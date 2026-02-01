@@ -30,10 +30,15 @@ import {
   Sun,
   Moon,
   Monitor,
+  Printer,
+  Bluetooth,
+  CheckCircle2,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { usePrinterStore, type PaperSize } from '@/store/printerStore';
+import { printTestReceipt } from '@/lib/printerService';
 import { APP_VERSION } from '@/store/updateStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -69,6 +74,12 @@ export default function MoreScreen() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [closingNote, setClosingNote] = useState('');
+
+  const [isPrintingTest, setIsPrintingTest] = useState(false);
+
+  // Printer
+  const paperSize = usePrinterStore((s) => s.paperSize);
+  const setPaperSize = usePrinterStore((s) => s.setPaperSize);
 
   // Theme
   const themePreference = useThemeStore((s) => s.preference);
@@ -134,6 +145,21 @@ export default function MoreScreen() {
     if (cost === 0) return null;
     return cost / (1 - margin / 100);
   }, [costPrice, targetMargin]);
+
+  const handleTestPrint = useCallback(async () => {
+    if (!shopInfo) return;
+    setIsPrintingTest(true);
+    try {
+      await printTestReceipt(shopInfo, paperSize);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Test print error:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Print Error', 'Could not print test receipt. Please try again.');
+    } finally {
+      setIsPrintingTest(false);
+    }
+  }, [shopInfo, paperSize]);
 
   const handleAddExpense = useCallback(() => {
     if (!expenseForm.amount) return;
@@ -577,6 +603,67 @@ export default function MoreScreen() {
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
             )}
+          </View>
+        </Animated.View>
+
+        {/* Receipt Printer Section */}
+        <Animated.View
+          entering={FadeInDown.delay(580).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Receipt Printer</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+            {/* Paper Size */}
+            <View className="p-4 border-b border-stone-200 dark:border-stone-800">
+              <Text className="text-stone-900 dark:text-white font-medium mb-3">Paper Size</Text>
+              <View className="flex-row gap-2">
+                {(['58mm', '80mm'] as PaperSize[]).map((size) => (
+                  <Pressable
+                    key={size}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setPaperSize(size);
+                    }}
+                    className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-lg ${
+                      paperSize === size
+                        ? 'bg-orange-500'
+                        : 'bg-stone-200 dark:bg-stone-800'
+                    }`}
+                  >
+                    {paperSize === size && <CheckCircle2 size={16} color="#fff" />}
+                    <Text className={`font-medium text-sm ${
+                      paperSize === size
+                        ? 'text-white'
+                        : 'text-stone-600 dark:text-stone-400'
+                    }`}>
+                      {size}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Test Print */}
+            <Pressable
+              onPress={handleTestPrint}
+              disabled={isPrintingTest}
+              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                {isPrintingTest ? (
+                  <ActivityIndicator size="small" color="#f97316" />
+                ) : (
+                  <Printer size={20} color="#f97316" />
+                )}
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">
+                  {isPrintingTest ? 'Printing...' : 'Test Print'}
+                </Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Print a sample receipt</Text>
+              </View>
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
           </View>
         </Animated.View>
 

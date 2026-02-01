@@ -14,12 +14,15 @@ import {
   Users,
   MessageCircle,
   Share2,
-  ScanBarcode
+  ScanBarcode,
+  Printer,
 } from 'lucide-react-native';
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
+import { usePrinterStore } from '@/store/printerStore';
+import { printReceipt } from '@/lib/printerService';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
@@ -37,7 +40,9 @@ export default function POSScreen() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
   const scanLockRef = useRef(false);
+  const paperSize = usePrinterStore((s) => s.paperSize);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const currentStaff = useStaffStore((s) => s.currentStaff);
@@ -111,6 +116,20 @@ export default function POSScreen() {
       logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
     }
   }, [completeSale, currentStaff, logActivity]);
+
+  const handlePrintReceipt = useCallback(async () => {
+    if (!lastSale || !shopInfo) return;
+    setIsPrinting(true);
+    try {
+      await printReceipt(lastSale, shopInfo, paperSize);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Print error:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsPrinting(false);
+    }
+  }, [lastSale, shopInfo, paperSize]);
 
   const shareReceiptWhatsApp = useCallback(() => {
     if (!lastSale || !shopInfo) return;
@@ -525,9 +544,19 @@ export default function POSScreen() {
         visible={showSuccessModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowSuccessModal(false)}
+        onRequestClose={() => {
+          setShowSuccessModal(false);
+          setLastSale(null);
+        }}
       >
-        <View className="flex-1 bg-black/80 items-center justify-center px-8">
+        <Pressable
+          className="flex-1 bg-black/80 items-center justify-center px-8"
+          onPress={() => {
+            setShowSuccessModal(false);
+            setLastSale(null);
+          }}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
           <Animated.View
             entering={FadeInUp.duration(400)}
             className="bg-white dark:bg-stone-900 rounded-3xl p-8 w-full items-center"
@@ -558,6 +587,16 @@ export default function POSScreen() {
 
             {/* Share Receipt Buttons */}
             <Pressable
+              onPress={handlePrintReceipt}
+              disabled={isPrinting}
+              className="flex-row items-center justify-center gap-2 w-full py-4 rounded-xl mb-3 bg-orange-500 active:opacity-90"
+            >
+              <Printer size={20} color="#ffffff" />
+              <Text className="text-white font-bold text-base">
+                {isPrinting ? 'Printing...' : 'Print Receipt'}
+              </Text>
+            </Pressable>
+            <Pressable
               onPress={shareReceiptWhatsApp}
               className="flex-row items-center justify-center gap-2 w-full py-4 rounded-xl mb-3 active:opacity-90"
               style={{ backgroundColor: '#25D366' }}
@@ -576,13 +615,17 @@ export default function POSScreen() {
             </View>
 
             <Pressable
-              onPress={() => setShowSuccessModal(false)}
+              onPress={() => {
+                setShowSuccessModal(false);
+                setLastSale(null);
+              }}
               className="bg-orange-500 w-full py-4 rounded-xl active:opacity-90"
             >
               <Text className="text-white font-semibold text-center text-lg">New Sale</Text>
             </Pressable>
           </Animated.View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
