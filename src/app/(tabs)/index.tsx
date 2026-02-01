@@ -12,10 +12,12 @@ import {
   Wifi,
   WifiOff,
   Clock,
-  Banknote
+  Banknote,
+  UserCircle
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useStaffStore } from '@/store/staffStore';
 import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter, Href } from 'expo-router';
@@ -27,6 +29,8 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
+  const staffMembers = useStaffStore((s) => s.staff);
+  const currentStaff = useStaffStore((s) => s.currentStaff);
   const products = useRetailStore((s) => s.products);
   const getSalesToday = useRetailStore((s) => s.getSalesToday);
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
@@ -90,6 +94,18 @@ export default function DashboardScreen() {
             <Text className="text-stone-500 text-sm font-medium mt-1">
               {greeting}, {displayName} 👋
             </Text>
+            {staffMembers.length > 0 && currentStaff && (
+              <Pressable
+                onPress={() => router.push('/staff-switch')}
+                className="flex-row items-center gap-2 mt-2 bg-stone-900/80 self-start px-3 py-1.5 rounded-full border border-stone-800 active:opacity-80"
+              >
+                <UserCircle size={14} color="#f97316" />
+                <Text className="text-orange-400 text-xs font-medium">
+                  {currentStaff.name}
+                </Text>
+                <Text className="text-stone-600 text-xs">• Switch</Text>
+              </Pressable>
+            )}
           </Animated.View>
         </View>
 

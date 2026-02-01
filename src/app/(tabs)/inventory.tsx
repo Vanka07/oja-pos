@@ -14,6 +14,7 @@ import {
   TrendingDown
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -42,6 +43,13 @@ export default function InventoryScreen() {
     unit: 'pcs',
     lowStockThreshold: '10',
   });
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const logActivity = useStaffStore((s) => s.logActivity);
+  const canEditProduct = !currentStaff || hasPermission(currentStaff.role, 'edit_product');
+  const canDeleteProduct = !currentStaff || hasPermission(currentStaff.role, 'delete_product');
+  const canAddProduct = !currentStaff || hasPermission(currentStaff.role, 'add_product');
+  const canRestock = !currentStaff || hasPermission(currentStaff.role, 'restock');
 
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
@@ -106,10 +114,14 @@ export default function InventoryScreen() {
     const amount = parseInt(stockAdjustment) || 0;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     adjustStock(selectedProduct.id, type === 'add' ? amount : -amount);
+    // Log restock activity
+    if (type === 'add') {
+      logActivity('restock', `Restocked ${selectedProduct.name} (+${amount})`);
+    }
     setStockAdjustment('');
     setShowStockModal(false);
     setSelectedProduct(null);
-  }, [selectedProduct, stockAdjustment, adjustStock]);
+  }, [selectedProduct, stockAdjustment, adjustStock, logActivity]);
 
   const openProductEdit = useCallback((product: Product) => {
     router.push({ pathname: '/product-edit', params: { productId: product.id } });
@@ -140,12 +152,14 @@ export default function InventoryScreen() {
               <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
                 Stock Management
               </Text>
-              <Pressable
-                onPress={() => setShowAddModal(true)}
-                className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
-              >
-                <Plus size={18} color="white" />
-              </Pressable>
+              {canAddProduct && (
+                <Pressable
+                  onPress={() => setShowAddModal(true)}
+                  className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
+                >
+                  <Plus size={18} color="white" />
+                </Pressable>
+              )}
             </View>
             <Text className="text-white text-3xl font-bold tracking-tight">
               Inventory
@@ -300,7 +314,7 @@ export default function InventoryScreen() {
                   layout={Layout.springify()}
                 >
                   <Pressable
-                    onPress={() => openProductEdit(product)}
+                    onPress={() => canEditProduct ? openProductEdit(product) : openStockModal(product)}
                     className={`bg-stone-900/80 rounded-xl p-4 border ${
                       isLowStock ? 'border-amber-500/50' : 'border-stone-800'
                     } active:scale-[0.99]`}
@@ -552,15 +566,17 @@ export default function InventoryScreen() {
                     </Pressable>
                   </View>
 
-                  <Pressable
-                    onPress={() => {
-                      deleteProduct(selectedProduct.id);
-                      setShowStockModal(false);
-                    }}
-                    className="mt-4 py-3 items-center"
-                  >
-                    <Text className="text-red-400 font-medium">Delete Product</Text>
-                  </Pressable>
+                  {canDeleteProduct && (
+                    <Pressable
+                      onPress={() => {
+                        deleteProduct(selectedProduct.id);
+                        setShowStockModal(false);
+                      }}
+                      className="mt-4 py-3 items-center"
+                    >
+                      <Text className="text-red-400 font-medium">Delete Product</Text>
+                    </Pressable>
+                  )}
                 </>
               )}
             </View>

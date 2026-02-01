@@ -19,6 +19,7 @@ import {
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useStaffStore } from '@/store/staffStore';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -36,6 +37,8 @@ export default function POSScreen() {
   const scanLockRef = useRef(false);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const logActivity = useStaffStore((s) => s.logActivity);
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
   const cart = useRetailStore((s) => s.cart);
@@ -96,13 +99,16 @@ export default function POSScreen() {
 
   const handleCompleteSale = useCallback((method: PaymentMethod) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const sale = completeSale(method);
+    const sale = completeSale(method, undefined, undefined, currentStaff?.id, currentStaff?.name);
     if (sale) {
       setLastSale(sale);
       setShowPaymentModal(false);
       setShowSuccessModal(true);
+      // Log staff activity
+      const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+      logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
     }
-  }, [completeSale]);
+  }, [completeSale, currentStaff, logActivity]);
 
   const shareReceiptWhatsApp = useCallback(() => {
     if (!lastSale || !shopInfo) return;

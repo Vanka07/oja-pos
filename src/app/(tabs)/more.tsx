@@ -20,11 +20,16 @@ import {
   Wrench,
   Smartphone,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Shield,
+  UserCircle,
+  Clock
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { APP_VERSION } from '@/store/updateStore';
+import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -64,7 +69,16 @@ export default function MoreScreen() {
     paymentMethod: 'cash' as 'cash' | 'transfer' | 'pos',
   });
 
+  const router = useRouter();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
+  const staffMembers = useStaffStore((s) => s.staff);
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const staffActivities = useStaffStore((s) => s.activities);
+  const canManageStaff = !currentStaff || hasPermission(currentStaff.role, 'manage_staff');
+  const canAddExpense = !currentStaff || hasPermission(currentStaff.role, 'add_expense');
+  const canViewActivity = !currentStaff || hasPermission(currentStaff.role, 'view_activity');
+  const hasStaff = staffMembers.length > 0;
+  const recentActivities = staffActivities.slice(0, 5);
   const expenses = useRetailStore((s) => s.expenses);
   const addExpense = useRetailStore((s) => s.addExpense);
   const getExpensesToday = useRetailStore((s) => s.getExpensesToday);
@@ -206,16 +220,18 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(300).duration(600)}
           className="flex-row mx-5 mt-4 gap-3"
         >
-          <Pressable
-            onPress={() => setShowExpenseModal(true)}
-            className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:scale-98"
-          >
-            <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mb-3">
-              <Receipt size={20} color="#ef4444" />
-            </View>
-            <Text className="text-white font-medium">Add Expense</Text>
-            <Text className="text-stone-500 text-xs mt-1">Record costs</Text>
-          </Pressable>
+          {canAddExpense && (
+            <Pressable
+              onPress={() => setShowExpenseModal(true)}
+              className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:scale-98"
+            >
+              <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mb-3">
+                <Receipt size={20} color="#ef4444" />
+              </View>
+              <Text className="text-white font-medium">Add Expense</Text>
+              <Text className="text-stone-500 text-xs mt-1">Record costs</Text>
+            </Pressable>
+          )}
 
           <Pressable
             onPress={() => setShowCalculatorModal(true)}
@@ -249,9 +265,90 @@ export default function MoreScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Menu Items */}
+        {/* Staff Section */}
         <Animated.View
           entering={FadeInDown.delay(500).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Staff</Text>
+          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+            {hasStaff && (
+              <Pressable
+                onPress={() => router.push('/staff-switch')}
+                className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                  <UserCircle size={20} color="#f97316" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white font-medium">Switch Staff</Text>
+                  <Text className="text-stone-500 text-sm">
+                    {currentStaff ? `Current: ${currentStaff.name}` : 'No one logged in'}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+
+            {canManageStaff && (
+              <Pressable
+                onPress={() => router.push('/staff')}
+                className="flex-row items-center p-4 active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-amber-500/20 items-center justify-center mr-3">
+                  <Shield size={20} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white font-medium">Staff Management</Text>
+                  <Text className="text-stone-500 text-sm">{staffMembers.length} staff member{staffMembers.length !== 1 ? 's' : ''}</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+          </View>
+        </Animated.View>
+
+        {/* Activity Log Preview */}
+        {canViewActivity && recentActivities.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.delay(550).duration(600)}
+            className="mx-5 mt-4"
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-stone-500 text-xs uppercase tracking-wide">Recent Activity</Text>
+              {canManageStaff && (
+                <Pressable onPress={() => router.push('/staff')} className="active:opacity-70">
+                  <Text className="text-orange-500 text-xs font-medium">View All</Text>
+                </Pressable>
+              )}
+            </View>
+            <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+              {recentActivities.map((activity, index) => (
+                <View
+                  key={activity.id}
+                  className={`flex-row items-center p-3 ${index < recentActivities.length - 1 ? 'border-b border-stone-800' : ''}`}
+                >
+                  <View className="w-7 h-7 rounded-full bg-stone-800 items-center justify-center mr-3">
+                    <Text className="text-white text-xs font-bold">{activity.staffName.charAt(0)}</Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-stone-300 text-sm" numberOfLines={1}>{activity.description}</Text>
+                    <Text className="text-stone-600 text-xs">
+                      {activity.staffName} • {new Date(activity.createdAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                  {activity.amount !== undefined && (
+                    <Text className="text-stone-400 text-sm font-medium">{formatNaira(activity.amount)}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Menu Items */}
+        <Animated.View
+          entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
           <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Shop Settings</Text>

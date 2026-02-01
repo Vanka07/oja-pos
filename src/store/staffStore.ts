@@ -1,0 +1,163 @@
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Types
+export type StaffRole = 'owner' | 'manager' | 'cashier';
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  phone: string;
+  pin: string; // 4-digit PIN
+  role: StaffRole;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface StaffActivity {
+  id: string;
+  staffId: string;
+  staffName: string;
+  action: 'sale' | 'restock' | 'price_change' | 'expense' | 'credit_payment' | 'login' | 'product_add' | 'product_delete';
+  description: string;
+  amount?: number;
+  createdAt: string;
+}
+
+// Permissions map
+const PERMISSIONS: Record<string, StaffRole[]> = {
+  sell: ['owner', 'manager', 'cashier'],
+  view_inventory: ['owner', 'manager', 'cashier'],
+  edit_product: ['owner', 'manager'],
+  delete_product: ['owner'],
+  add_product: ['owner', 'manager'],
+  restock: ['owner', 'manager'],
+  view_reports: ['owner', 'manager'],
+  add_expense: ['owner', 'manager'],
+  manage_customers: ['owner', 'manager'],
+  manage_staff: ['owner'],
+  view_activity: ['owner', 'manager'],
+};
+
+export function hasPermission(role: StaffRole, action: string): boolean {
+  const allowed = PERMISSIONS[action];
+  if (!allowed) return false;
+  return allowed.includes(role);
+}
+
+const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+
+interface StaffState {
+  staff: StaffMember[];
+  currentStaff: StaffMember | null;
+  activities: StaffActivity[];
+
+  addStaff: (staff: Omit<StaffMember, 'id' | 'createdAt'>) => void;
+  updateStaff: (id: string, updates: Partial<StaffMember>) => void;
+  removeStaff: (id: string) => void;
+  switchStaff: (pin: string) => boolean;
+  logActivity: (action: StaffActivity['action'], description: string, amount?: number) => void;
+  getActivitiesToday: () => StaffActivity[];
+  getActivitiesByStaff: (staffId: string) => StaffActivity[];
+  logout: () => void;
+}
+
+export const useStaffStore = create<StaffState>()(
+  persist(
+    (set, get) => ({
+      staff: [],
+      currentStaff: null,
+      activities: [],
+
+      addStaff: (staffData) => {
+        const state = get();
+        // Auto-create owner: if no owner exists, force role to 'owner'
+        const hasOwner = state.staff.some((s) => s.role === 'owner');
+        const role = !hasOwner ? 'owner' : staffData.role;
+
+        const newStaff: StaffMember = {
+          ...staffData,
+          role,
+          id: generateId(),
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ staff: [...state.staff, newStaff] }));
+      },
+
+      updateStaff: (id, updates) => {
+        set((state) => ({
+          staff: state.staff.map((s) =>
+            s.id === id ? { ...s, ...updates } : s
+          ),
+          // Also update currentStaff if it's the same person
+          currentStaff: state.currentStaff?.id === id
+            ? { ...state.currentStaff, ...updates }
+            : state.currentStaff,
+        }));
+      },
+
+      removeStaff: (id) => {
+        set((state) => ({
+          staff: state.staff.filter((s) => s.id !== id),
+          currentStaff: state.currentStaff?.id === id ? null : state.currentStaff,
+        }));
+      },
+
+      switchStaff: (pin) => {
+        const state = get();
+        const member = state.staff.find((s) => s.pin === pin && s.active);
+        if (!member) return false;
+
+        set({ currentStaff: member });
+
+        // Log login activity
+        const activity: StaffActivity = {
+          id: generateId(),
+          staffId: member.id,
+          staffName: member.name,
+          action: 'login',
+          description: `${member.name} logged in`,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ activities: [activity, ...state.activities] }));
+
+        return true;
+      },
+
+      logActivity: (action, description, amount) => {
+        const state = get();
+        const current = state.currentStaff;
+        if (!current) return;
+
+        const activity: StaffActivity = {
+          id: generateId(),
+          staffId: current.id,
+          staffName: current.name,
+          action,
+          description,
+          amount,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ activities: [activity, ...state.activities] }));
+      },
+
+      getActivitiesToday: () => {
+        const today = new Date().toISOString().split('T')[0];
+        return get().activities.filter((a) => a.createdAt.startsWith(today));
+      },
+
+      getActivitiesByStaff: (staffId) => {
+        return get().activities.filter((a) => a.staffId === staffId);
+      },
+
+      logout: () => {
+        set({ currentStaff: null });
+      },
+    }),
+    {
+      name: 'oja-staff-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);

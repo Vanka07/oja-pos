@@ -67,6 +67,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="product-edit" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="staff" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="staff-switch" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

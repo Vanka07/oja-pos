@@ -13,6 +13,8 @@ import {
   Users
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { Lock } from 'lucide-react-native';
 import { useState, useMemo } from 'react';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import EmptyState from '@/components/EmptyState';
@@ -44,6 +46,9 @@ type DateRange = 'today' | 'week' | 'month';
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [dateRange, setDateRange] = useState<DateRange>('today');
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canViewReports = !currentStaff || hasPermission(currentStaff.role, 'view_reports');
 
   const sales = useRetailStore((s) => s.sales);
   const products = useRetailStore((s) => s.products);
@@ -318,6 +323,34 @@ export default function ReportsScreen() {
       </View>
     );
   };
+
+  if (!canViewReports) {
+    return (
+      <View className="flex-1 bg-stone-950">
+        <LinearGradient
+          colors={['#292524', '#1c1917', '#0c0a09']}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        />
+        <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+          <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
+            Analytics
+          </Text>
+          <Text className="text-white text-3xl font-bold tracking-tight">
+            Reports
+          </Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-20 h-20 rounded-full bg-stone-800 items-center justify-center mb-4">
+            <Lock size={32} color="#78716c" />
+          </View>
+          <Text className="text-white text-xl font-bold mb-2">Access Restricted</Text>
+          <Text className="text-stone-500 text-center">
+            You don't have permission to view reports. Ask the shop owner for access.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-stone-950">

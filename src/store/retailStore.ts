@@ -39,6 +39,8 @@ export interface Sale {
   paymentMethod: 'cash' | 'transfer' | 'pos' | 'credit';
   customerId?: string;
   customerName?: string;
+  staffId?: string;
+  staffName?: string;
   cashReceived?: number;
   changeGiven?: number;
   createdAt: string;
@@ -144,7 +146,7 @@ interface RetailState {
 
   // Sales
   sales: Sale[];
-  completeSale: (paymentMethod: Sale['paymentMethod'], customerId?: string, cashReceived?: number) => Sale | null;
+  completeSale: (paymentMethod: Sale['paymentMethod'], customerId?: string, cashReceived?: number, staffId?: string, staffName?: string) => Sale | null;
   getSalesToday: () => Sale[];
   getSalesByDateRange: (startDate: string, endDate: string) => Sale[];
 
@@ -443,7 +445,7 @@ export const useRetailStore = create<RetailState>()(
       },
 
       // Sales actions
-      completeSale: (paymentMethod, customerId, cashReceived) => {
+      completeSale: (paymentMethod, customerId, cashReceived, staffId, staffName) => {
         const state = get();
         if (state.cart.length === 0) return null;
 
@@ -463,6 +465,8 @@ export const useRetailStore = create<RetailState>()(
           paymentMethod,
           customerId,
           customerName: customer?.name,
+          staffId,
+          staffName,
           cashReceived: paymentMethod === 'cash' ? cashReceived : undefined,
           changeGiven: paymentMethod === 'cash' && cashReceived ? cashReceived - total : undefined,
           createdAt: new Date().toISOString(),
