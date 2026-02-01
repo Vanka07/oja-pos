@@ -33,10 +33,12 @@ import {
   Printer,
   Bluetooth,
   CheckCircle2,
+  Lock,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useAuthStore } from '@/store/authStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { usePrinterStore, type PaperSize } from '@/store/printerStore';
 import { printTestReceipt } from '@/lib/printerService';
@@ -100,6 +102,8 @@ export default function MoreScreen() {
   });
 
   const router = useRouter();
+  const lockApp = useAuthStore((s) => s.lock);
+  const hasAnyPin = useAuthStore((s) => s.hasPin)();
   const cloudAuth = useCloudAuthStore();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const staffMembers = useStaffStore((s) => s.staff);
@@ -804,7 +808,7 @@ export default function MoreScreen() {
             <Pressable
               onPress={handleExportData}
               disabled={isExporting}
-              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
             >
               <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
                 {isExporting ? (
@@ -819,6 +823,26 @@ export default function MoreScreen() {
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
+
+            {hasAnyPin && (
+              <Pressable
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  lockApp();
+                }}
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
+                  <Lock size={20} color="#ef4444" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-red-400 font-medium">Lock App</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    {currentStaff ? `Logged in as ${currentStaff.name}` : 'Require PIN to re-enter'}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
           </View>
         </Animated.View>
 
