@@ -120,9 +120,9 @@ export default function StaffSwitchScreen() {
               <Pressable
                 key={colIndex}
                 onPress={() => handlePinDigit(String(digit))}
-                className="w-20 h-16 rounded-2xl bg-stone-200/80 dark:bg-stone-800/80 items-center justify-center active:bg-stone-200 dark:active:bg-stone-700 border border-stone-700"
+                className="w-20 h-16 rounded-2xl bg-stone-200/80 dark:bg-stone-800/80 items-center justify-center active:bg-stone-300 dark:active:bg-stone-700 border border-stone-300 dark:border-stone-700"
               >
-                <Text className="text-stone-900 dark:text-white text-2xl font-semibold">{digit}</Text>
+                <Text className="text-stone-900 dark:text-white text-2xl font-semibold">{String(digit)}</Text>
               </Pressable>
             );
           })}
@@ -172,7 +172,7 @@ export default function StaffSwitchScreen() {
                   <View className={`w-20 h-20 rounded-full items-center justify-center mb-2 ${
                     currentStaff?.id === member.id
                       ? 'bg-orange-500/30 border-2 border-orange-500'
-                      : 'bg-stone-800 border-2 border-stone-700'
+                      : 'bg-stone-200 dark:bg-stone-800 border-2 border-stone-300 dark:border-stone-700'
                   }`}>
                     <Text className="text-stone-900 dark:text-white text-2xl font-bold">
                       {member.name.charAt(0).toUpperCase()}
@@ -189,7 +189,7 @@ export default function StaffSwitchScreen() {
             <View className="items-center py-16">
               <Lock size={48} color="#57534e" />
               <Text className="text-stone-500 text-lg mt-4">No active staff</Text>
-              <Text className="text-stone-600 text-center mt-2">
+              <Text className="text-stone-600 dark:text-stone-400 text-center mt-2">
                 Add staff members from Settings → Staff Management
               </Text>
             </View>
@@ -200,7 +200,7 @@ export default function StaffSwitchScreen() {
         <View className="flex-1">
           <Animated.View entering={FadeInDown.duration(300)} className="items-center">
             <View className={`w-24 h-24 rounded-full items-center justify-center mb-3 ${
-              error ? 'bg-red-500/20 border-2 border-red-500' : 'bg-orange-500/20 border-2 border-orange-500'
+              error ? 'bg-red-500/20 border-2 border-red-500' : 'bg-orange-500/15 border-2 border-orange-500'
             }`}>
               <Text className="text-stone-900 dark:text-white text-3xl font-bold">
                 {selectedStaff.name.charAt(0).toUpperCase()}

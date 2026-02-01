@@ -114,14 +114,14 @@ export default function LockScreen() {
                 ) : key === 'del' ? (
                   <Pressable
                     onPress={handleDelete}
-                    className="h-16 rounded-2xl items-center justify-center active:bg-stone-200 dark:bg-stone-800"
+                    className="h-16 rounded-2xl items-center justify-center active:bg-stone-200 dark:active:bg-stone-800"
                   >
                     <Delete size={24} color="#a8a29e" />
                   </Pressable>
                 ) : (
                   <Pressable
                     onPress={() => handlePress(key)}
-                    className="h-16 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center active:bg-stone-200 dark:bg-stone-800"
+                    className="h-16 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center active:bg-stone-200 dark:active:bg-stone-800"
                   >
                     <Text className="text-stone-900 dark:text-white text-2xl font-medium">{key}</Text>
                   </Pressable>

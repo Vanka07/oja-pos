@@ -1,7 +1,6 @@
 import { View, Text, Pressable } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useColorScheme } from 'nativewind';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -12,8 +11,6 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ icon: Icon, title, description, buttonLabel, onButtonPress }: EmptyStateProps) {
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
   return (
     <Animated.View
       entering={FadeInDown.duration(500)}

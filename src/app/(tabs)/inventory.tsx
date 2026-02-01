@@ -6,10 +6,7 @@ import {
   Plus,
   Package,
   AlertTriangle,
-  Filter,
   X,
-  Edit3,
-  Trash2,
   TrendingUp,
   TrendingDown
 } from 'lucide-react-native';

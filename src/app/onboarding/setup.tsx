@@ -91,7 +91,7 @@ export default function OnboardingSetup() {
               <Text className="text-stone-900 dark:text-white text-3xl font-bold mb-2">
                 Set up your shop
               </Text>
-              <Text className="text-stone-400 text-base leading-6 mb-8">
+              <Text className="text-stone-500 dark:text-stone-400 text-base leading-6 mb-8">
                 Tell us about your business so we can personalize Oja for you. Takes less than a minute!
               </Text>
             </Animated.View>
@@ -192,11 +192,11 @@ export default function OnboardingSetup() {
                 style={{ borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 <Check size={20} color="white" />
-                <Text className="text-stone-900 dark:text-white text-lg font-semibold">Start Using Oja</Text>
+                <Text className="text-white text-lg font-semibold">Start Using Oja</Text>
               </LinearGradient>
             </Pressable>
 
-            <Text className="text-stone-600 text-xs text-center mt-4">
+            <Text className="text-stone-500 dark:text-stone-400 text-xs text-center mt-4">
               You can change these details later in Settings
             </Text>
           </Animated.View>

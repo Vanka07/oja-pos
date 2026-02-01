@@ -99,7 +99,7 @@ export default function OnboardingWelcome() {
             entering={FadeInDown.duration(500)}
             className="items-center"
           >
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold text-center mb-4">
+            <Text className="text-white text-3xl font-bold text-center mb-4">
               {slide.title}
             </Text>
             <Text className="text-white/80 text-lg text-center leading-7">
@@ -127,7 +127,7 @@ export default function OnboardingWelcome() {
             onPress={handleNext}
             className="bg-white/20 border border-white/30 rounded-2xl py-4 active:scale-98"
           >
-            <Text className="text-stone-900 dark:text-white text-lg font-semibold text-center">
+            <Text className="text-white text-lg font-semibold text-center">
               {currentSlide === slides.length - 1 ? 'Get Started' : 'Next'}
             </Text>
           </Pressable>

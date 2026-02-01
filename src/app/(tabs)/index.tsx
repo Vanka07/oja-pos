@@ -3,15 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  TrendingUp,
-  TrendingDown,
   ShoppingCart,
   Package,
   AlertTriangle,
   ArrowRight,
   Wifi,
   WifiOff,
-  Clock,
   Banknote,
   UserCircle
 } from 'lucide-react-native';

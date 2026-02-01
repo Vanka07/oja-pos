@@ -137,7 +137,7 @@ export default function POSScreen() {
       await printReceipt(lastSale, shopInfo, paperSize);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('Print error:', error);
+      // Print failed — haptic already handles feedback
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsPrinting(false);

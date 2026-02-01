@@ -90,10 +90,13 @@ export default function CreditBookScreen() {
     setPaymentNote('');
     setShowPaymentModal(false);
 
-    // Refresh selected customer
-    const updated = customers.find((c) => c.id === selectedCustomer.id);
-    if (updated) setSelectedCustomer(updated);
-  }, [selectedCustomer, paymentAmount, paymentNote, recordCreditPayment, customers]);
+    // Refresh selected customer from store (not stale closure)
+    setTimeout(() => {
+      const freshCustomers = useRetailStore.getState().customers;
+      const updated = freshCustomers.find((c) => c.id === selectedCustomer.id);
+      if (updated) setSelectedCustomer(updated);
+    }, 0);
+  }, [selectedCustomer, paymentAmount, paymentNote, recordCreditPayment]);
 
   const openCustomerDetail = useCallback((customer: Customer) => {
     setSelectedCustomer(customer);
@@ -125,7 +128,7 @@ export default function CreditBookScreen() {
             <Lock size={32} color="#78716c" />
           </View>
           <Text className="text-stone-900 dark:text-white text-xl font-bold mb-2">Access Restricted</Text>
-          <Text className="text-stone-500 text-center">You don't have permission to manage customers. Ask the shop owner for access.</Text>
+          <Text className="text-stone-500 dark:text-stone-400 text-center">You don't have permission to manage customers. Ask the shop owner for access.</Text>
         </View>
       </View>
     );
@@ -148,7 +151,7 @@ export default function CreditBookScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-stone-500 text-sm font-semibold tracking-wide">
-                Credit Book
+                Customers
               </Text>
               <Pressable
                 onPress={() => setShowAddModal(true)}
@@ -277,7 +280,7 @@ export default function CreditBookScreen() {
                             <Text className="text-red-400 font-bold text-lg">
                               {formatNaira(customer.currentCredit)}
                             </Text>
-                            <Text className="text-stone-600 text-xs">
+                            <Text className="text-stone-500 dark:text-stone-400 text-xs">
                               / {formatNaira(customer.creditLimit)}
                             </Text>
                           </>
@@ -323,7 +326,7 @@ export default function CreditBookScreen() {
 
               <View className="gap-4">
                 <View>
-                  <Text className="text-stone-400 text-sm mb-2">Customer Name *</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Customer Name *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. Mama Ngozi"
@@ -334,7 +337,7 @@ export default function CreditBookScreen() {
                 </View>
 
                 <View>
-                  <Text className="text-stone-400 text-sm mb-2">Phone Number</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. 08012345678"
@@ -346,7 +349,7 @@ export default function CreditBookScreen() {
                 </View>
 
                 <View>
-                  <Text className="text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="50000"
@@ -526,7 +529,7 @@ export default function CreditBookScreen() {
 
                   <View className="gap-4">
                     <View>
-                      <Text className="text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
+                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
                       <TextInput
                         className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                         placeholder="0"
@@ -539,7 +542,7 @@ export default function CreditBookScreen() {
                     </View>
 
                     <View>
-                      <Text className="text-stone-400 text-sm mb-2">Note (Optional)</Text>
+                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
                       <TextInput
                         className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                         placeholder="e.g. Partial payment"
@@ -557,7 +560,7 @@ export default function CreditBookScreen() {
                           onPress={() => setPaymentAmount(amount.toString())}
                           className="flex-1 bg-stone-200 dark:bg-stone-800 py-2 rounded-lg active:opacity-70"
                         >
-                          <Text className="text-stone-400 text-center text-sm">
+                          <Text className="text-stone-600 dark:text-stone-400 text-center text-sm">
                             {amount === selectedCustomer.currentCredit ? 'Full' : formatNaira(amount)}
                           </Text>
                         </Pressable>

@@ -172,7 +172,7 @@ export default function MoreScreen() {
       await printTestReceipt(shopInfo, paperSize);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('Test print error:', error);
+      // Test print failed — Alert shown below
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Print Error', 'Could not print test receipt. Please try again.');
     } finally {
@@ -273,7 +273,7 @@ export default function MoreScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       Alert.alert('Export Failed', 'Could not export data. Please try again.');
-      console.error('Export error:', error);
+      // Export failed — Alert shown above
     } finally {
       setIsExporting(false);
     }

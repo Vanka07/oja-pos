@@ -2,15 +2,12 @@ import { View, Text, ScrollView, Pressable, Dimensions, Platform } from 'react-n
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Calendar,
   TrendingUp,
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
-  Package,
   DollarSign,
   ShoppingCart,
-  Users
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -249,7 +246,7 @@ export default function ReportsScreen() {
             <Lock size={32} color="#78716c" />
           </View>
           <Text className="text-stone-900 dark:text-white text-xl font-bold mb-2">Access Restricted</Text>
-          <Text className="text-stone-500 text-center">You don't have permission to view reports. Ask the shop owner for access.</Text>
+          <Text className="text-stone-500 dark:text-stone-400 text-center">You don't have permission to view reports. Ask the shop owner for access.</Text>
         </View>
       </View>
     );

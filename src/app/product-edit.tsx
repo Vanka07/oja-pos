@@ -148,7 +148,7 @@ export default function ProductEditScreen() {
 
             <View className="gap-4">
               <View>
-                <Text className="text-stone-400 text-sm mb-2">Product Name *</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="e.g. Indomie Chicken 70g"
@@ -159,7 +159,7 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-400 text-sm mb-2">Barcode</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Barcode</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="Scan or enter barcode"
@@ -170,7 +170,7 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-400 text-sm mb-2">Category</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -183,14 +183,14 @@ export default function ProductEditScreen() {
                       className={`mr-2 px-4 py-2 rounded-full border ${
                         formData.category === cat.name
                           ? 'bg-orange-500 border-orange-500'
-                          : 'bg-white dark:bg-stone-900 border-stone-700'
+                          : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-700'
                       }`}
                     >
                       <Text
                         className={
                           formData.category === cat.name
-                            ? 'text-stone-900 dark:text-white font-medium'
-                            : 'text-stone-400'
+                            ? 'text-white font-medium'
+                            : 'text-stone-600 dark:text-stone-400'
                         }
                       >
                         {cat.name}
@@ -202,7 +202,7 @@ export default function ProductEditScreen() {
 
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <Text className="text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
@@ -213,7 +213,7 @@ export default function ProductEditScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
@@ -226,7 +226,7 @@ export default function ProductEditScreen() {
               </View>
 
               {/* Margin preview */}
-              {formData.costPrice && formData.sellingPrice && (
+              {formData.costPrice && formData.sellingPrice && parseFloat(formData.sellingPrice) > 0 && (
                 <View className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex-row items-center justify-between">
                   <Text className="text-emerald-400 text-sm">Profit Margin</Text>
                   <Text className="text-emerald-400 font-bold">
@@ -241,7 +241,7 @@ export default function ProductEditScreen() {
               )}
 
               <View>
-                <Text className="text-stone-400 text-sm mb-2">Unit</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Unit</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -254,12 +254,12 @@ export default function ProductEditScreen() {
                       className={`mr-2 px-4 py-2 rounded-full border ${
                         formData.unit === unit
                           ? 'bg-orange-500 border-orange-500'
-                          : 'bg-white dark:bg-stone-900 border-stone-700'
+                          : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-700'
                       }`}
                     >
                       <Text
                         className={
-                          formData.unit === unit ? 'text-stone-900 dark:text-white font-medium' : 'text-stone-400'
+                          formData.unit === unit ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'
                         }
                       >
                         {unit}
@@ -270,7 +270,7 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-400 text-sm mb-1">Low Stock Alert</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-1">Low Stock Alert</Text>
                 <Text className="text-stone-500 text-xs mb-2">Alert when stock falls below</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
@@ -294,7 +294,7 @@ export default function ProductEditScreen() {
 
             <View className="bg-white/80 dark:bg-stone-900/80 rounded-2xl border border-stone-200 dark:border-stone-800 p-4">
               <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-stone-400 text-sm">Current Stock</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm">Current Stock</Text>
                 <View className="flex-row items-center gap-2">
                   <Text className="text-stone-900 dark:text-white font-bold text-2xl">{product.quantity}</Text>
                   <Text className="text-stone-500">{product.unit}</Text>
@@ -303,7 +303,7 @@ export default function ProductEditScreen() {
 
               <View className="mb-4">
                 <TextInput
-                  className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold border border-stone-700"
+                  className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold border border-stone-200 dark:border-stone-700"
                   placeholder="0"
                   placeholderTextColor="#57534e"
                   keyboardType="numeric"
