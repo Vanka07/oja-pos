@@ -78,7 +78,7 @@ export default function CloudAuthScreen() {
             >
               <ArrowLeft size={20} color="#a8a29e" />
             </Pressable>
-            <Text className="text-white text-lg font-semibold">Cloud Sync</Text>
+            <Text className="text-stone-900 dark:text-white text-lg font-semibold">Cloud Sync</Text>
           </View>
 
           {/* Icon & Description */}
@@ -86,7 +86,7 @@ export default function CloudAuthScreen() {
             <View className="w-20 h-20 rounded-3xl bg-blue-500/20 items-center justify-center mb-5">
               <Cloud size={40} color="#3b82f6" />
             </View>
-            <Text className="text-white text-2xl font-bold text-center mb-2">
+            <Text className="text-stone-900 dark:text-white text-2xl font-bold text-center mb-2">
               {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
             </Text>
             <Text className="text-stone-400 text-center text-base leading-6">
@@ -150,7 +150,7 @@ export default function CloudAuthScreen() {
               {loading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-semibold text-center text-lg">
+                <Text className="text-stone-900 dark:text-white font-semibold text-center text-lg">
                   {mode === 'signup' ? 'Create Account & Sync' : 'Sign In'}
                 </Text>
               )}

@@ -121,7 +121,7 @@ export default function StaffSwitchScreen() {
                 onPress={() => handlePinDigit(String(digit))}
                 className="w-20 h-16 rounded-2xl bg-stone-200/80 dark:bg-stone-800/80 items-center justify-center active:bg-stone-200 dark:active:bg-stone-700 border border-stone-700"
               >
-                <Text className="text-white text-2xl font-semibold">{digit}</Text>
+                <Text className="text-stone-900 dark:text-white text-2xl font-semibold">{digit}</Text>
               </Pressable>
             );
           })}
@@ -140,7 +140,7 @@ export default function StaffSwitchScreen() {
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8 }} className="px-5 pb-4">
         <View className="flex-row items-center justify-between">
-          <Text className="text-white text-xl font-bold">Switch Staff</Text>
+          <Text className="text-stone-900 dark:text-white text-xl font-bold">Switch Staff</Text>
           <Pressable
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center"
@@ -173,11 +173,11 @@ export default function StaffSwitchScreen() {
                       ? 'bg-orange-500/30 border-2 border-orange-500'
                       : 'bg-stone-800 border-2 border-stone-700'
                   }`}>
-                    <Text className="text-white text-2xl font-bold">
+                    <Text className="text-stone-900 dark:text-white text-2xl font-bold">
                       {member.name.charAt(0).toUpperCase()}
                     </Text>
                   </View>
-                  <Text className="text-white font-medium text-sm">{member.name.split(' ')[0]}</Text>
+                  <Text className="text-stone-900 dark:text-white font-medium text-sm">{member.name.split(' ')[0]}</Text>
                   <Text className="text-stone-500 text-xs capitalize">{member.role}</Text>
                 </Pressable>
               </Animated.View>
@@ -201,11 +201,11 @@ export default function StaffSwitchScreen() {
             <View className={`w-24 h-24 rounded-full items-center justify-center mb-3 ${
               error ? 'bg-red-500/20 border-2 border-red-500' : 'bg-orange-500/20 border-2 border-orange-500'
             }`}>
-              <Text className="text-white text-3xl font-bold">
+              <Text className="text-stone-900 dark:text-white text-3xl font-bold">
                 {selectedStaff.name.charAt(0).toUpperCase()}
               </Text>
             </View>
-            <Text className="text-white text-xl font-bold">{selectedStaff.name}</Text>
+            <Text className="text-stone-900 dark:text-white text-xl font-bold">{selectedStaff.name}</Text>
             <Text className="text-stone-500 text-sm capitalize">{selectedStaff.role}</Text>
 
             {error ? (

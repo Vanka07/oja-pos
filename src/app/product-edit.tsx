@@ -86,8 +86,8 @@ export default function ProductEditScreen() {
       <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center">
         <Package size={48} color="#78716c" />
         <Text className="text-stone-400 mt-4 text-lg">Product not found</Text>
-        <Pressable onPress={() => router.back()} className="mt-4 px-6 py-3 bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl">
-          <Text className="text-white font-medium">Go Back</Text>
+        <Pressable onPress={() => router.back()} className="mt-4 px-6 py-3 bg-stone-200 dark:bg-stone-800 rounded-xl">
+          <Text className="text-stone-900 dark:text-white font-medium">Go Back</Text>
         </Pressable>
       </View>
     );
@@ -111,11 +111,11 @@ export default function ProductEditScreen() {
         >
           <Pressable
             onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-stone-800 items-center justify-center active:scale-95"
+            className="w-10 h-10 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center active:scale-95"
           >
             <X size={20} color="#a8a29e" />
           </Pressable>
-          <Text className="text-white text-lg font-bold">Edit Product</Text>
+          <Text className="text-stone-900 dark:text-white text-lg font-bold">Edit Product</Text>
           <Pressable
             onPress={handleSave}
             className="bg-orange-500 px-5 py-2.5 rounded-full flex-row items-center gap-2 active:scale-95"
@@ -141,7 +141,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Product Name *</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
+                  className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="e.g. Indomie Chicken 70g"
                   placeholderTextColor="#57534e"
                   value={formData.name}
@@ -152,7 +152,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Barcode</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
+                  className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="Scan or enter barcode"
                   placeholderTextColor="#57534e"
                   value={formData.barcode}
@@ -195,7 +195,7 @@ export default function ProductEditScreen() {
                 <View className="flex-1">
                   <Text className="text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
-                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
+                    className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -206,7 +206,7 @@ export default function ProductEditScreen() {
                 <View className="flex-1">
                   <Text className="text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
-                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
+                    className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -263,7 +263,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Low Stock Threshold</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
+                  className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="10"
                   placeholderTextColor="#57534e"
                   keyboardType="numeric"
@@ -286,14 +286,14 @@ export default function ProductEditScreen() {
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-stone-400 text-sm">Current Stock</Text>
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-white font-bold text-2xl">{product.quantity}</Text>
+                  <Text className="text-stone-900 dark:text-white font-bold text-2xl">{product.quantity}</Text>
                   <Text className="text-stone-500">{product.unit}</Text>
                 </View>
               </View>
 
               <View className="mb-4">
                 <TextInput
-                  className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold border border-stone-700"
+                  className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold border border-stone-700"
                   placeholder="0"
                   placeholderTextColor="#57534e"
                   keyboardType="numeric"

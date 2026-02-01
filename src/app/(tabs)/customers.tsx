@@ -285,7 +285,7 @@ export default function CreditBookScreen() {
                 <View>
                   <Text className="text-stone-400 text-sm mb-2">Customer Name *</Text>
                   <TextInput
-                    className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. Mama Ngozi"
                     placeholderTextColor="#57534e"
                     value={formData.name}
@@ -296,7 +296,7 @@ export default function CreditBookScreen() {
                 <View>
                   <Text className="text-stone-400 text-sm mb-2">Phone Number</Text>
                   <TextInput
-                    className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. 08012345678"
                     placeholderTextColor="#57534e"
                     keyboardType="phone-pad"
@@ -308,7 +308,7 @@ export default function CreditBookScreen() {
                 <View>
                   <Text className="text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
                   <TextInput
-                    className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="50000"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -488,7 +488,7 @@ export default function CreditBookScreen() {
                     <View>
                       <Text className="text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
                       <TextInput
-                        className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
+                        className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                         placeholder="0"
                         placeholderTextColor="#57534e"
                         keyboardType="numeric"
@@ -501,7 +501,7 @@ export default function CreditBookScreen() {
                     <View>
                       <Text className="text-stone-400 text-sm mb-2">Note (Optional)</Text>
                       <TextInput
-                        className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+                        className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                         placeholder="e.g. Partial payment"
                         placeholderTextColor="#57534e"
                         value={paymentNote}
@@ -515,7 +515,7 @@ export default function CreditBookScreen() {
                         <Pressable
                           key={amount}
                           onPress={() => setPaymentAmount(amount.toString())}
-                          className="flex-1 bg-stone-800 py-2 rounded-lg active:opacity-70"
+                          className="flex-1 bg-stone-200 dark:bg-stone-800 py-2 rounded-lg active:opacity-70"
                         >
                           <Text className="text-stone-400 text-center text-sm">
                             {amount === selectedCustomer.currentCredit ? 'Full' : formatNaira(amount)}

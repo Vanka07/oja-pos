@@ -58,7 +58,7 @@ export default function LockScreen() {
         <View className="w-16 h-16 rounded-full bg-orange-500/20 items-center justify-center mb-6">
           <Lock size={28} color="#f97316" />
         </View>
-        <Text className="text-white text-2xl font-bold mb-2">Enter PIN</Text>
+        <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Enter PIN</Text>
         <Text className="text-stone-500 text-sm mb-8">Enter your 4-digit PIN to unlock</Text>
 
         {/* PIN dots */}
@@ -71,7 +71,7 @@ export default function LockScreen() {
                   ? error
                     ? 'bg-red-500'
                     : 'bg-orange-500'
-                  : 'bg-stone-700'
+                  : 'bg-stone-300 dark:bg-stone-700'
               }`}
             />
           ))}
@@ -100,7 +100,7 @@ export default function LockScreen() {
                     onPress={() => handlePress(key)}
                     className="h-16 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center active:bg-stone-200 dark:bg-stone-800"
                   >
-                    <Text className="text-white text-2xl font-medium">{key}</Text>
+                    <Text className="text-stone-900 dark:text-white text-2xl font-medium">{key}</Text>
                   </Pressable>
                 )}
               </View>

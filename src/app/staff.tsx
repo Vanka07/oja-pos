@@ -155,7 +155,7 @@ export default function StaffScreen() {
           className={`flex-1 py-3 rounded-xl border flex-row items-center justify-center gap-2 ${
             selected === role
               ? `${ROLE_COLORS[role].bg} ${ROLE_COLORS[role].border}`
-              : 'bg-stone-800 border-stone-700'
+              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
           }`}
         >
           {ROLE_ICONS[role]}
@@ -174,7 +174,7 @@ export default function StaffScreen() {
       <View>
         <Text className="text-stone-400 text-sm mb-2">Name *</Text>
         <TextInput
-          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. Chidi Okafor"
           placeholderTextColor="#57534e"
           value={formData.name}
@@ -185,7 +185,7 @@ export default function StaffScreen() {
       <View>
         <Text className="text-stone-400 text-sm mb-2">Phone</Text>
         <TextInput
-          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. 08012345678"
           placeholderTextColor="#57534e"
           keyboardType="phone-pad"
@@ -199,7 +199,7 @@ export default function StaffScreen() {
           {isEdit ? 'New PIN (leave blank to keep current)' : '4-Digit PIN *'}
         </Text>
         <TextInput
-          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
+          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
           placeholder="• • • •"
           placeholderTextColor="#57534e"
           keyboardType="numeric"
@@ -271,7 +271,7 @@ export default function StaffScreen() {
                 <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
                   Management
                 </Text>
-                <Text className="text-white text-2xl font-bold tracking-tight">
+                <Text className="text-stone-900 dark:text-white text-2xl font-bold tracking-tight">
                   Staff & Roles
                 </Text>
               </View>
@@ -341,14 +341,14 @@ export default function StaffScreen() {
                     }`}>
                       <View className="flex-row items-center justify-between">
                         <View className="flex-row items-center gap-3 flex-1">
-                          <View className="w-12 h-12 rounded-full bg-stone-800 items-center justify-center">
-                            <Text className="text-white text-lg font-bold">
+                          <View className="w-12 h-12 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center">
+                            <Text className="text-stone-900 dark:text-white text-lg font-bold">
                               {member.name.charAt(0).toUpperCase()}
                             </Text>
                           </View>
                           <View className="flex-1">
                             <View className="flex-row items-center gap-2">
-                              <Text className="text-white font-medium text-base">{member.name}</Text>
+                              <Text className="text-stone-900 dark:text-white font-medium text-base">{member.name}</Text>
                               {currentStaff?.id === member.id && (
                                 <View className="bg-emerald-500/20 px-2 py-0.5 rounded">
                                   <Text className="text-emerald-400 text-xs">Active</Text>
@@ -417,12 +417,12 @@ export default function StaffScreen() {
                     <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-3 border border-stone-200 dark:border-stone-800">
                       <View className="flex-row items-center justify-between mb-1">
                         <View className="flex-row items-center gap-2">
-                          <View className="w-7 h-7 rounded-full bg-stone-800 items-center justify-center">
-                            <Text className="text-white text-xs font-bold">
+                          <View className="w-7 h-7 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center">
+                            <Text className="text-stone-900 dark:text-white text-xs font-bold">
                               {activity.staffName.charAt(0)}
                             </Text>
                           </View>
-                          <Text className="text-white font-medium text-sm">{activity.staffName}</Text>
+                          <Text className="text-stone-900 dark:text-white font-medium text-sm">{activity.staffName}</Text>
                         </View>
                         <Text className="text-stone-600 text-xs">{formatActivityTime(activity.createdAt)}</Text>
                       </View>
@@ -461,7 +461,7 @@ export default function StaffScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-white text-xl font-bold">Add Staff Member</Text>
+                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Add Staff Member</Text>
                   <Pressable onPress={() => setShowAddModal(false)}>
                     <X size={24} color="#78716c" />
                   </Pressable>
@@ -496,7 +496,7 @@ export default function StaffScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-white text-xl font-bold">Edit Staff</Text>
+                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Edit Staff</Text>
                   <Pressable onPress={() => setShowEditModal(false)}>
                     <X size={24} color="#78716c" />
                   </Pressable>

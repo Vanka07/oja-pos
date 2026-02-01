@@ -88,7 +88,7 @@ export default function OnboardingSetup() {
               <View className="w-16 h-16 rounded-2xl bg-orange-500/20 items-center justify-center mb-6">
                 <Store size={32} color="#f97316" />
               </View>
-              <Text className="text-white text-3xl font-bold mb-2">
+              <Text className="text-stone-900 dark:text-white text-3xl font-bold mb-2">
                 Set up your shop
               </Text>
               <Text className="text-stone-400 text-base leading-6 mb-8">
@@ -192,7 +192,7 @@ export default function OnboardingSetup() {
                 style={{ borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 <Check size={20} color="white" />
-                <Text className="text-white text-lg font-semibold">Start Using Oja</Text>
+                <Text className="text-stone-900 dark:text-white text-lg font-semibold">Start Using Oja</Text>
               </LinearGradient>
             </Pressable>
 

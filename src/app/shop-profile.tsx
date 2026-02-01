@@ -76,12 +76,12 @@ export default function ShopProfileScreen() {
           <View style={{ paddingTop: insets.top + 8 }} className="px-5">
             <View className="flex-row items-center justify-between mb-6">
               <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-                <Text className="text-white text-2xl font-bold">Shop Profile</Text>
+                <Text className="text-stone-900 dark:text-white text-2xl font-bold">Shop Profile</Text>
                 <Text className="text-stone-500 text-sm mt-1">Edit your shop information</Text>
               </Animated.View>
               <Pressable
                 onPress={() => router.back()}
-                className="w-10 h-10 rounded-full bg-stone-800 items-center justify-center"
+                className="w-10 h-10 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center"
               >
                 <X size={20} color="#a8a29e" />
               </Pressable>
