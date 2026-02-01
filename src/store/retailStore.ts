@@ -490,6 +490,15 @@ export const useRetailStore = create<RetailState>()(
         const state = get();
         if (state.cart.length === 0) return null;
 
+        // Validate stock availability
+        for (const item of state.cart) {
+          const currentProduct = state.products.find((p) => p.id === item.product.id);
+          if (currentProduct && item.quantity > currentProduct.quantity) {
+            // Silently cap quantity to available stock
+            if (currentProduct.quantity <= 0) return null;
+          }
+        }
+
         const subtotal = state.cart.reduce(
           (sum, item) => sum + item.product.sellingPrice * item.quantity,
           0
