@@ -38,6 +38,12 @@ const PERMISSIONS: Record<string, StaffRole[]> = {
   manage_customers: ['owner', 'manager'],
   manage_staff: ['owner'],
   view_activity: ['owner', 'manager'],
+  manage_payroll: ['owner'],
+  manage_shop: ['owner', 'manager'],
+  export_data: ['owner'],
+  manage_cloud: ['owner'],
+  manage_alerts: ['owner', 'manager'],
+  cash_register: ['owner', 'manager'],
 };
 
 // Roles that can log into the app (have PINs)

@@ -15,16 +15,20 @@ import {
   MessageCircle
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Customer } from '@/store/retailStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import EmptyState from '@/components/EmptyState';
+import { Lock } from 'lucide-react-native';
 
 export default function CreditBookScreen() {
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManageCustomers = !currentStaff || hasPermission(currentStaff.role, 'manage_customers');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -103,6 +107,29 @@ export default function CreditBookScreen() {
       // WhatsApp not installed
     });
   }, []);
+
+  const gradientColors: [string, string, string] = isDark
+    ? ['#292524', '#1c1917', '#0c0a09']
+    : ['#f5f5f4', '#fafaf9', '#ffffff'];
+
+  if (!canManageCustomers) {
+    return (
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950">
+        <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+        <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+          <Text className="text-stone-500 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
+          <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Credit Book</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-20 h-20 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center mb-4">
+            <Lock size={32} color="#78716c" />
+          </View>
+          <Text className="text-stone-900 dark:text-white text-xl font-bold mb-2">Access Restricted</Text>
+          <Text className="text-stone-500 text-center">You don't have permission to manage customers. Ask the shop owner for access.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-stone-50 dark:bg-stone-950">

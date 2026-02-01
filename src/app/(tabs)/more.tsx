@@ -112,6 +112,12 @@ export default function MoreScreen() {
   const canManageStaff = !currentStaff || hasPermission(currentStaff.role, 'manage_staff');
   const canAddExpense = !currentStaff || hasPermission(currentStaff.role, 'add_expense');
   const canViewActivity = !currentStaff || hasPermission(currentStaff.role, 'view_activity');
+  const canManagePayroll = !currentStaff || hasPermission(currentStaff.role, 'manage_payroll');
+  const canManageShop = !currentStaff || hasPermission(currentStaff.role, 'manage_shop');
+  const canExportData = !currentStaff || hasPermission(currentStaff.role, 'export_data');
+  const canManageCloud = !currentStaff || hasPermission(currentStaff.role, 'manage_cloud');
+  const canManageAlerts = !currentStaff || hasPermission(currentStaff.role, 'manage_alerts');
+  const canCashRegister = !currentStaff || hasPermission(currentStaff.role, 'cash_register');
   const hasStaff = staffMembers.length > 0;
   const recentActivities = staffActivities.slice(0, 5);
   const products = useRetailStore((s) => s.products);
@@ -349,6 +355,7 @@ export default function MoreScreen() {
         </View>
 
         {/* Cash Management Card */}
+        {canCashRegister && (
         <Animated.View
           entering={FadeInDown.delay(200).duration(600)}
           className="mx-5 mt-6"
@@ -389,6 +396,7 @@ export default function MoreScreen() {
             </LinearGradient>
           </Pressable>
         </Animated.View>
+        )}
 
         {/* Quick Actions */}
         <Animated.View
@@ -421,6 +429,7 @@ export default function MoreScreen() {
         </Animated.View>
 
         {/* Today's Expenses */}
+        {canAddExpense && (
         <Animated.View
           entering={FadeInDown.delay(400).duration(600)}
           className="mx-5 mt-6"
@@ -439,6 +448,7 @@ export default function MoreScreen() {
             </View>
           </Pressable>
         </Animated.View>
+        )}
 
         {/* Staff Section */}
         <Animated.View
@@ -481,19 +491,21 @@ export default function MoreScreen() {
               </Pressable>
             )}
 
-            <Pressable
-              onPress={() => router.push('/payroll')}
-              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
-                <Banknote size={20} color="#22c55e" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">Payroll</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Track staff salaries</Text>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
+            {canManagePayroll && (
+              <Pressable
+                onPress={() => router.push('/payroll')}
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
+                  <Banknote size={20} color="#22c55e" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Payroll</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Track staff salaries</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
           </View>
         </Animated.View>
 
@@ -575,6 +587,7 @@ export default function MoreScreen() {
         </Animated.View>
 
         {/* Cloud Sync Section */}
+        {canManageCloud && (
         <Animated.View
           entering={FadeInDown.delay(550).duration(600)}
           className="mx-5 mt-6"
@@ -644,6 +657,7 @@ export default function MoreScreen() {
             )}
           </View>
         </Animated.View>
+        )}
 
         {/* Receipt Printer Section */}
         <Animated.View
@@ -707,6 +721,7 @@ export default function MoreScreen() {
         </Animated.View>
 
         {/* Inventory Alerts Section */}
+        {canManageAlerts && (
         <Animated.View
           entering={FadeInDown.delay(590).duration(600)}
           className="mx-5 mt-6"
@@ -783,6 +798,7 @@ export default function MoreScreen() {
             )}
           </View>
         </Animated.View>
+        )}
 
         {/* Menu Items */}
         <Animated.View
@@ -791,38 +807,42 @@ export default function MoreScreen() {
         >
           <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
-            <Pressable
-              onPress={() => router.push('/shop-profile')}
-              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
-                <Store size={20} color="#f97316" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">Shop Profile</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
+            {canManageShop && (
+              <Pressable
+                onPress={() => router.push('/shop-profile')}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                  <Store size={20} color="#f97316" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Shop Profile</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
 
-            <Pressable
-              onPress={handleExportData}
-              disabled={isExporting}
-              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
-                {isExporting ? (
-                  <ActivityIndicator size="small" color="#3b82f6" />
-                ) : (
-                  <Download size={20} color="#3b82f6" />
-                )}
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Backup your records</Text>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
+            {canExportData && (
+              <Pressable
+                onPress={handleExportData}
+                disabled={isExporting}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
+                  {isExporting ? (
+                    <ActivityIndicator size="small" color="#3b82f6" />
+                  ) : (
+                    <Download size={20} color="#3b82f6" />
+                  )}
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Backup your records</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
 
             {hasAnyPin && (
               <Pressable
