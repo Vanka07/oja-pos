@@ -120,7 +120,7 @@ export default function DashboardScreen() {
         >
           <Pressable onPress={() => canViewReports ? router.push('/(tabs)/reports') : null} className="active:opacity-90">
           <LinearGradient
-            colors={['#16a34a', '#15803d', '#166534']}
+            colors={['#e05e1b', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ borderRadius: 24, padding: 24, overflow: 'hidden' }}
