@@ -145,10 +145,10 @@ export default function POSScreen() {
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8 }} className="px-5 pb-4">
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-          <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
-            Point of Sale
+          <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
+            Sell
           </Text>
-          <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
+          <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
             New Sale
           </Text>
         </Animated.View>
@@ -236,6 +236,10 @@ export default function POSScreen() {
             <View className="flex-row flex-wrap gap-3">
               {filteredProducts.map((product, index) => {
                 const inCart = cart.find((i) => i.product.id === product.id);
+                const firstLetter = product.name.charAt(0).toUpperCase();
+                const letterColors = ['#f97316', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
+                const colorIndex = firstLetter.charCodeAt(0) % letterColors.length;
+                const placeholderColor = letterColors[colorIndex];
                 return (
                   <Animated.View
                     key={product.id}
@@ -248,7 +252,22 @@ export default function POSScreen() {
                         inCart ? 'border-orange-500' : 'border-stone-200 dark:border-stone-800'
                       } active:scale-95`}
                     >
-                      <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>
+                      {/* Product image placeholder */}
+                      {product.imageUrl ? (
+                        <View className="w-full h-16 rounded-lg bg-stone-200 dark:bg-stone-800 mb-2 overflow-hidden items-center justify-center">
+                          <Text className="text-stone-400 text-xs">📷</Text>
+                        </View>
+                      ) : (
+                        <View
+                          className="w-full h-16 rounded-lg mb-2 items-center justify-center"
+                          style={{ backgroundColor: placeholderColor + '18' }}
+                        >
+                          <Text style={{ color: placeholderColor, fontSize: 22, fontWeight: '700' }}>
+                            {firstLetter}
+                          </Text>
+                        </View>
+                      )}
+                      <Text className="text-stone-900 dark:text-white font-semibold text-sm mb-1" numberOfLines={2}>
                         {product.name}
                       </Text>
                       <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
@@ -538,20 +557,21 @@ export default function POSScreen() {
             )}
 
             {/* Share Receipt Buttons */}
+            <Pressable
+              onPress={shareReceiptWhatsApp}
+              className="flex-row items-center justify-center gap-2 w-full py-4 rounded-xl mb-3 active:opacity-90"
+              style={{ backgroundColor: '#25D366' }}
+            >
+              <MessageCircle size={20} color="#ffffff" />
+              <Text className="text-white font-bold text-base">Share via WhatsApp</Text>
+            </Pressable>
             <View className="flex-row gap-3 w-full mb-4">
-              <Pressable
-                onPress={shareReceiptWhatsApp}
-                className="flex-1 flex-row items-center justify-center gap-2 bg-green-500/20 border border-green-500/40 py-3 rounded-xl active:opacity-90"
-              >
-                <MessageCircle size={18} color="#22c55e" />
-                <Text className="text-green-400 font-medium">WhatsApp</Text>
-              </Pressable>
               <Pressable
                 onPress={shareReceipt}
                 className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
               >
                 <Share2 size={18} color="#a8a29e" />
-                <Text className="text-stone-600 dark:text-stone-300 font-medium">Share</Text>
+                <Text className="text-stone-600 dark:text-stone-300 font-medium">Share Other</Text>
               </Pressable>
             </View>
 

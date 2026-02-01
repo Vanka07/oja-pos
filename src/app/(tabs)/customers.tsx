@@ -120,8 +120,8 @@ export default function CreditBookScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
-                Debtor Management
+              <Text className="text-stone-500 text-sm font-semibold tracking-wide">
+                Credit Book
               </Text>
               <Pressable
                 onPress={() => setShowAddModal(true)}
@@ -130,7 +130,7 @@ export default function CreditBookScreen() {
                 <Plus size={18} color="white" />
               </Pressable>
             </View>
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
+            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               Credit Book
             </Text>
           </Animated.View>
@@ -144,14 +144,14 @@ export default function CreditBookScreen() {
           <View className="flex-1 bg-red-500/10 rounded-2xl p-4 border border-red-500/30">
             <View className="flex-row items-center gap-2 mb-2">
               <AlertCircle size={16} color="#ef4444" />
-              <Text className="text-red-400 text-xs uppercase tracking-wide">Total Owed</Text>
+              <Text className="text-red-400 text-xs font-semibold tracking-wide">Total Owed</Text>
             </View>
             <Text className="text-red-400 text-2xl font-bold">{formatNaira(totalOutstanding)}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <Users size={16} color="#3b82f6" />
-              <Text className="text-stone-500 text-xs uppercase tracking-wide">With Credit</Text>
+              <Text className="text-stone-500 text-xs font-semibold tracking-wide">With Credit</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{customersWithDebt} / {customers.length}</Text>
           </View>
@@ -217,15 +217,28 @@ export default function CreditBookScreen() {
                   >
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-3 flex-1">
-                        <View className={`w-12 h-12 rounded-full items-center justify-center ${
-                          hasDebt ? 'bg-amber-500/20' : 'bg-emerald-500/20'
-                        }`}>
-                          <Text className={`text-lg font-bold ${
-                            hasDebt ? 'text-amber-400' : 'text-emerald-400'
-                          }`}>
-                            {customer.name.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
+                        {(() => {
+                          const letter = customer.name.charAt(0).toUpperCase();
+                          const avatarColors: Record<string, { bg: string; text: string }> = {
+                            A: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
+                            B: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+                            C: { bg: 'bg-purple-500/20', text: 'text-purple-400' },
+                            D: { bg: 'bg-pink-500/20', text: 'text-pink-400' },
+                            E: { bg: 'bg-cyan-500/20', text: 'text-cyan-400' },
+                            F: { bg: 'bg-orange-500/20', text: 'text-orange-400' },
+                            G: { bg: 'bg-teal-500/20', text: 'text-teal-400' },
+                            H: { bg: 'bg-indigo-500/20', text: 'text-indigo-400' },
+                            I: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
+                            J: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
+                          };
+                          const defaultColor = { bg: 'bg-stone-500/20', text: 'text-stone-400' };
+                          const color = avatarColors[letter] || defaultColor;
+                          return (
+                            <View className={`w-12 h-12 rounded-full items-center justify-center ${color.bg}`}>
+                              <Text className={`text-lg font-bold ${color.text}`}>{letter}</Text>
+                            </View>
+                          );
+                        })()}
                         <View className="flex-1">
                           <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
                           <Text className="text-stone-500 text-sm">{customer.phone}</Text>

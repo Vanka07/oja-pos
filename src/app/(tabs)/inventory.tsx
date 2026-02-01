@@ -129,14 +129,14 @@ export default function InventoryScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">Stock Management</Text>
+              <Text className="text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
               {canAddProduct && (
                 <Pressable onPress={() => setShowAddModal(true)} className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95">
                   <Plus size={18} color="white" />
                 </Pressable>
               )}
             </View>
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Inventory</Text>
+            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Inventory</Text>
           </Animated.View>
         </View>
 
@@ -145,16 +145,16 @@ export default function InventoryScreen() {
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <Package size={16} color="#3b82f6" />
-              <Text className="text-stone-500 text-xs uppercase tracking-wide">Total Products</Text>
+              <Text className="text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <TrendingUp size={16} color="#10b981" />
-              <Text className="text-stone-500 text-xs uppercase tracking-wide">Stock Value</Text>
+              <Text className="text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
             </View>
-            <Text className="text-emerald-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
+            <Text className="text-orange-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
           </View>
         </Animated.View>
 

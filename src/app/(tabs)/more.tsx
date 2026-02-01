@@ -288,10 +288,10 @@ export default function MoreScreen() {
         {/* Header */}
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
               Settings & Tools
             </Text>
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
+            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               More
             </Text>
           </Animated.View>
@@ -307,7 +307,7 @@ export default function MoreScreen() {
             className="active:scale-[0.99]"
           >
             <LinearGradient
-              colors={currentCashSession ? ['#059669', '#047857'] : ['#3b82f6', '#2563eb']}
+              colors={currentCashSession ? ['#059669', '#047857'] : ['#ea580c', '#c2410c']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{ borderRadius: 20, padding: 20 }}
@@ -380,7 +380,7 @@ export default function MoreScreen() {
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Today's Expenses</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Today's Expenses</Text>
                 <Text className="text-red-400 text-2xl font-bold mt-1">{formatNaira(todayExpenseTotal)}</Text>
                 <Text className="text-stone-500 dark:text-stone-500 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
               </View>
@@ -394,7 +394,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(500).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Staff</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Staff</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {hasStaff && (
               <Pressable
@@ -439,7 +439,7 @@ export default function MoreScreen() {
             className="mx-5 mt-4"
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Recent Activity</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Recent Activity</Text>
               {canManageStaff && (
                 <Pressable onPress={() => router.push('/staff')} className="active:opacity-70">
                   <Text className="text-orange-500 text-xs font-medium">View All</Text>
@@ -475,7 +475,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(540).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Appearance</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Appearance</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 p-3">
             <View className="flex-row gap-2">
               {([
@@ -514,7 +514,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(550).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Cloud Sync</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Cloud Sync</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {cloudAuth.isAuthenticated ? (
               <>
@@ -585,7 +585,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Shop Settings</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <Pressable
               onPress={() => router.push('/shop-profile')}
@@ -627,7 +627,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">About</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">About</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <View className="flex-row items-center p-4">
               <View className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">

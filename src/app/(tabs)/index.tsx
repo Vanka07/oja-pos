@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TrendingUp,
@@ -15,6 +15,7 @@ import {
   Banknote,
   UserCircle
 } from 'lucide-react-native';
+import { OjaLogo } from '@/components/OjaLogo';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
@@ -78,9 +79,7 @@ export default function DashboardScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-base font-bold tracking-wide">
-                <Text className="text-emerald-500">🛒</Text><Text className="text-emerald-500"> O</Text><Text className="text-stone-900 dark:text-white">j</Text><Text className="text-emerald-500">a</Text>
-              </Text>
+              <OjaLogo size={28} showText textSize={20} />
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
                   <View className="flex-row items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-full">
@@ -95,7 +94,7 @@ export default function DashboardScreen() {
                 )}
               </View>
             </View>
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
+            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               {shopInfo?.name || 'Dashboard'}
             </Text>
             <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium mt-1">
@@ -125,23 +124,41 @@ export default function DashboardScreen() {
             colors={['#ea580c', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ borderRadius: 24, padding: 24 }}
+            style={{ borderRadius: 24, padding: 24, overflow: 'hidden' }}
           >
+            {/* Subtle wave sparkline background */}
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.08 }}>
+              <Svg width="100%" height="80" viewBox="0 0 400 80" preserveAspectRatio="none">
+                <Path
+                  d="M0 60 Q50 20 100 45 Q150 70 200 35 Q250 0 300 40 Q350 80 400 30 L400 80 L0 80 Z"
+                  fill="white"
+                />
+              </Svg>
+            </View>
             <View className="flex-row items-center gap-2 mb-3">
               <Banknote size={20} color="rgba(255,255,255,0.8)" />
               <Text className="text-white/80 text-sm font-medium">Today's Revenue</Text>
             </View>
-            <Text className="text-white text-4xl font-bold tracking-tight mb-4">
+            <Text className="text-white text-4xl font-extrabold tracking-tight mb-4">
               {formatNaira(summary.totalSales)}
             </Text>
             <View className="flex-row gap-6">
               <View>
-                <Text className="text-white/60 text-xs uppercase tracking-wide mb-1">Transactions</Text>
+                <Text className="text-white/60 text-xs tracking-wide mb-1">Transactions</Text>
                 <Text className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
               </View>
               <View>
-                <Text className="text-white/60 text-xs uppercase tracking-wide mb-1">Profit</Text>
-                <Text className="text-emerald-300 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
+                <Text className="text-white/60 text-xs tracking-wide mb-1">Profit</Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-orange-200 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
+                  {summary.totalSales > 0 && (
+                    <View className="bg-white/20 px-2 py-0.5 rounded-full">
+                      <Text className="text-white/90 text-xs font-medium">
+                        {summary.profit > 0 ? '↑' : ''} {summary.totalSales > 0 ? ((summary.profit / summary.totalSales) * 100).toFixed(0) : 0}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
           </LinearGradient>
@@ -149,8 +166,8 @@ export default function DashboardScreen() {
             {summary.totalTransactions === 0
               ? 'New day, new opportunities! 🌅'
               : summary.totalSales >= 50000
-                ? 'Big day! Keep pushing! 💪🔥'
-                : 'Nice start — keep the sales coming! 💪'}
+                ? ['Oja dey move! 🔥', 'Money dey enter! 💰', 'Na today we shine! ✨', 'Omo, sales dey burst! 💪'][Math.floor(new Date().getMinutes() / 15) % 4]
+                : ['Shop dey flow! 🚀', 'Nice start — keep going! 💪', 'Sales don land! 🎯', 'We dey move! 🔥'][Math.floor(new Date().getMinutes() / 15) % 4]}
           </Text>
         </Animated.View>
 
@@ -161,15 +178,15 @@ export default function DashboardScreen() {
         >
           <View className="flex-row gap-3">
             <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Cash</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Cash</Text>
               <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
             </View>
             <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Transfer</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Transfer</Text>
               <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
             </View>
             <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">POS</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">POS</Text>
               <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
             </View>
           </View>
@@ -187,7 +204,7 @@ export default function DashboardScreen() {
             <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mb-3">
               <Package size={20} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Total Products</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Total Products</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </Pressable>
 
@@ -198,7 +215,7 @@ export default function DashboardScreen() {
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Sales Today</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Sales Today</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{salesToday.length}</Text>
           </Pressable>
         </Animated.View>
