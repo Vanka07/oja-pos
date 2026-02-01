@@ -1,10 +1,16 @@
-# RetailOS - African Retail Supermarket POS
+# Oja - African Retail Supermarket POS
 
 An offline-first financial and inventory operating system designed for African retail supermarkets, with Nigeria as the MVP market.
 
 ## Features
 
+### Onboarding
+- Welcome screens explaining key features
+- Shop setup wizard (name, owner, phone, address)
+- Personalized dashboard with shop name
+
 ### Dashboard
+- Personalized greeting with owner's name
 - Real-time sales overview with daily revenue tracking
 - Payment method breakdown (Cash, Transfer, POS, Credit)
 - Low stock alerts with quick navigation
@@ -73,15 +79,27 @@ The app comes pre-loaded with sample Nigerian retail products:
 ```
 src/
 ├── app/
+│   ├── onboarding/
+│   │   ├── _layout.tsx    # Onboarding navigation
+│   │   ├── index.tsx      # Welcome slides
+│   │   └── setup.tsx      # Shop setup form
 │   ├── (tabs)/
 │   │   ├── _layout.tsx    # Tab navigation
 │   │   ├── index.tsx      # Dashboard
 │   │   ├── pos.tsx        # Point of Sale
 │   │   ├── inventory.tsx  # Inventory Management
 │   │   └── reports.tsx    # Reports & Analytics
-│   └── _layout.tsx        # Root layout
+│   └── _layout.tsx        # Root layout with auth redirect
 ├── store/
-│   └── retailStore.ts     # Zustand store with all business logic
+│   ├── retailStore.ts     # Zustand store with all business logic
+│   └── onboardingStore.ts # Onboarding state persistence
 ├── components/
 └── lib/
 ```
+
+## Installation
+
+1. Download from Google Play Store (when published)
+2. Open the app
+3. Complete the onboarding flow with your shop details
+4. Start selling!

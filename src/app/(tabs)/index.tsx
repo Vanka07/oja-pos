@@ -15,6 +15,7 @@ import {
   Banknote
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
 import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
+  const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const products = useRetailStore((s) => s.products);
   const getSalesToday = useRetailStore((s) => s.getSalesToday);
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
@@ -43,6 +45,7 @@ export default function DashboardScreen() {
   const isOnline = pendingSyncCount === 0;
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const displayName = shopInfo?.ownerName?.split(' ')[0] || 'there';
 
   return (
     <View className="flex-1 bg-stone-950">
@@ -64,7 +67,7 @@ export default function DashboardScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
-                {greeting}
+                {greeting}, {displayName}
               </Text>
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
@@ -81,7 +84,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             <Text className="text-white text-3xl font-bold tracking-tight">
-              Dashboard
+              {shopInfo?.name || 'Dashboard'}
             </Text>
           </Animated.View>
         </View>
