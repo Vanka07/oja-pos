@@ -44,6 +44,9 @@ import { usePrinterStore, type PaperSize } from '@/store/printerStore';
 import { printTestReceipt } from '@/lib/printerService';
 import { APP_VERSION } from '@/store/updateStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
+import PremiumUpsell from '@/components/PremiumUpsell';
 import { useThemeStore } from '@/store/themeStore';
 import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
@@ -51,6 +54,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Crown } from 'lucide-react-native';
 
 const expenseIcons: Record<string, React.ReactNode> = {
   'Rent': <Store size={18} color="#e05e1b" />,
@@ -79,6 +83,18 @@ export default function MoreScreen() {
   const [closingNote, setClosingNote] = useState('');
 
   const [isPrintingTest, setIsPrintingTest] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [upsellFeature, setUpsellFeature] = useState<string>('cloud_sync');
+
+  // Subscription
+  const isPremium = useSubscriptionStore((s) => s.isPremium)();
+  const subscriptionPlan = useSubscriptionStore((s) => s.plan);
+  const daysRemaining = useSubscriptionStore((s) => s.daysRemaining)();
+
+  const showPremiumUpsell = useCallback((feature: string) => {
+    setUpsellFeature(feature);
+    setShowUpsell(true);
+  }, []);
 
   // Printer
   const paperSize = usePrinterStore((s) => s.paperSize);
@@ -493,7 +509,13 @@ export default function MoreScreen() {
 
             {canManagePayroll && (
               <Pressable
-                onPress={() => router.push('/payroll')}
+                onPress={() => {
+                  if (!canAccess('payroll')) {
+                    showPremiumUpsell('payroll');
+                  } else {
+                    router.push('/payroll');
+                  }
+                }}
                 className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
@@ -501,9 +523,17 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Payroll</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Track staff salaries</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    {canAccess('payroll') ? 'Track staff salaries' : 'Upgrade to Business to unlock'}
+                  </Text>
                 </View>
-                <ChevronRight size={20} color="#57534e" />
+                {!canAccess('payroll') ? (
+                  <View className="bg-orange-500/20 px-2 py-1 rounded-full">
+                    <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
+                  </View>
+                ) : (
+                  <ChevronRight size={20} color="#57534e" />
+                )}
               </Pressable>
             )}
           </View>
@@ -592,9 +622,32 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(550).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Cloud Sync</Text>
+          <View className="flex-row items-center gap-2 mb-3">
+            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Cloud Sync</Text>
+            {!canAccess('cloud_sync') && (
+              <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
+                <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
+              </View>
+            )}
+          </View>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
-            {cloudAuth.isAuthenticated ? (
+            {!canAccess('cloud_sync') ? (
+              <Pressable
+                onPress={() => showPremiumUpsell('cloud_sync')}
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
+                  <Cloud size={20} color="#3b82f6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Enable Cloud Sync</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+                </View>
+                <View className="bg-orange-500/20 px-2 py-1 rounded-full">
+                  <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
+                </View>
+              </Pressable>
+            ) : cloudAuth.isAuthenticated ? (
               <>
                 {/* Sync Status */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
@@ -664,7 +717,33 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(580).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Receipt Printer</Text>
+          <View className="flex-row items-center gap-2 mb-3">
+            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Receipt Printer</Text>
+            {!canAccess('receipt_printer') && (
+              <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
+                <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
+              </View>
+            )}
+          </View>
+          {!canAccess('receipt_printer') ? (
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+            <Pressable
+              onPress={() => showPremiumUpsell('receipt_printer')}
+              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                <Printer size={20} color="#e05e1b" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">Receipt Printer</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+              </View>
+              <View className="bg-orange-500/20 px-2 py-1 rounded-full">
+                <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
+              </View>
+            </Pressable>
+          </View>
+          ) : (
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {/* Paper Size */}
             <View className="p-4 border-b border-stone-200 dark:border-stone-800">
@@ -718,6 +797,7 @@ export default function MoreScreen() {
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
           </View>
+          )}
         </Animated.View>
 
         {/* Inventory Alerts Section */}
@@ -726,7 +806,33 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(590).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Inventory Alerts</Text>
+          <View className="flex-row items-center gap-2 mb-3">
+            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Inventory Alerts</Text>
+            {!canAccess('low_stock_alerts') && (
+              <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
+                <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
+              </View>
+            )}
+          </View>
+          {!canAccess('low_stock_alerts') ? (
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+            <Pressable
+              onPress={() => showPremiumUpsell('low_stock_alerts')}
+              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
+                <Banknote size={20} color="#22c55e" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Low Stock Alerts</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+              </View>
+              <View className="bg-orange-500/20 px-2 py-1 rounded-full">
+                <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
+              </View>
+            </Pressable>
+          </View>
+          ) : (
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {/* Toggle */}
             <View className="flex-row items-center justify-between p-4 border-b border-stone-200 dark:border-stone-800">
@@ -797,6 +903,7 @@ export default function MoreScreen() {
               </>
             )}
           </View>
+          )}
         </Animated.View>
         )}
 
@@ -807,6 +914,34 @@ export default function MoreScreen() {
         >
           <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+            {/* Subscription Row */}
+            <Pressable
+              onPress={() => router.push('/subscription')}
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                <Crown size={20} color="#e05e1b" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">Subscription</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  {isPremium ? 'Business Plan' : 'Starter Plan (Free)'}
+                </Text>
+              </View>
+              {isPremium ? (
+                <View className="bg-emerald-500/20 px-3 py-1 rounded-full mr-2">
+                  <Text className="text-emerald-400 text-xs font-semibold">
+                    Active • {daysRemaining}d
+                  </Text>
+                </View>
+              ) : (
+                <View className="bg-orange-500/20 px-3 py-1 rounded-full mr-2">
+                  <Text className="text-orange-400 text-xs font-semibold">Upgrade</Text>
+                </View>
+              )}
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
+
             {canManageShop && (
               <Pressable
                 onPress={() => router.push('/shop-profile')}
@@ -1236,6 +1371,13 @@ export default function MoreScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <PremiumUpsell
+        visible={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        featureName={FEATURE_DESCRIPTIONS[upsellFeature]?.name || 'Premium Feature'}
+        featureDescription={FEATURE_DESCRIPTIONS[upsellFeature]?.description || 'This feature requires the Business plan.'}
+      />
     </View>
   );
 }

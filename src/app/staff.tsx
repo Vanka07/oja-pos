@@ -16,6 +16,8 @@ import {
 } from 'lucide-react-native';
 import { useStaffStore, hasPermission, isAppRole, type StaffMember, type StaffRole } from '@/store/staffStore';
 import { formatNaira } from '@/store/retailStore';
+import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
+import PremiumUpsell from '@/components/PremiumUpsell';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
@@ -43,6 +45,7 @@ export default function StaffScreen() {
   const router = useRouter();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [activeTab, setActiveTab] = useState<'staff' | 'activity'>('staff');
 
@@ -318,7 +321,14 @@ export default function StaffScreen() {
               </View>
             </View>
             <Pressable
-              onPress={() => { resetForm(); setShowAddModal(true); }}
+              onPress={() => {
+                if (staff.length >= 1 && !canAccess('multi_staff')) {
+                  setShowUpsell(true);
+                } else {
+                  resetForm();
+                  setShowAddModal(true);
+                }
+              }}
               className="bg-orange-500 w-10 h-10 rounded-full items-center justify-center active:scale-95"
             >
               <Plus size={20} color="white" />
@@ -520,6 +530,13 @@ export default function StaffScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <PremiumUpsell
+        visible={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        featureName={FEATURE_DESCRIPTIONS.multi_staff.name}
+        featureDescription={FEATURE_DESCRIPTIONS.multi_staff.description}
+      />
 
       {/* Edit Staff Modal */}
       <Modal

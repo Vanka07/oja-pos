@@ -12,6 +12,8 @@ import {
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { canAccess, FREE_PRODUCT_LIMIT, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
+import PremiumUpsell from '@/components/PremiumUpsell';
 import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
@@ -29,6 +31,7 @@ export default function InventoryScreen() {
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState('');
 
@@ -74,6 +77,12 @@ export default function InventoryScreen() {
 
   const handleAddProduct = useCallback(() => {
     if (!formData.name || !formData.costPrice || !formData.sellingPrice) return;
+    // Check product limit for free users
+    if (products.length >= FREE_PRODUCT_LIMIT && !canAccess('unlimited_products')) {
+      setShowAddModal(false);
+      setShowUpsell(true);
+      return;
+    }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addProduct({
       name: formData.name,
@@ -128,7 +137,16 @@ export default function InventoryScreen() {
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
               {canAddProduct && (
-                <Pressable onPress={() => setShowAddModal(true)} className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95">
+                <Pressable
+                  onPress={() => {
+                    if (products.length >= FREE_PRODUCT_LIMIT && !canAccess('unlimited_products')) {
+                      setShowUpsell(true);
+                    } else {
+                      setShowAddModal(true);
+                    }
+                  }}
+                  className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
+                >
                   <Plus size={18} color="white" />
                 </Pressable>
               )}
@@ -258,6 +276,13 @@ export default function InventoryScreen() {
           </View>
         </Animated.View>
       </ScrollView>
+
+      <PremiumUpsell
+        visible={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        featureName={FEATURE_DESCRIPTIONS.unlimited_products.name}
+        featureDescription={FEATURE_DESCRIPTIONS.unlimited_products.description}
+      />
 
       {/* Add Product Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>

@@ -12,6 +12,8 @@ import {
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
+import PremiumUpsell from '@/components/PremiumUpsell';
 import { Lock } from 'lucide-react-native';
 import { useState, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
@@ -44,6 +46,7 @@ export default function ReportsScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [dateRange, setDateRange] = useState<DateRange>('today');
+  const [showUpsell, setShowUpsell] = useState(false);
 
   const currentStaff = useStaffStore((s) => s.currentStaff);
   const canViewReports = !currentStaff || hasPermission(currentStaff.role, 'view_reports');
@@ -310,13 +313,28 @@ export default function ReportsScreen() {
 
         <Animated.View entering={FadeInDown.delay(200).duration(600)} className="px-5 mt-6">
           <View className="flex-row bg-white/80 dark:bg-stone-900/80 rounded-xl p-1 border border-stone-200 dark:border-stone-800">
-            {(['today', 'week', 'month', 'year'] as DateRange[]).map((range) => (
-              <Pressable key={range} onPress={() => setDateRange(range)} className={`flex-1 py-3 rounded-lg ${dateRange === range ? 'bg-orange-500' : ''}`}>
-                <Text className={`text-center font-medium ${dateRange === range ? 'text-white' : 'text-stone-600 dark:text-stone-400'}`}>
-                  {range === 'today' ? 'Today' : range === 'week' ? '7 Days' : range === 'month' ? '30 Days' : '1 Year'}
-                </Text>
-              </Pressable>
-            ))}
+            {(['today', 'week', 'month', 'year'] as DateRange[]).map((range) => {
+              const isPremiumRange = range !== 'today';
+              const locked = isPremiumRange && !canAccess('advanced_reports');
+              return (
+                <Pressable
+                  key={range}
+                  onPress={() => {
+                    if (locked) {
+                      setShowUpsell(true);
+                    } else {
+                      setDateRange(range);
+                    }
+                  }}
+                  className={`flex-1 py-3 rounded-lg ${dateRange === range ? 'bg-orange-500' : ''}`}
+                >
+                  <Text className={`text-center font-medium ${dateRange === range ? 'text-white' : locked ? 'text-stone-400 dark:text-stone-600' : 'text-stone-600 dark:text-stone-400'}`}>
+                    {range === 'today' ? 'Today' : range === 'week' ? '7 Days' : range === 'month' ? '30 Days' : '1 Year'}
+                    {locked ? ' 🔒' : ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </Animated.View>
 
@@ -461,6 +479,13 @@ export default function ReportsScreen() {
           )}
         </Animated.View>
       </ScrollView>
+
+      <PremiumUpsell
+        visible={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        featureName={FEATURE_DESCRIPTIONS.advanced_reports.name}
+        featureDescription={FEATURE_DESCRIPTIONS.advanced_reports.description}
+      />
     </View>
   );
 }
