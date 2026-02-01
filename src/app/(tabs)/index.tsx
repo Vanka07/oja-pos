@@ -120,6 +120,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(200).duration(600)}
           className="mx-5 mt-6"
         >
+          <Pressable onPress={() => router.push('/(tabs)/reports')} className="active:opacity-90">
           <LinearGradient
             colors={['#ea580c', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
@@ -162,6 +163,7 @@ export default function DashboardScreen() {
               </View>
             </View>
           </LinearGradient>
+          </Pressable>
           <Text className="text-stone-500 dark:text-stone-500 text-sm text-center mt-3 font-medium">
             {summary.totalTransactions === 0
               ? 'New day, new opportunities! 🌅'
@@ -176,20 +178,22 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(300).duration(600)}
           className="mx-5 mt-4"
         >
-          <View className="flex-row gap-3">
-            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Cash</Text>
-              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
+          <Pressable onPress={() => router.push('/(tabs)/reports')} className="active:opacity-80">
+            <View className="flex-row gap-3">
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Cash</Text>
+                <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
+              </View>
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Transfer</Text>
+                <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
+              </View>
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">POS</Text>
+                <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
+              </View>
             </View>
-            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">Transfer</Text>
-              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
-            </View>
-            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">POS</Text>
-              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
-            </View>
-          </View>
+          </Pressable>
         </Animated.View>
 
         {/* Quick Stats */}
@@ -210,7 +214,7 @@ export default function DashboardScreen() {
 
           <Pressable
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
-            onPress={() => router.push('/(tabs)/pos')}
+            onPress={() => router.push('/(tabs)/reports')}
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
