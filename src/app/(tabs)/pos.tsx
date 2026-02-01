@@ -147,10 +147,15 @@ export default function POSScreen() {
   const shareReceiptWhatsApp = useCallback(() => {
     if (!lastSale || !shopInfo) return;
     const receipt = generateReceiptText(lastSale, shopInfo.name, shopInfo.phone);
-    const url = `whatsapp://send?text=${encodeURIComponent(receipt)}`;
-    Linking.openURL(url).catch(() => {
-      Share.share({ message: receipt });
-    });
+    const encoded = encodeURIComponent(receipt);
+    if (Platform.OS === 'web') {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    } else {
+      const url = `whatsapp://send?text=${encoded}`;
+      Linking.openURL(url).catch(() => {
+        Share.share({ message: receipt });
+      });
+    }
   }, [lastSale, shopInfo]);
 
   const shareReceipt = useCallback(async () => {

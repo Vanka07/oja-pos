@@ -18,9 +18,16 @@ export async function checkAndSendLowStockAlerts(phoneNumber: string): Promise<b
 
   const message = formatLowStockMessage(lowStockProducts);
   const encodedMessage = encodeURIComponent(message);
-  const cleanPhone = phoneNumber.replace(/[^0-9+]/g, '');
+  // Strip everything except digits (remove +, spaces, dashes)
+  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
 
-  // Try WhatsApp app deep link first
+  if (Platform.OS === 'web') {
+    // On web, always use wa.me which works in browser
+    window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
+    return true;
+  }
+
+  // On native, try WhatsApp deep link first
   const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`;
   const webFallback = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 
@@ -33,7 +40,6 @@ export async function checkAndSendLowStockAlerts(phoneNumber: string): Promise<b
     }
     return true;
   } catch {
-    // Final fallback
     try {
       await Linking.openURL(webFallback);
       return true;
