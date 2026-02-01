@@ -16,7 +16,7 @@ import {
 } from 'lucide-react-native';
 import { useStaffStore, hasPermission, isAppRole, type StaffMember, type StaffRole } from '@/store/staffStore';
 import { formatNaira } from '@/store/retailStore';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
@@ -59,6 +59,11 @@ export default function StaffScreen() {
   const removeStaff = useStaffStore((s) => s.removeStaff);
 
   const isOwner = currentStaff?.role === 'owner' || staff.length === 0;
+  const canManageStaff = !currentStaff || hasPermission(currentStaff.role, 'manage_staff');
+
+  useEffect(() => {
+    if (!canManageStaff) router.back();
+  }, [canManageStaff, router]);
 
   const recentActivities = useMemo(() => activities.slice(0, 50), [activities]);
 

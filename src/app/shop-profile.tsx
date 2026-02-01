@@ -2,9 +2,10 @@ import { View, Text, TextInput, Pressable, ScrollView, Alert, KeyboardAvoidingVi
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Store, X, RotateCcw } from 'lucide-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
@@ -14,6 +15,13 @@ export default function ShopProfileScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManageShop = !currentStaff || hasPermission(currentStaff.role, 'manage_shop');
+
+  useEffect(() => {
+    if (!canManageShop) router.back();
+  }, [canManageShop, router]);
+
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const resetOnboarding = useOnboardingStore((s) => s.resetOnboarding);

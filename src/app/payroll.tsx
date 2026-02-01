@@ -13,9 +13,9 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { usePayrollStore, type StaffSalaryRecord } from '@/store/payrollStore';
-import { useStaffStore } from '@/store/staffStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { formatNaira } from '@/store/retailStore';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useColorScheme } from 'nativewind';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -49,6 +49,12 @@ export default function PayrollScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManagePayroll = !currentStaff || hasPermission(currentStaff.role, 'manage_payroll');
+
+  useEffect(() => {
+    if (!canManagePayroll) router.back();
+  }, [canManagePayroll, router]);
 
   const salaryRecords = usePayrollStore((s) => s.salaryRecords);
   const addStaffSalary = usePayrollStore((s) => s.addStaffSalary);

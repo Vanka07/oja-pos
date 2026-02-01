@@ -18,7 +18,7 @@ import {
 import { OjaLogo } from '@/components/OjaLogo';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { useStaffStore } from '@/store/staffStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useState, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
@@ -35,6 +35,7 @@ export default function DashboardScreen() {
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const staffMembers = useStaffStore((s) => s.staff);
   const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canViewReports = !currentStaff || hasPermission(currentStaff.role, 'view_reports');
   const products = useRetailStore((s) => s.products);
   const getSalesToday = useRetailStore((s) => s.getSalesToday);
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
@@ -120,7 +121,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(200).duration(600)}
           className="mx-5 mt-6"
         >
-          <Pressable onPress={() => router.push('/(tabs)/reports')} className="active:opacity-90">
+          <Pressable onPress={() => canViewReports ? router.push('/(tabs)/reports') : null} className="active:opacity-90">
           <LinearGradient
             colors={['#ea580c', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
@@ -148,19 +149,21 @@ export default function DashboardScreen() {
                 <Text className="text-white/60 text-xs tracking-wide mb-1">Transactions</Text>
                 <Text className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
               </View>
-              <View>
-                <Text className="text-white/60 text-xs tracking-wide mb-1">Profit</Text>
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-orange-200 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
-                  {summary.totalSales > 0 && (
-                    <View className="bg-white/20 px-2 py-0.5 rounded-full">
-                      <Text className="text-white/90 text-xs font-medium">
-                        {summary.profit > 0 ? '↑' : ''} {summary.totalSales > 0 ? ((summary.profit / summary.totalSales) * 100).toFixed(0) : 0}%
-                      </Text>
-                    </View>
-                  )}
+              {canViewReports && (
+                <View>
+                  <Text className="text-white/60 text-xs tracking-wide mb-1">Profit</Text>
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-orange-200 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
+                    {summary.totalSales > 0 && (
+                      <View className="bg-white/20 px-2 py-0.5 rounded-full">
+                        <Text className="text-white/90 text-xs font-medium">
+                          {summary.profit > 0 ? '↑' : ''} {summary.totalSales > 0 ? ((summary.profit / summary.totalSales) * 100).toFixed(0) : 0}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </View>
+              )}
             </View>
           </LinearGradient>
           </Pressable>
@@ -174,6 +177,7 @@ export default function DashboardScreen() {
         </Animated.View>
 
         {/* Payment Methods */}
+        {canViewReports && (
         <Animated.View
           entering={FadeInDown.delay(300).duration(600)}
           className="mx-5 mt-4"
@@ -195,6 +199,7 @@ export default function DashboardScreen() {
             </View>
           </Pressable>
         </Animated.View>
+        )}
 
         {/* Quick Stats */}
         <Animated.View
@@ -214,7 +219,7 @@ export default function DashboardScreen() {
 
           <Pressable
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
-            onPress={() => router.push('/(tabs)/reports')}
+            onPress={() => canViewReports ? router.push('/(tabs)/reports') : null}
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
@@ -257,12 +262,14 @@ export default function DashboardScreen() {
         >
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-stone-900 dark:text-white text-lg font-semibold">Recent Sales</Text>
-            <Pressable
-              className="active:opacity-70"
-              onPress={() => router.push('/(tabs)/reports')}
-            >
-              <Text className="text-orange-500 text-sm font-medium">View All</Text>
-            </Pressable>
+            {canViewReports && (
+              <Pressable
+                className="active:opacity-70"
+                onPress={() => router.push('/(tabs)/reports')}
+              >
+                <Text className="text-orange-500 text-sm font-medium">View All</Text>
+              </Pressable>
+            )}
           </View>
 
           {salesToday.length === 0 ? (

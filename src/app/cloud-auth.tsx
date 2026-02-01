@@ -3,9 +3,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Mail, Lock, Cloud, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { syncAll } from '@/lib/syncService';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
@@ -16,6 +17,13 @@ export default function CloudAuthScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManageCloud = !currentStaff || hasPermission(currentStaff.role, 'manage_cloud');
+
+  useEffect(() => {
+    if (!canManageCloud) router.back();
+  }, [canManageCloud, router]);
+
   const [mode, setMode] = useState<'signin' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

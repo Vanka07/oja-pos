@@ -12,7 +12,8 @@ import {
   Package,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
-import { useState, useCallback, useMemo } from 'react';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 
 export default function ProductEditScreen() {
@@ -21,6 +22,14 @@ export default function ProductEditScreen() {
   const isDark = colorScheme === 'dark';
   const router = useRouter();
   const params = useLocalSearchParams<{ productId: string }>();
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canEdit = !currentStaff || hasPermission(currentStaff.role, 'edit_product');
+
+  // Redirect if no permission
+  useEffect(() => {
+    if (!canEdit) router.back();
+  }, [canEdit, router]);
 
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
