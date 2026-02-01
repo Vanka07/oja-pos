@@ -5,9 +5,11 @@ import { View } from 'react-native';
 import { LayoutDashboard, ShoppingCart, Package, Users, MoreHorizontal } from 'lucide-react-native';
 
 function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<{ size: number; color: string }>; color: string; focused: boolean }) {
+  const size = Platform.OS === 'web' ? 20 : 24;
+  const boxSize = Platform.OS === 'web' ? 36 : 48;
   return (
-    <View className={`items-center justify-center ${focused ? 'opacity-100' : 'opacity-60'}`} style={{ width: 48, height: 48 }}>
-      <Icon size={24} color={color} />
+    <View className={`items-center justify-center ${focused ? 'opacity-100' : 'opacity-60'}`} style={{ width: boxSize, height: boxSize }}>
+      <Icon size={size} color={color} />
     </View>
   );
 }
@@ -23,14 +25,17 @@ export default function TabLayout() {
           backgroundColor: '#1c1917',
           borderTopColor: '#292524',
           borderTopWidth: 1,
-          height: Platform.OS === 'web' ? 65 : 85,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'web' ? 8 : 28,
+          height: Platform.OS === 'web' ? 56 : 85,
+          paddingTop: Platform.OS === 'web' ? 4 : 8,
+          paddingBottom: Platform.OS === 'web' ? 4 : 28,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 0,
+        },
+        tabBarIconStyle: {
+          marginBottom: Platform.OS === 'web' ? -2 : 0,
         },
       }}>
       <Tabs.Screen
