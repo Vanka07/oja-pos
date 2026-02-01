@@ -1,17 +1,30 @@
 {
   "expo": {
-    "name": "vibecode",
-    "slug": "vibecode",
+    "name": "Oja POS",
+    "slug": "oja-pos",
     "scheme": "vibecode",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "backgroundColor": "#0c0a09",
+      "resizeMode": "contain"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1c1917"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": ["expo-router"],
     "experiments": {
