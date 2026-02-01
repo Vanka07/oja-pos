@@ -8,6 +8,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
+import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import LockScreen from './lock';
@@ -37,6 +39,22 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     }, 100);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // Initialize cloud auth and auto-sync
+  useEffect(() => {
+    const cloudAuth = useCloudAuthStore.getState();
+    cloudAuth.initialize().then(() => {
+      const { shopId, isAuthenticated } = useCloudAuthStore.getState();
+      if (isAuthenticated && shopId) {
+        syncAll(shopId).catch(() => {});
+        startAutoSync(shopId);
+      }
+    });
+
+    return () => {
+      stopAutoSync();
+    };
   }, []);
 
   useEffect(() => {
@@ -70,6 +88,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="staff" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="staff-switch" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="shop-profile" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="cloud-auth" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

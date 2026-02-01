@@ -23,12 +23,17 @@ import {
   HelpCircle,
   Shield,
   UserCircle,
-  Clock
+  Clock,
+  Cloud,
+  RefreshCw,
+  LogOut,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { APP_VERSION } from '@/store/updateStore';
+import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -56,6 +61,7 @@ export default function MoreScreen() {
   const [showCashModal, setShowCashModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [closingNote, setClosingNote] = useState('');
 
@@ -73,6 +79,7 @@ export default function MoreScreen() {
   });
 
   const router = useRouter();
+  const cloudAuth = useCloudAuthStore();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const staffMembers = useStaffStore((s) => s.staff);
   const currentStaff = useStaffStore((s) => s.currentStaff);
@@ -201,6 +208,41 @@ export default function MoreScreen() {
       setIsExporting(false);
     }
   }, [shopInfo, products, sales, allCustomers, expenses, allCashSessions, stockMovements]);
+
+  const handleSyncNow = useCallback(async () => {
+    if (!cloudAuth.shopId || isSyncing) return;
+    setIsSyncing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await syncAll(cloudAuth.shopId);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [cloudAuth.shopId, isSyncing]);
+
+  const handleCloudSignOut = useCallback(async () => {
+    Alert.alert('Sign Out', 'You will stop syncing data to the cloud. Your local data is safe.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: () => cloudAuth.signOut(),
+      },
+    ]);
+  }, [cloudAuth]);
+
+  const lastSyncTime = useRetailStore((s) => s.lastSyncTime);
+  const lastSyncDisplay = lastSyncTime
+    ? new Date(lastSyncTime).toLocaleString('en-NG', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: 'numeric',
+        month: 'short',
+      })
+    : 'Never';
 
   return (
     <View className="flex-1 bg-stone-950">
@@ -398,6 +440,77 @@ export default function MoreScreen() {
             </View>
           </Animated.View>
         )}
+
+        {/* Cloud Sync Section */}
+        <Animated.View
+          entering={FadeInDown.delay(550).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Cloud Sync</Text>
+          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+            {cloudAuth.isAuthenticated ? (
+              <>
+                {/* Sync Status */}
+                <View className="p-4 border-b border-stone-800">
+                  <View className="flex-row items-center gap-3 mb-2">
+                    <View className={`w-3 h-3 rounded-full ${isSyncing ? 'bg-orange-400' : 'bg-emerald-400'}`} />
+                    <Text className="text-white font-medium">
+                      {isSyncing ? 'Syncing...' : 'Connected'}
+                    </Text>
+                  </View>
+                  <Text className="text-stone-500 text-sm">Last synced: {lastSyncDisplay}</Text>
+                </View>
+
+                {/* Sync Now */}
+                <Pressable
+                  onPress={handleSyncNow}
+                  disabled={isSyncing}
+                  className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+                >
+                  <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
+                    {isSyncing ? (
+                      <ActivityIndicator size="small" color="#3b82f6" />
+                    ) : (
+                      <RefreshCw size={20} color="#3b82f6" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white font-medium">Sync Now</Text>
+                    <Text className="text-stone-500 text-sm">Push & pull latest data</Text>
+                  </View>
+                </Pressable>
+
+                {/* Sign Out */}
+                <Pressable
+                  onPress={handleCloudSignOut}
+                  className="flex-row items-center p-4 active:bg-stone-800/50"
+                >
+                  <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
+                    <LogOut size={20} color="#ef4444" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-red-400 font-medium">Sign Out</Text>
+                    <Text className="text-stone-500 text-sm">Stop cloud sync</Text>
+                  </View>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable
+                onPress={() => router.push('/cloud-auth')}
+                className="flex-row items-center p-4 active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
+                  <Cloud size={20} color="#3b82f6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white font-medium">Enable Cloud Sync</Text>
+                  <Text className="text-stone-500 text-sm">Back up & sync across devices</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+          </View>
+        </Animated.View>
 
         {/* Menu Items */}
         <Animated.View
