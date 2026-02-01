@@ -41,7 +41,7 @@ if (Platform.OS !== 'web') {
   }
 }
 
-type DateRange = 'today' | 'week' | 'month';
+type DateRange = 'today' | 'week' | 'month' | 'year';
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
@@ -67,8 +67,10 @@ export default function ReportsScreen() {
     const startDate = new Date();
     if (dateRange === 'week') {
       startDate.setDate(today.getDate() - 7);
-    } else {
+    } else if (dateRange === 'month') {
       startDate.setDate(today.getDate() - 30);
+    } else {
+      startDate.setDate(today.getDate() - 365);
     }
 
     const rangeSales = getSalesByDateRange(startDate.toISOString().split('T')[0], todayStr);
@@ -90,7 +92,7 @@ export default function ReportsScreen() {
   }, [dateRange, getDailySummary, getSalesByDateRange]);
 
   const topProducts = useMemo(() => {
-    const days = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : 30;
+    const days = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;
     return getTopSellingProducts(days);
   }, [dateRange, getTopSellingProducts]);
 
@@ -98,23 +100,58 @@ export default function ReportsScreen() {
     return sales.slice(0, 10);
   }, [sales]);
 
-  // Daily sales data for bar chart (last 7 days)
-  const dailySalesData = useMemo(() => {
+  // Chart data based on selected date range
+  const chartData = useMemo(() => {
+    if (dateRange === 'week') {
+      const data = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const summary = getDailySummary(dateStr);
+        data.push({
+          day: date.toLocaleDateString('en-NG', { weekday: 'short' }),
+          sales: summary.totalSales,
+          label: dateStr,
+        });
+      }
+      return { data, title: 'Daily Sales (Last 7 Days)' };
+    }
+
+    if (dateRange === 'month') {
+      const data = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const summary = getDailySummary(dateStr);
+        data.push({
+          day: date.toLocaleDateString('en-NG', { day: 'numeric' }),
+          sales: summary.totalSales,
+          label: dateStr,
+        });
+      }
+      return { data, title: 'Daily Sales (Last 30 Days)' };
+    }
+
+    // year — aggregate by month
     const data = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const summary = getDailySummary(dateStr);
-      const dayLabel = date.toLocaleDateString('en-NG', { weekday: 'short' });
+    const today = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
+      const startStr = monthStart.toISOString().split('T')[0];
+      const endStr = monthEnd.toISOString().split('T')[0];
+      const monthSales = getSalesByDateRange(startStr, endStr);
+      const total = monthSales.reduce((sum, s) => sum + s.total, 0);
       data.push({
-        day: dayLabel,
-        sales: summary.totalSales,
-        label: dateStr,
+        day: monthStart.toLocaleDateString('en-NG', { month: 'short' }),
+        sales: total,
+        label: startStr,
       });
     }
-    return data;
-  }, [getDailySummary]);
+    return { data, title: 'Monthly Sales (Last 12 Months)' };
+  }, [dateRange, getDailySummary, getSalesByDateRange]);
 
   // Calculate week-over-week or month-over-month change
   const getPreviousPeriodChange = useMemo(() => {
@@ -133,21 +170,13 @@ export default function ReportsScreen() {
     let previousStart: Date;
     let previousEnd: Date;
 
-    if (dateRange === 'week') {
-      const currentStart = new Date(today);
-      currentStart.setDate(today.getDate() - 7);
-      previousEnd = new Date(currentStart);
-      previousEnd.setDate(previousEnd.getDate() - 1);
-      previousStart = new Date(previousEnd);
-      previousStart.setDate(previousEnd.getDate() - 7);
-    } else {
-      const currentStart = new Date(today);
-      currentStart.setDate(today.getDate() - 30);
-      previousEnd = new Date(currentStart);
-      previousEnd.setDate(previousEnd.getDate() - 1);
-      previousStart = new Date(previousEnd);
-      previousStart.setDate(previousEnd.getDate() - 30);
-    }
+    const periodDays = dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;
+    const currentStart = new Date(today);
+    currentStart.setDate(today.getDate() - periodDays);
+    previousEnd = new Date(currentStart);
+    previousEnd.setDate(previousEnd.getDate() - 1);
+    previousStart = new Date(previousEnd);
+    previousStart.setDate(previousEnd.getDate() - periodDays);
 
     const previousSales = getSalesByDateRange(
       previousStart.toISOString().split('T')[0],
@@ -157,7 +186,8 @@ export default function ReportsScreen() {
 
     if (previousTotal === 0) return null;
     const change = ((getDateRangeData.totalSales - previousTotal) / previousTotal) * 100;
-    return { change, label: dateRange === 'week' ? 'vs last week' : 'vs last month' };
+    const label = dateRange === 'week' ? 'vs last week' : dateRange === 'month' ? 'vs last month' : 'vs last year';
+    return { change, label };
   }, [dateRange, getDateRangeData, getDailySummary, getSalesByDateRange]);
 
   const paymentBreakdown = useMemo(() => {
@@ -172,31 +202,44 @@ export default function ReportsScreen() {
 
   // Simple bar chart for web (no victory dependency)
   const WebBarChart = () => {
-    const maxSales = Math.max(...dailySalesData.map(d => d.sales), 1);
+    const { data, title } = chartData;
+    const maxSales = Math.max(...data.map(d => d.sales), 1);
+    const showLabels = data.length <= 12;
     return (
       <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800">
-        <Text className="text-white font-semibold mb-4">Daily Sales (Last 7 Days)</Text>
+        <Text className="text-white font-semibold mb-4">{title}</Text>
         <View className="flex-row items-end justify-between" style={{ height: 140 }}>
-          {dailySalesData.map((item, index) => {
+          {data.map((item, index) => {
             const barHeight = Math.max((item.sales / maxSales) * 120, 4);
             return (
               <View key={index} className="items-center flex-1">
-                <Text className="text-stone-500 text-[10px] mb-1">
-                  {item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}
-                </Text>
+                {showLabels && (
+                  <Text className="text-stone-500 text-[10px] mb-1">
+                    {item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}
+                  </Text>
+                )}
                 <View
                   style={{
                     height: barHeight,
                     backgroundColor: item.sales > 0 ? '#f97316' : '#44403c',
-                    width: '60%',
+                    width: data.length > 12 ? '80%' : '60%',
                     borderRadius: 4,
                   }}
                 />
-                <Text className="text-stone-500 text-xs mt-2">{item.day}</Text>
+                {showLabels && (
+                  <Text className="text-stone-500 text-xs mt-2">{item.day}</Text>
+                )}
               </View>
             );
           })}
         </View>
+        {!showLabels && (
+          <View className="flex-row justify-between mt-2">
+            <Text className="text-stone-500 text-xs">{data[0]?.day}</Text>
+            <Text className="text-stone-500 text-xs">{data[Math.floor(data.length / 2)]?.day}</Text>
+            <Text className="text-stone-500 text-xs">{data[data.length - 1]?.day}</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -241,10 +284,10 @@ export default function ReportsScreen() {
   // Native chart components using victory-native
   const NativeBarChart = () => {
     if (!VictoryChart || !VictoryBar || !VictoryAxis) return <WebBarChart />;
-    const maxSales = Math.max(...dailySalesData.map(d => d.sales), 1);
+    const { data, title } = chartData;
     return (
       <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800">
-        <Text className="text-white font-semibold mb-2">Daily Sales (Last 7 Days)</Text>
+        <Text className="text-white font-semibold mb-2">{title}</Text>
         <VictoryChart
           theme={VictoryTheme?.material}
           domainPadding={20}
@@ -255,7 +298,7 @@ export default function ReportsScreen() {
           <VictoryAxis
             style={{
               axis: { stroke: '#44403c' },
-              tickLabels: { fill: '#a8a29e', fontSize: 10 },
+              tickLabels: { fill: '#a8a29e', fontSize: data.length > 12 ? 7 : 10, angle: data.length > 12 ? -45 : 0 },
             }}
           />
           <VictoryAxis
@@ -268,7 +311,7 @@ export default function ReportsScreen() {
             }}
           />
           <VictoryBar
-            data={dailySalesData}
+            data={data}
             x="day"
             y="sales"
             style={{
@@ -382,7 +425,7 @@ export default function ReportsScreen() {
           className="px-5 mt-6"
         >
           <View className="flex-row bg-stone-900/80 rounded-xl p-1 border border-stone-800">
-            {(['today', 'week', 'month'] as DateRange[]).map((range) => (
+            {(['today', 'week', 'month', 'year'] as DateRange[]).map((range) => (
               <Pressable
                 key={range}
                 onPress={() => setDateRange(range)}
@@ -395,7 +438,7 @@ export default function ReportsScreen() {
                     dateRange === range ? 'text-white' : 'text-stone-400'
                   }`}
                 >
-                  {range === 'today' ? 'Today' : range === 'week' ? '7 Days' : '30 Days'}
+                  {range === 'today' ? 'Today' : range === 'week' ? '7 Days' : range === 'month' ? '30 Days' : '1 Year'}
                 </Text>
               </Pressable>
             ))}
@@ -436,7 +479,7 @@ export default function ReportsScreen() {
         </Animated.View>
 
         {/* Charts Section */}
-        {dateRange === 'week' && (
+        {(dateRange === 'week' || dateRange === 'month' || dateRange === 'year') && (
           <Animated.View
             entering={FadeInDown.delay(350).duration(600)}
             className="mx-5 mt-4"
