@@ -222,7 +222,7 @@ export default function InventoryScreen() {
               return (
                 <Animated.View key={product.id} entering={FadeIn.delay(100 + index * 30).duration(400)} layout={Layout.springify()}>
                   <Pressable
-                    onPress={() => canEditProduct ? openProductEdit(product) : openStockModal(product)}
+                    onPress={() => canEditProduct ? openProductEdit(product) : canRestock ? openStockModal(product) : undefined}
                     className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border ${isLowStock ? 'border-amber-500/50' : 'border-stone-200 dark:border-stone-800'} active:scale-[0.99]`}
                   >
                     <View className="flex-row items-start justify-between">
