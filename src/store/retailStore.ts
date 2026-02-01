@@ -234,6 +234,12 @@ const todayAt = (h: number, m: number) => {
   d.setHours(h, m, 0, 0);
   return d.toISOString();
 };
+const daysAgoAt = (daysAgo: number, h: number, m: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+};
 
 const DEMO_PRODUCTS: Product[] = [
   { id: 'dp1',  name: 'Peak Milk 400g',           barcode: '5000112345601', category: 'Dairy',            costPrice: 2800, sellingPrice: 3500, quantity: 80,  unit: 'tin',    lowStockThreshold: 10, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
@@ -283,28 +289,63 @@ const DEMO_CUSTOMERS: Customer[] = [
 const _dp = (id: string) => DEMO_PRODUCTS.find(p => p.id === id)!;
 
 const DEMO_SALES: Sale[] = [
-  // Sale 1 – 8:15 AM – cash ₦7,250
+  // ── 6 days ago (1 sale) ─────────────────────────────
+  { id: 'ds20', items: [{ product: _dp('dp2'), quantity: 10 }, { product: _dp('dp3'), quantity: 4 }],
+    subtotal: 3300, discount: 0, total: 3300, paymentMethod: 'cash', cashReceived: 3500, changeGiven: 200, createdAt: daysAgoAt(6, 10, 30), synced: true },
+
+  // ── 5 days ago (2 sales) ────────────────────────────
+  { id: 'ds21', items: [{ product: _dp('dp1'), quantity: 2 }, { product: _dp('dp9'), quantity: 6 }],
+    subtotal: 7900, discount: 0, total: 7900, paymentMethod: 'transfer', createdAt: daysAgoAt(5, 9, 15), synced: true },
+  { id: 'ds22', items: [{ product: _dp('dp6'), quantity: 3 }],
+    subtotal: 4500, discount: 0, total: 4500, paymentMethod: 'cash', cashReceived: 5000, changeGiven: 500, createdAt: daysAgoAt(5, 14, 0), synced: true },
+
+  // ── 4 days ago (1 sale) ─────────────────────────────
+  { id: 'ds23', items: [{ product: _dp('dp8'), quantity: 5 }, { product: _dp('dp11'), quantity: 10 }],
+    subtotal: 3250, discount: 0, total: 3250, paymentMethod: 'pos', createdAt: daysAgoAt(4, 11, 45), synced: true },
+
+  // ── 3 days ago (3 sales) ────────────────────────────
+  { id: 'ds24', items: [{ product: _dp('dp4'), quantity: 1 }, { product: _dp('dp12'), quantity: 2 }],
+    subtotal: 4800, discount: 0, total: 4800, paymentMethod: 'cash', cashReceived: 5000, changeGiven: 200, createdAt: daysAgoAt(3, 8, 30), synced: true },
+  { id: 'ds25', items: [{ product: _dp('dp7'), quantity: 2 }, { product: _dp('dp5'), quantity: 2 }],
+    subtotal: 6600, discount: 100, total: 6500, paymentMethod: 'transfer', createdAt: daysAgoAt(3, 12, 0), synced: true },
+  { id: 'ds26', items: [{ product: _dp('dp3'), quantity: 8 }],
+    subtotal: 2000, discount: 0, total: 2000, paymentMethod: 'cash', cashReceived: 2000, changeGiven: 0, createdAt: daysAgoAt(3, 16, 30), synced: true },
+
+  // ── 2 days ago (2 sales) ────────────────────────────
+  { id: 'ds27', items: [{ product: _dp('dp1'), quantity: 3 }, { product: _dp('dp2'), quantity: 8 }],
+    subtotal: 12340, discount: 0, total: 12340, paymentMethod: 'cash', cashReceived: 13000, changeGiven: 660, createdAt: daysAgoAt(2, 9, 0), synced: true },
+  { id: 'ds28', items: [{ product: _dp('dp10'), quantity: 2 }, { product: _dp('dp6'), quantity: 1 }],
+    subtotal: 3400, discount: 0, total: 3400, paymentMethod: 'transfer', createdAt: daysAgoAt(2, 15, 30), synced: true },
+
+  // ── Yesterday (2 sales) ─────────────────────────────
+  { id: 'ds29', items: [{ product: _dp('dp5'), quantity: 4 }, { product: _dp('dp9'), quantity: 10 }],
+    subtotal: 5900, discount: 0, total: 5900, paymentMethod: 'cash', cashReceived: 6000, changeGiven: 100, createdAt: daysAgoAt(1, 10, 0), synced: true },
+  { id: 'ds30', items: [{ product: _dp('dp4'), quantity: 1 }, { product: _dp('dp7'), quantity: 1 }],
+    subtotal: 4900, discount: 0, total: 4900, paymentMethod: 'pos', createdAt: daysAgoAt(1, 14, 20), synced: true },
+
+  // ── Today (busiest – 5 sales) ───────────────────────
+  // Sale 1 – 8:15 AM – cash
   { id: 'ds1', items: [{ product: _dp('dp1'), quantity: 1 }, { product: _dp('dp2'), quantity: 5 }, { product: _dp('dp3'), quantity: 6 }],
     subtotal: 6150, discount: 0, total: 6150, paymentMethod: 'cash', cashReceived: 7000, changeGiven: 850, createdAt: todayAt(8,15), synced: true },
-  // Sale 2 – 9:40 AM – transfer ₦5,400
+  // Sale 2 – 9:40 AM – transfer
   { id: 'ds2', items: [{ product: _dp('dp4'), quantity: 2 }],
     subtotal: 5400, discount: 0, total: 5400, paymentMethod: 'transfer', createdAt: todayAt(9,40), synced: true },
-  // Sale 3 – 10:55 AM – cash ₦8,350
+  // Sale 3 – 10:55 AM – cash
   { id: 'ds3', items: [{ product: _dp('dp5'), quantity: 3 }, { product: _dp('dp6'), quantity: 2 }, { product: _dp('dp7'), quantity: 1 }],
     subtotal: 8500, discount: 150, total: 8350, paymentMethod: 'cash', cashReceived: 10000, changeGiven: 1650, createdAt: todayAt(10,55), synced: true },
-  // Sale 4 – 12:20 PM – pos ₦3,600
+  // Sale 4 – 12:20 PM – pos
   { id: 'ds4', items: [{ product: _dp('dp8'), quantity: 4 }, { product: _dp('dp9'), quantity: 8 }],
     subtotal: 3000, discount: 0, total: 3000, paymentMethod: 'pos', createdAt: todayAt(12,20), synced: true },
-  // Sale 5 – 1:45 PM – cash ₦9,500
+  // Sale 5 – 1:45 PM – cash
   { id: 'ds5', items: [{ product: _dp('dp1'), quantity: 2 }, { product: _dp('dp12'), quantity: 2 }, { product: _dp('dp11'), quantity: 2 }],
     subtotal: 9300, discount: 0, total: 9300, paymentMethod: 'cash', cashReceived: 10000, changeGiven: 700, createdAt: todayAt(13,45), synced: true },
-  // Sale 6 – 3:00 PM – transfer ₦11,000
+  // Sale 6 – 3:00 PM – transfer
   { id: 'ds6', items: [{ product: _dp('dp7'), quantity: 3 }, { product: _dp('dp6'), quantity: 3 }],
     subtotal: 11100, discount: 100, total: 11000, paymentMethod: 'transfer', createdAt: todayAt(15,0), synced: true },
-  // Sale 7 – 3:30 PM – credit ₦8,200 (Mama Ngozi)
+  // Sale 7 – 3:30 PM – credit (Mama Ngozi)
   { id: 'ds7', items: [{ product: _dp('dp4'), quantity: 2 }, { product: _dp('dp5'), quantity: 2 }, { product: _dp('dp9'), quantity: 4 }],
     subtotal: 8200, discount: 0, total: 8200, paymentMethod: 'credit', customerId: 'dc1', customerName: 'Mama Ngozi', createdAt: todayAt(15,30), synced: true },
-  // Sale 8 – 5:00 PM – credit ₦4,750 (Mrs. Adebayo)
+  // Sale 8 – 5:00 PM – credit (Mrs. Adebayo)
   { id: 'ds8', items: [{ product: _dp('dp10'), quantity: 3 }, { product: _dp('dp8'), quantity: 2 }, { product: _dp('dp3'), quantity: 4 }],
     subtotal: 4750, discount: 0, total: 4750, paymentMethod: 'credit', customerId: 'dc3', customerName: 'Mrs. Adebayo', createdAt: todayAt(17,0), synced: true },
 ];

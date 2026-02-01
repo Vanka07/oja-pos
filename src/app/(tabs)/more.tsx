@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -33,6 +33,8 @@ import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 const expenseIcons: Record<string, React.ReactNode> = {
   'Rent': <Store size={18} color="#f97316" />,
@@ -53,6 +55,7 @@ export default function MoreScreen() {
   const [showExpensesListModal, setShowExpensesListModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [closingNote, setClosingNote] = useState('');
 
@@ -79,6 +82,11 @@ export default function MoreScreen() {
   const canViewActivity = !currentStaff || hasPermission(currentStaff.role, 'view_activity');
   const hasStaff = staffMembers.length > 0;
   const recentActivities = staffActivities.slice(0, 5);
+  const products = useRetailStore((s) => s.products);
+  const sales = useRetailStore((s) => s.sales);
+  const allCustomers = useRetailStore((s) => s.customers);
+  const allCashSessions = useRetailStore((s) => s.cashSessions);
+  const stockMovements = useRetailStore((s) => s.stockMovements);
   const expenses = useRetailStore((s) => s.expenses);
   const addExpense = useRetailStore((s) => s.addExpense);
   const getExpensesToday = useRetailStore((s) => s.getExpensesToday);
@@ -148,6 +156,51 @@ export default function MoreScreen() {
     setClosingNote('');
     setShowCashModal(false);
   }, [cashAmount, closingNote, currentCashSession, openCashSession, closeCashSession]);
+
+  const handleExportData = useCallback(async () => {
+    try {
+      setIsExporting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      const backupData = {
+        exportedAt: new Date().toISOString(),
+        appVersion: APP_VERSION,
+        shopInfo,
+        products,
+        sales,
+        customers: allCustomers,
+        expenses,
+        cashSessions: allCashSessions,
+        stockMovements,
+      };
+
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filePath = FileSystem.documentDirectory + `oja-backup-${dateStr}.json`;
+
+      await FileSystem.writeAsStringAsync(filePath, jsonString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'application/json',
+          dialogTitle: 'Export Oja POS Backup',
+          UTI: 'public.json',
+        });
+      } else {
+        Alert.alert('Export Complete', 'Backup file saved but sharing is not available on this device.');
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      Alert.alert('Export Failed', 'Could not export data. Please try again.');
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [shopInfo, products, sales, allCustomers, expenses, allCashSessions, stockMovements]);
 
   return (
     <View className="flex-1 bg-stone-950">
@@ -353,7 +406,10 @@ export default function MoreScreen() {
         >
           <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
-            <Pressable className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50">
+            <Pressable
+              onPress={() => router.push('/shop-profile')}
+              className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+            >
               <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
                 <Store size={20} color="#f97316" />
               </View>
@@ -364,12 +420,20 @@ export default function MoreScreen() {
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
 
-            <Pressable className="flex-row items-center p-4 active:bg-stone-800/50">
+            <Pressable
+              onPress={handleExportData}
+              disabled={isExporting}
+              className="flex-row items-center p-4 active:bg-stone-800/50"
+            >
               <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
-                <Download size={20} color="#3b82f6" />
+                {isExporting ? (
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                ) : (
+                  <Download size={20} color="#3b82f6" />
+                )}
               </View>
               <View className="flex-1">
-                <Text className="text-white font-medium">Export Data</Text>
+                <Text className="text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
                 <Text className="text-stone-500 text-sm">Backup your records</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
