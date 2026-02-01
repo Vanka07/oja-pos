@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { LayoutDashboard, ShoppingCart, Package, Users, MoreHorizontal } from 'lucide-react-native';
@@ -22,14 +23,14 @@ export default function TabLayout() {
           backgroundColor: '#1c1917',
           borderTopColor: '#292524',
           borderTopWidth: 1,
-          height: 85,
+          height: Platform.OS === 'web' ? 65 : 85,
           paddingTop: 8,
-          paddingBottom: 28,
+          paddingBottom: Platform.OS === 'web' ? 8 : 28,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: 2,
         },
       }}>
       <Tabs.Screen

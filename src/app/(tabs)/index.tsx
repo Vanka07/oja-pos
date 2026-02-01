@@ -67,8 +67,8 @@ export default function DashboardScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-orange-500 text-base font-bold tracking-wide">
-                🛍️ Oja
+              <Text className="text-base font-bold tracking-wide">
+                <Text className="text-emerald-500">🛒</Text><Text className="text-emerald-500"> O</Text><Text className="text-white">j</Text><Text className="text-emerald-500">a</Text>
               </Text>
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
