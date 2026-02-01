@@ -2,7 +2,7 @@ import { View, Text, Pressable, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Lock, Delete } from 'lucide-react-native';
-import { useStaffStore, type StaffMember } from '@/store/staffStore';
+import { useStaffStore, isAppRole, type StaffMember } from '@/store/staffStore';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Animated, { FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
@@ -22,7 +22,8 @@ export default function StaffSwitchScreen() {
   const switchStaff = useStaffStore((s) => s.switchStaff);
   const currentStaff = useStaffStore((s) => s.currentStaff);
 
-  const activeStaff = staff.filter((s) => s.active);
+  // Only show app roles (not employees) in switch screen
+  const activeStaff = staff.filter((s) => s.active && isAppRole(s.role));
 
   // Shake animation
   const shakeX = useSharedValue(0);

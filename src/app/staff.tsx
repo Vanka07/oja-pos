@@ -14,7 +14,7 @@ import {
   ChevronLeft,
   UserCircle
 } from 'lucide-react-native';
-import { useStaffStore, hasPermission, type StaffMember, type StaffRole } from '@/store/staffStore';
+import { useStaffStore, hasPermission, isAppRole, type StaffMember, type StaffRole } from '@/store/staffStore';
 import { formatNaira } from '@/store/retailStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -26,12 +26,14 @@ const ROLE_COLORS: Record<StaffRole, { bg: string; text: string; border: string 
   owner: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/40' },
   manager: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/40' },
   cashier: { bg: 'bg-stone-700/40', text: 'text-stone-600 dark:text-stone-300', border: 'border-stone-600' },
+  employee: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/40' },
 };
 
 const ROLE_ICONS: Record<StaffRole, React.ReactNode> = {
   owner: <ShieldAlert size={16} color="#f59e0b" />,
   manager: <ShieldCheck size={16} color="#3b82f6" />,
   cashier: <Shield size={16} color="#a8a29e" />,
+  employee: <UserCircle size={16} color="#a855f7" />,
 };
 
 export default function StaffScreen() {
@@ -68,19 +70,24 @@ export default function StaffScreen() {
   }, []);
 
   const handleAddStaff = useCallback(() => {
-    if (!formName || formPin.length !== 4) return;
-    // Check for duplicate PIN
-    const pinExists = staff.some((s) => s.pin === formPin);
-    if (pinExists) {
-      Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN. Choose a different one.');
-      return;
+    const needsPin = isAppRole(formRole);
+    if (!formName) return;
+    if (needsPin && formPin.length !== 4) return;
+
+    // Check for duplicate PIN (only for app roles)
+    if (needsPin) {
+      const pinExists = staff.some((s) => s.pin === formPin && s.pin !== '');
+      if (pinExists) {
+        Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN. Choose a different one.');
+        return;
+      }
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addStaff({
       name: formName,
       phone: formPhone,
-      pin: formPin,
+      pin: needsPin ? formPin : '', // Employees don't get a PIN
       role: formRole,
       active: true,
     });
@@ -90,9 +97,11 @@ export default function StaffScreen() {
 
   const handleEditStaff = useCallback(() => {
     if (!editingStaff || !formName) return;
+    const needsPin = isAppRole(formRole);
+
     // Check for duplicate PIN (excluding current staff)
-    if (formPin.length === 4) {
-      const pinExists = staff.some((s) => s.pin === formPin && s.id !== editingStaff.id);
+    if (needsPin && formPin.length === 4) {
+      const pinExists = staff.some((s) => s.pin === formPin && s.pin !== '' && s.id !== editingStaff.id);
       if (pinExists) {
         Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN.');
         return;
@@ -105,8 +114,10 @@ export default function StaffScreen() {
       phone: formPhone,
       role: formRole,
     };
-    if (formPin.length === 4) {
+    if (needsPin && formPin.length === 4) {
       updates.pin = formPin;
+    } else if (!needsPin) {
+      updates.pin = ''; // Clear PIN when switching to employee
     }
     updateStaff(editingStaff.id, updates);
     setShowEditModal(false);
@@ -146,85 +157,113 @@ export default function StaffScreen() {
   }, [updateStaff]);
 
   const renderRoleSelector = (selected: StaffRole, onSelect: (r: StaffRole) => void) => (
-    <View className="flex-row gap-2">
-      {(['owner', 'manager', 'cashier'] as StaffRole[]).map((role) => (
-        <Pressable
-          key={role}
-          onPress={() => onSelect(role)}
-          className={`flex-1 py-3 rounded-xl border flex-row items-center justify-center gap-2 ${
-            selected === role
-              ? `${ROLE_COLORS[role].bg} ${ROLE_COLORS[role].border}`
-              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
-          }`}
-        >
-          {ROLE_ICONS[role]}
-          <Text className={`font-medium capitalize ${
-            selected === role ? ROLE_COLORS[role].text : 'text-stone-400'
-          }`}>
-            {role}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-
-  const renderStaffForm = (isEdit: boolean) => (
-    <View className="gap-4">
-      <View>
-        <Text className="text-stone-400 text-sm mb-2">Name *</Text>
-        <TextInput
-          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-          placeholder="e.g. Chidi Okafor"
-          placeholderTextColor="#57534e"
-          autoCapitalize="words"
-          autoCorrect={false}
-          value={formName}
-          onChangeText={setFormName}
-        />
+    <View className="gap-2">
+      <View className="flex-row gap-2">
+        {(['owner', 'manager', 'cashier'] as StaffRole[]).map((role) => (
+          <Pressable
+            key={role}
+            onPress={() => onSelect(role)}
+            className={`flex-1 py-3 rounded-xl border flex-row items-center justify-center gap-2 ${
+              selected === role
+                ? `${ROLE_COLORS[role].bg} ${ROLE_COLORS[role].border}`
+                : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
+            }`}
+          >
+            {ROLE_ICONS[role]}
+            <Text className={`font-medium capitalize ${
+              selected === role ? ROLE_COLORS[role].text : 'text-stone-400'
+            }`}>
+              {role}
+            </Text>
+          </Pressable>
+        ))}
       </View>
-
-      <View>
-        <Text className="text-stone-400 text-sm mb-2">Phone</Text>
-        <TextInput
-          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-          placeholder="e.g. 08012345678"
-          placeholderTextColor="#57534e"
-          inputMode="tel"
-          value={formPhone}
-          onChangeText={setFormPhone}
-        />
-      </View>
-
-      <View>
-        <Text className="text-stone-400 text-sm mb-2">
-          {isEdit ? 'New PIN (leave blank to keep current)' : '4-Digit PIN *'}
-        </Text>
-        <TextInput
-          className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
-          placeholder="• • • •"
-          placeholderTextColor="#57534e"
-          inputMode="numeric"
-          maxLength={4}
-          value={formPin}
-          onChangeText={(text) => setFormPin(text.replace(/[^0-9]/g, ''))}
-        />
-      </View>
-
-      <View>
-        <Text className="text-stone-400 text-sm mb-2">Role</Text>
-        {renderRoleSelector(formRole, setFormRole)}
-      </View>
-
       <Pressable
-        onPress={isEdit ? handleEditStaff : handleAddStaff}
-        className="bg-orange-500 py-4 rounded-xl active:opacity-90 mt-2"
+        onPress={() => onSelect('employee')}
+        className={`py-3 rounded-xl border flex-row items-center justify-center gap-2 ${
+          selected === 'employee'
+            ? `${ROLE_COLORS.employee.bg} ${ROLE_COLORS.employee.border}`
+            : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
+        }`}
       >
-        <Text className="text-white font-semibold text-center text-lg">
-          {isEdit ? 'Save Changes' : 'Add Staff Member'}
+        {ROLE_ICONS.employee}
+        <Text className={`font-medium ${
+          selected === 'employee' ? ROLE_COLORS.employee.text : 'text-stone-400'
+        }`}>
+          Employee (Payroll Only)
         </Text>
       </Pressable>
     </View>
   );
+
+  const renderStaffForm = (isEdit: boolean) => {
+    const needsPin = isAppRole(formRole);
+    return (
+      <View className="gap-4">
+        <View>
+          <Text className="text-stone-400 text-sm mb-2">Name *</Text>
+          <TextInput
+            className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+            placeholder="e.g. Chidi Okafor"
+            placeholderTextColor="#57534e"
+            autoCapitalize="words"
+            autoCorrect={false}
+            value={formName}
+            onChangeText={setFormName}
+          />
+        </View>
+
+        <View>
+          <Text className="text-stone-400 text-sm mb-2">Phone</Text>
+          <TextInput
+            className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+            placeholder="e.g. 08012345678"
+            placeholderTextColor="#57534e"
+            inputMode="tel"
+            value={formPhone}
+            onChangeText={setFormPhone}
+          />
+        </View>
+
+        <View>
+          <Text className="text-stone-400 text-sm mb-2">Role</Text>
+          {renderRoleSelector(formRole, setFormRole)}
+        </View>
+
+        {needsPin ? (
+          <View>
+            <Text className="text-stone-400 text-sm mb-2">
+              {isEdit ? 'New PIN (leave blank to keep current)' : '4-Digit PIN *'}
+            </Text>
+            <TextInput
+              className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
+              placeholder="• • • •"
+              placeholderTextColor="#57534e"
+              inputMode="numeric"
+              maxLength={4}
+              value={formPin}
+              onChangeText={(text) => setFormPin(text.replace(/[^0-9]/g, ''))}
+            />
+          </View>
+        ) : (
+          <View className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3">
+            <Text className="text-purple-400 text-sm">
+              👷 Employees don't need a PIN — they can't log into the app. They only appear in Payroll.
+            </Text>
+          </View>
+        )}
+
+        <Pressable
+          onPress={isEdit ? handleEditStaff : handleAddStaff}
+          className="bg-orange-500 py-4 rounded-xl active:opacity-90 mt-2"
+        >
+          <Text className="text-white font-semibold text-center text-lg">
+            {isEdit ? 'Save Changes' : 'Add Staff Member'}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
 
   const formatActivityTime = (dateStr: string) => {
     const date = new Date(dateStr);

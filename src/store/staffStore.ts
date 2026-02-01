@@ -3,13 +3,13 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from '@/lib/storage';
 
 // Types
-export type StaffRole = 'owner' | 'manager' | 'cashier';
+export type StaffRole = 'owner' | 'manager' | 'cashier' | 'employee';
 
 export interface StaffMember {
   id: string;
   name: string;
   phone: string;
-  pin: string; // 4-digit PIN
+  pin: string; // 4-digit PIN (empty string for employees — they don't log in)
   role: StaffRole;
   active: boolean;
   createdAt: string;
@@ -25,7 +25,7 @@ export interface StaffActivity {
   createdAt: string;
 }
 
-// Permissions map
+// Permissions map — employee has NO app permissions (payroll-only)
 const PERMISSIONS: Record<string, StaffRole[]> = {
   sell: ['owner', 'manager', 'cashier'],
   view_inventory: ['owner', 'manager', 'cashier'],
@@ -39,6 +39,10 @@ const PERMISSIONS: Record<string, StaffRole[]> = {
   manage_staff: ['owner'],
   view_activity: ['owner', 'manager'],
 };
+
+// Roles that can log into the app (have PINs)
+export const APP_ROLES: StaffRole[] = ['owner', 'manager', 'cashier'];
+export const isAppRole = (role: StaffRole) => APP_ROLES.includes(role);
 
 export function hasPermission(role: StaffRole, action: string): boolean {
   const allowed = PERMISSIONS[action];
@@ -106,7 +110,8 @@ export const useStaffStore = create<StaffState>()(
 
       switchStaff: (pin) => {
         const state = get();
-        const member = state.staff.find((s) => s.pin === pin && s.active);
+        // Only match app roles (not employees — they can't log in)
+        const member = state.staff.find((s) => s.pin === pin && s.active && isAppRole(s.role));
         if (!member) return false;
 
         set({ currentStaff: member });

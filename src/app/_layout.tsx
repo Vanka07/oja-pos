@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
+import { useStaffStore } from '@/store/staffStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useThemeStore } from '@/store/themeStore';
 import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
@@ -30,6 +31,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding);
   const pin = useAuthStore((s) => s.pin);
   const isLocked = useAuthStore((s) => s.isLocked);
+  const staffCount = useStaffStore((s) => s.staff.length);
+  const hasAnyPin = pin !== null || staffCount > 0;
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -74,8 +77,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     return <View className="flex-1 bg-stone-50 dark:bg-stone-950" />;
   }
 
-  // Show lock screen if PIN is set and app is locked
-  if (pin && isLocked) {
+  // Show lock screen if any PIN exists (legacy or staff) and app is locked
+  if (hasAnyPin && isLocked) {
     return <LockScreen />;
   }
 

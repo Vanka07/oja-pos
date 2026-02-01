@@ -1,10 +1,11 @@
 import { View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
-import { useState, useCallback } from 'react';
-import { Lock, Delete } from 'lucide-react-native';
+import { useStaffStore } from '@/store/staffStore';
+import { useState, useCallback, useEffect } from 'react';
+import { Lock, Delete, UserCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 
 export default function LockScreen() {
@@ -13,12 +14,24 @@ export default function LockScreen() {
   const isDark = colorScheme === 'dark';
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
   const unlock = useAuthStore((s) => s.unlock);
+  const staff = useStaffStore((s) => s.staff);
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const hasStaff = staff.length > 0;
   const shakeX = useSharedValue(0);
 
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],
   }));
+
+  // Clear welcome message after a delay
+  useEffect(() => {
+    if (welcomeName) {
+      const timer = setTimeout(() => setWelcomeName(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [welcomeName]);
 
   const handlePress = useCallback((digit: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -28,7 +41,13 @@ export default function LockScreen() {
       setEntered(next);
       if (next.length === 4) {
         const success = unlock(next);
-        if (!success) {
+        if (success) {
+          // Show welcome with staff name if staff system is active
+          const staffState = useStaffStore.getState();
+          if (staffState.currentStaff) {
+            setWelcomeName(staffState.currentStaff.name);
+          }
+        } else {
           setError(true);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           shakeX.value = withSequence(
@@ -59,7 +78,11 @@ export default function LockScreen() {
           <Lock size={28} color="#f97316" />
         </View>
         <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Enter PIN</Text>
-        <Text className="text-stone-500 text-sm mb-8">Enter your 4-digit PIN to unlock</Text>
+        <Text className="text-stone-500 text-sm mb-8">
+          {hasStaff
+            ? 'Enter your staff PIN to unlock'
+            : 'Enter your 4-digit PIN to unlock'}
+        </Text>
 
         {/* PIN dots */}
         <Animated.View style={shakeStyle} className="flex-row gap-4 mb-10">
