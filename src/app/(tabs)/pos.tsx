@@ -1,11 +1,10 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Search,
   Plus,
   Minus,
-  Trash2,
   ShoppingBag,
   X,
   Check,
@@ -13,9 +12,11 @@ import {
   CreditCard,
   Smartphone,
   Users,
-  ScanLine
+  MessageCircle,
+  Share2
 } from 'lucide-react-native';
-import { useRetailStore, formatNaira, type Product, type Sale } from '@/store/retailStore';
+import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -30,6 +31,7 @@ export default function POSScreen() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
 
+  const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
   const cart = useRetailStore((s) => s.cart);
@@ -38,7 +40,6 @@ export default function POSScreen() {
   const updateCartQuantity = useRetailStore((s) => s.updateCartQuantity);
   const removeFromCart = useRetailStore((s) => s.removeFromCart);
   const clearCart = useRetailStore((s) => s.clearCart);
-  const setCartDiscount = useRetailStore((s) => s.setCartDiscount);
   const completeSale = useRetailStore((s) => s.completeSale);
 
   const filteredProducts = useMemo(() => {
@@ -83,6 +84,26 @@ export default function POSScreen() {
       setShowSuccessModal(true);
     }
   }, [completeSale]);
+
+  const shareReceiptWhatsApp = useCallback(() => {
+    if (!lastSale || !shopInfo) return;
+    const receipt = generateReceiptText(lastSale, shopInfo.name, shopInfo.phone);
+    const url = `whatsapp://send?text=${encodeURIComponent(receipt)}`;
+    Linking.openURL(url).catch(() => {
+      // WhatsApp not installed, try regular share
+      Share.share({ message: receipt });
+    });
+  }, [lastSale, shopInfo]);
+
+  const shareReceipt = useCallback(async () => {
+    if (!lastSale || !shopInfo) return;
+    const receipt = generateReceiptText(lastSale, shopInfo.name, shopInfo.phone);
+    try {
+      await Share.share({ message: receipt });
+    } catch (error) {
+      // Ignore
+    }
+  }, [lastSale, shopInfo]);
 
   return (
     <View className="flex-1 bg-stone-950">
@@ -434,12 +455,35 @@ export default function POSScreen() {
                   <Text className="text-stone-400">Total</Text>
                   <Text className="text-white font-bold text-lg">{formatNaira(lastSale.total)}</Text>
                 </View>
-                <View className="flex-row justify-between">
+                <View className="flex-row justify-between mb-2">
                   <Text className="text-stone-400">Payment</Text>
                   <Text className="text-orange-400 font-medium capitalize">{lastSale.paymentMethod}</Text>
                 </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-stone-400">Items</Text>
+                  <Text className="text-stone-300">{lastSale.items.length} product{lastSale.items.length > 1 ? 's' : ''}</Text>
+                </View>
               </View>
             )}
+
+            {/* Share Receipt Buttons */}
+            <View className="flex-row gap-3 w-full mb-4">
+              <Pressable
+                onPress={shareReceiptWhatsApp}
+                className="flex-1 flex-row items-center justify-center gap-2 bg-green-500/20 border border-green-500/40 py-3 rounded-xl active:opacity-90"
+              >
+                <MessageCircle size={18} color="#22c55e" />
+                <Text className="text-green-400 font-medium">WhatsApp</Text>
+              </Pressable>
+              <Pressable
+                onPress={shareReceipt}
+                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-800 py-3 rounded-xl active:opacity-90"
+              >
+                <Share2 size={18} color="#a8a29e" />
+                <Text className="text-stone-300 font-medium">Share</Text>
+              </Pressable>
+            </View>
+
             <Pressable
               onPress={() => setShowSuccessModal(false)}
               className="bg-orange-500 w-full py-4 rounded-xl active:opacity-90"

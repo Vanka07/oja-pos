@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { LayoutDashboard, ShoppingCart, Package, BarChart3 } from 'lucide-react-native';
+import { LayoutDashboard, ShoppingCart, Package, Users, MoreHorizontal } from 'lucide-react-native';
 
 function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<{ size: number; color: string }>; color: string; focused: boolean }) {
   return (
@@ -35,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={LayoutDashboard} color={color} focused={focused} />
           ),
@@ -44,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="pos"
         options={{
-          title: 'POS',
+          title: 'Sell',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={ShoppingCart} color={color} focused={focused} />
           ),
@@ -53,27 +53,33 @@ export default function TabLayout() {
       <Tabs.Screen
         name="inventory"
         options={{
-          title: 'Inventory',
+          title: 'Stock',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={Package} color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="customers"
         options={{
-          title: 'Reports',
+          title: 'Credit',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={BarChart3} color={color} focused={focused} />
+            <TabBarIcon icon={Users} color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="more"
         options={{
-          href: null,
+          title: 'More',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon icon={MoreHorizontal} color={color} focused={focused} />
+          ),
         }}
       />
+      {/* Hidden screens */}
+      <Tabs.Screen name="reports" options={{ href: null }} />
+      <Tabs.Screen name="two" options={{ href: null }} />
     </Tabs>
   );
 }
