@@ -13,11 +13,13 @@ import {
   Smartphone,
   Users,
   MessageCircle,
-  Share2
+  Share2,
+  ScanBarcode
 } from 'lucide-react-native';
+import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -29,7 +31,9 @@ export default function POSScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const scanLockRef = useRef(false);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const products = useRetailStore((s) => s.products);
@@ -41,6 +45,21 @@ export default function POSScreen() {
   const removeFromCart = useRetailStore((s) => s.removeFromCart);
   const clearCart = useRetailStore((s) => s.clearCart);
   const completeSale = useRetailStore((s) => s.completeSale);
+  const getProductByBarcode = useRetailStore((s) => s.getProductByBarcode);
+
+  const handleBarcodeScan = useCallback((result: BarcodeScanningResult) => {
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
+    const product = getProductByBarcode(result.data);
+    if (product) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      addToCart(product);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+    setShowScanner(false);
+    setTimeout(() => { scanLockRef.current = false; }, 500);
+  }, [getProductByBarcode, addToCart]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -132,20 +151,28 @@ export default function POSScreen() {
             entering={FadeInDown.delay(200).duration(600)}
             className="px-5 mb-4"
           >
-            <View className="bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-800">
-              <Search size={20} color="#78716c" />
-              <TextInput
-                className="flex-1 py-3 px-3 text-white text-base"
-                placeholder="Search products or scan barcode..."
-                placeholderTextColor="#78716c"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-              {searchQuery && (
-                <Pressable onPress={() => setSearchQuery('')}>
-                  <X size={18} color="#78716c" />
-                </Pressable>
-              )}
+            <View className="flex-row items-center gap-2">
+              <View className="flex-1 bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-800">
+                <Search size={20} color="#78716c" />
+                <TextInput
+                  className="flex-1 py-3 px-3 text-white text-base"
+                  placeholder="Search products..."
+                  placeholderTextColor="#78716c"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery && (
+                  <Pressable onPress={() => setSearchQuery('')}>
+                    <X size={18} color="#78716c" />
+                  </Pressable>
+                )}
+              </View>
+              <Pressable
+                onPress={() => setShowScanner(true)}
+                className="bg-orange-500/20 border border-orange-500/40 rounded-xl p-3 active:opacity-80"
+              >
+                <ScanBarcode size={22} color="#f97316" />
+              </Pressable>
             </View>
           </Animated.View>
 
@@ -428,6 +455,39 @@ export default function POSScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Barcode Scanner Modal */}
+      <Modal
+        visible={showScanner}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <View className="flex-1 bg-black">
+          <View style={{ paddingTop: insets.top + 8 }} className="px-5 pb-4 flex-row items-center justify-between z-10">
+            <Text className="text-white text-lg font-bold">Scan Barcode</Text>
+            <Pressable
+              onPress={() => setShowScanner(false)}
+              className="bg-stone-800/80 w-10 h-10 rounded-full items-center justify-center"
+            >
+              <X size={20} color="white" />
+            </Pressable>
+          </View>
+          <CameraView
+            style={{ flex: 1 }}
+            facing="back"
+            barcodeScannerSettings={{
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'qr'],
+            }}
+            onBarcodeScanned={handleBarcodeScan}
+          />
+          <View className="absolute bottom-0 left-0 right-0 items-center" style={{ paddingBottom: insets.bottom + 20 }}>
+            <View className="bg-stone-900/90 px-6 py-3 rounded-full">
+              <Text className="text-stone-300 text-sm">Point camera at a barcode</Text>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* Success Modal */}

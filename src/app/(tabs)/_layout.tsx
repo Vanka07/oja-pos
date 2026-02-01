@@ -79,7 +79,6 @@ export default function TabLayout() {
       />
       {/* Hidden screens */}
       <Tabs.Screen name="reports" options={{ href: null }} />
-      <Tabs.Screen name="two" options={{ href: null }} />
     </Tabs>
   );
 }

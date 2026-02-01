@@ -7,8 +7,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useAuthStore } from '@/store/authStore';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import LockScreen from './lock';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -23,6 +25,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const router = useRouter();
   const segments = useSegments();
   const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding);
+  const pin = useAuthStore((s) => s.pin);
+  const isLocked = useAuthStore((s) => s.isLocked);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -49,6 +53,11 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
   if (!isReady) {
     return <View className="flex-1 bg-stone-950" />;
+  }
+
+  // Show lock screen if PIN is set and app is locked
+  if (pin && isLocked) {
+    return <LockScreen />;
   }
 
   return (
