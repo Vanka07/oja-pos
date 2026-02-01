@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
+import { checkSoldProductsLowStock, checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
 import { usePrinterStore } from '@/store/printerStore';
@@ -41,8 +42,11 @@ export default function POSScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [lowStockAlert, setLowStockAlert] = useState<{ name: string; quantity: number }[] | null>(null);
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
+  const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
+  const alertPhoneNumber = useRetailStore((s) => s.alertPhoneNumber);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const currentStaff = useStaffStore((s) => s.currentStaff);
@@ -107,6 +111,7 @@ export default function POSScreen() {
 
   const handleCompleteSale = useCallback((method: PaymentMethod) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const soldProductIds = cart.map((item) => item.product.id);
     const sale = completeSale(method, undefined, undefined, currentStaff?.id, currentStaff?.name);
     if (sale) {
       setLastSale(sale);
@@ -114,8 +119,16 @@ export default function POSScreen() {
       setShowSuccessModal(true);
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
       logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
+
+      // Check for low stock after sale
+      if (whatsAppAlertsEnabled) {
+        const lowStock = checkSoldProductsLowStock(soldProductIds);
+        if (lowStock.length > 0) {
+          setLowStockAlert(lowStock);
+        }
+      }
     }
-  }, [completeSale, currentStaff, logActivity]);
+  }, [completeSale, currentStaff, logActivity, cart, whatsAppAlertsEnabled]);
 
   const handlePrintReceipt = useCallback(async () => {
     if (!lastSale || !shopInfo) return;
@@ -547,6 +560,7 @@ export default function POSScreen() {
         onRequestClose={() => {
           setShowSuccessModal(false);
           setLastSale(null);
+          setLowStockAlert(null);
         }}
       >
         <Pressable
@@ -554,6 +568,7 @@ export default function POSScreen() {
           onPress={() => {
             setShowSuccessModal(false);
             setLastSale(null);
+            setLowStockAlert(null);
           }}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
@@ -582,6 +597,29 @@ export default function POSScreen() {
                   <Text className="text-stone-500 dark:text-stone-400">Items</Text>
                   <Text className="text-stone-600 dark:text-stone-300">{lastSale.items.length} product{lastSale.items.length > 1 ? 's' : ''}</Text>
                 </View>
+              </View>
+            )}
+
+            {/* Low Stock Alert Banner */}
+            {lowStockAlert && lowStockAlert.length > 0 && (
+              <View className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 w-full mb-4">
+                <Text className="text-amber-400 font-medium text-sm mb-1">⚠️ Low Stock Warning</Text>
+                {lowStockAlert.map((item, i) => (
+                  <Text key={i} className="text-amber-300 text-xs">
+                    {item.name} — {item.quantity} left
+                  </Text>
+                ))}
+                {alertPhoneNumber ? (
+                  <Pressable
+                    onPress={() => {
+                      checkAndSendLowStockAlerts(alertPhoneNumber);
+                      setLowStockAlert(null);
+                    }}
+                    className="bg-amber-500 mt-2 py-2 rounded-lg active:opacity-90"
+                  >
+                    <Text className="text-white font-semibold text-center text-sm">Send WhatsApp Alert</Text>
+                  </Pressable>
+                ) : null}
               </View>
             )}
 
@@ -618,6 +656,7 @@ export default function POSScreen() {
               onPress={() => {
                 setShowSuccessModal(false);
                 setLastSale(null);
+                setLowStockAlert(null);
               }}
               className="bg-orange-500 w-full py-4 rounded-xl active:opacity-90"
             >

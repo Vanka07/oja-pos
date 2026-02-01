@@ -90,6 +90,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="staff-switch" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="shop-profile" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="cloud-auth" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="payroll" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

@@ -35,6 +35,7 @@ import {
   CheckCircle2,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
+import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { usePrinterStore, type PaperSize } from '@/store/printerStore';
@@ -121,6 +122,14 @@ export default function MoreScreen() {
   const openCashSession = useRetailStore((s) => s.openCashSession);
   const closeCashSession = useRetailStore((s) => s.closeCashSession);
   const getExpectedCash = useRetailStore((s) => s.getExpectedCash);
+
+  // Inventory Alerts
+  const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
+  const setWhatsAppAlertsEnabled = useRetailStore((s) => s.setWhatsAppAlertsEnabled);
+  const alertPhoneNumber = useRetailStore((s) => s.alertPhoneNumber);
+  const setAlertPhoneNumber = useRetailStore((s) => s.setAlertPhoneNumber);
+  const defaultLowStockThreshold = useRetailStore((s) => s.defaultLowStockThreshold);
+  const setDefaultLowStockThreshold = useRetailStore((s) => s.setDefaultLowStockThreshold);
 
   const todayExpenses = useMemo(() => getExpensesToday(), [getExpensesToday, expenses]);
   const todayExpenseTotal = useMemo(() =>
@@ -285,6 +294,18 @@ export default function MoreScreen() {
     ]);
   }, [cloudAuth]);
 
+  const handleSendAlertNow = useCallback(async () => {
+    if (!alertPhoneNumber) {
+      Alert.alert('Missing Number', 'Please enter a WhatsApp number first.');
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const sent = await checkAndSendLowStockAlerts(alertPhoneNumber);
+    if (!sent) {
+      Alert.alert('No Low Stock', 'All products are above their low stock threshold.');
+    }
+  }, [alertPhoneNumber]);
+
   const lastSyncTime = useRetailStore((s) => s.lastSyncTime);
   const lastSyncDisplay = lastSyncTime
     ? new Date(lastSyncTime).toLocaleString('en-NG', {
@@ -443,7 +464,7 @@ export default function MoreScreen() {
             {canManageStaff && (
               <Pressable
                 onPress={() => router.push('/staff')}
-                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-amber-500/20 items-center justify-center mr-3">
                   <Shield size={20} color="#f59e0b" />
@@ -455,6 +476,20 @@ export default function MoreScreen() {
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
             )}
+
+            <Pressable
+              onPress={() => router.push('/payroll')}
+              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
+                <Banknote size={20} color="#22c55e" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">Payroll</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Track staff salaries</Text>
+              </View>
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
           </View>
         </Animated.View>
 
@@ -664,6 +699,84 @@ export default function MoreScreen() {
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
+          </View>
+        </Animated.View>
+
+        {/* Inventory Alerts Section */}
+        <Animated.View
+          entering={FadeInDown.delay(590).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Inventory Alerts</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+            {/* Toggle */}
+            <View className="flex-row items-center justify-between p-4 border-b border-stone-200 dark:border-stone-800">
+              <View className="flex-row items-center gap-3 flex-1">
+                <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center">
+                  <Banknote size={20} color="#22c55e" />
+                </View>
+                <View>
+                  <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Low Stock Alerts</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    {whatsAppAlertsEnabled ? 'Enabled' : 'Disabled'}
+                  </Text>
+                </View>
+              </View>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setWhatsAppAlertsEnabled(!whatsAppAlertsEnabled);
+                }}
+                className={`w-12 h-7 rounded-full justify-center ${whatsAppAlertsEnabled ? 'bg-orange-500 items-end' : 'bg-stone-300 dark:bg-stone-700 items-start'}`}
+              >
+                <View className="w-5 h-5 rounded-full bg-white mx-1" />
+              </Pressable>
+            </View>
+
+            {whatsAppAlertsEnabled && (
+              <>
+                {/* Phone Number */}
+                <View className="p-4 border-b border-stone-200 dark:border-stone-800">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">WhatsApp Number</Text>
+                  <TextInput
+                    className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
+                    placeholder="e.g. 2348012345678"
+                    placeholderTextColor="#57534e"
+                    keyboardType="phone-pad"
+                    value={alertPhoneNumber}
+                    onChangeText={setAlertPhoneNumber}
+                  />
+                </View>
+
+                {/* Default Threshold */}
+                <View className="p-4 border-b border-stone-200 dark:border-stone-800">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Default Low Stock Threshold</Text>
+                  <TextInput
+                    className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
+                    placeholder="10"
+                    placeholderTextColor="#57534e"
+                    keyboardType="numeric"
+                    value={defaultLowStockThreshold.toString()}
+                    onChangeText={(text) => setDefaultLowStockThreshold(parseInt(text) || 10)}
+                  />
+                </View>
+
+                {/* Send Alert Now */}
+                <Pressable
+                  onPress={handleSendAlertNow}
+                  className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+                >
+                  <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mr-3">
+                    <Zap size={20} color="#10b981" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-stone-900 dark:text-white font-medium">Send Alert Now</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Manually check & send low stock alert</Text>
+                  </View>
+                  <ChevronRight size={20} color="#57534e" />
+                </Pressable>
+              </>
+            )}
           </View>
         </Animated.View>
 

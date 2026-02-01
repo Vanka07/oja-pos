@@ -261,7 +261,8 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-400 text-sm mb-2">Low Stock Threshold</Text>
+                <Text className="text-stone-400 text-sm mb-1">Low Stock Alert</Text>
+                <Text className="text-stone-500 text-xs mb-2">Alert when stock falls below</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="10"

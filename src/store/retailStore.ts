@@ -131,6 +131,16 @@ interface RetailState {
   getProductByBarcode: (barcode: string) => Product | undefined;
   adjustStock: (id: string, adjustment: number, reason?: string, supplierId?: string, costPerUnit?: number) => void;
 
+  // Inventory Alerts
+  whatsAppAlertsEnabled: boolean;
+  alertPhoneNumber: string;
+  lastAlertSentAt: string | null;
+  defaultLowStockThreshold: number;
+  setWhatsAppAlertsEnabled: (enabled: boolean) => void;
+  setAlertPhoneNumber: (phone: string) => void;
+  setLastAlertSentAt: (timestamp: string) => void;
+  setDefaultLowStockThreshold: (threshold: number) => void;
+
   // Categories
   categories: Category[];
   addCategory: (category: Omit<Category, 'id'>) => void;
@@ -377,6 +387,16 @@ export const useRetailStore = create<RetailState>()(
       pendingSyncCount: 0,
       lastSyncTime: null,
       demoLoaded: false,
+
+      // Inventory Alerts
+      whatsAppAlertsEnabled: false,
+      alertPhoneNumber: '',
+      lastAlertSentAt: null,
+      defaultLowStockThreshold: 10,
+      setWhatsAppAlertsEnabled: (enabled) => set({ whatsAppAlertsEnabled: enabled }),
+      setAlertPhoneNumber: (phone) => set({ alertPhoneNumber: phone }),
+      setLastAlertSentAt: (timestamp) => set({ lastAlertSentAt: timestamp }),
+      setDefaultLowStockThreshold: (threshold) => set({ defaultLowStockThreshold: threshold }),
 
       // Product actions
       addProduct: (product) => {
@@ -846,6 +866,10 @@ export const useRetailStore = create<RetailState>()(
         pendingSyncCount: state.pendingSyncCount,
         lastSyncTime: state.lastSyncTime,
         demoLoaded: state.demoLoaded,
+        whatsAppAlertsEnabled: state.whatsAppAlertsEnabled,
+        alertPhoneNumber: state.alertPhoneNumber,
+        lastAlertSentAt: state.lastAlertSentAt,
+        defaultLowStockThreshold: state.defaultLowStockThreshold,
       }),
       onRehydrateStorage: () => (state) => {
         if (state && !state.demoLoaded) {
