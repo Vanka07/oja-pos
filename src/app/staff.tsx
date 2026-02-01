@@ -177,8 +177,10 @@ export default function StaffScreen() {
           className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. Chidi Okafor"
           placeholderTextColor="#57534e"
+          autoCapitalize="words"
+          autoCorrect={false}
           value={formData.name}
-          onChangeText={(text) => setFormData({ ...formData, name: text })}
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
         />
       </View>
 
@@ -188,9 +190,10 @@ export default function StaffScreen() {
           className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. 08012345678"
           placeholderTextColor="#57534e"
-          keyboardType="phone-pad"
+          keyboardType={Platform.OS === 'web' ? 'default' : 'phone-pad'}
+          inputMode="tel"
           value={formData.phone}
-          onChangeText={(text) => setFormData({ ...formData, phone: text })}
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, phone: text.replace(/[^0-9+\-\s]/g, '') }))}
         />
       </View>
 
@@ -202,11 +205,12 @@ export default function StaffScreen() {
           className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
           placeholder="• • • •"
           placeholderTextColor="#57534e"
-          keyboardType="numeric"
+          keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
+          inputMode="numeric"
           maxLength={4}
-          secureTextEntry
+          secureTextEntry={Platform.OS !== 'web'}
           value={formData.pin}
-          onChangeText={(text) => setFormData({ ...formData, pin: text.replace(/[^0-9]/g, '') })}
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, pin: text.replace(/[^0-9]/g, '') }))}
         />
       </View>
 

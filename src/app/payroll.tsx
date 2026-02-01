@@ -390,11 +390,16 @@ export default function PayrollScreen() {
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                     placeholder="0"
                     placeholderTextColor="#57534e"
-                    keyboardType="numeric"
+                    keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
+                    inputMode="numeric"
                     value={paymentAmount}
-                    onChangeText={setPaymentAmount}
-                    autoFocus
+                    onChangeText={(text) => setPaymentAmount(text.replace(/[^0-9]/g, ''))}
                   />
+                  {paymentAmount ? (
+                    <Text className="text-orange-400 text-sm text-center mt-2">
+                      {formatNaira(parseFloat(paymentAmount) || 0)}
+                    </Text>
+                  ) : null}
                 </View>
 
                 <View>
@@ -506,19 +511,30 @@ export default function PayrollScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Monthly Salary (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                    placeholder="0"
+                    placeholder="e.g. 50000"
                     placeholderTextColor="#57534e"
-                    keyboardType="numeric"
+                    keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
+                    inputMode="numeric"
                     value={newSalary}
-                    onChangeText={setNewSalary}
+                    onChangeText={(text) => setNewSalary(text.replace(/[^0-9]/g, ''))}
                   />
+                  {newSalary ? (
+                    <Text className="text-orange-400 text-sm text-center mt-2">
+                      {formatNaira(parseFloat(newSalary) || 0)}/month
+                    </Text>
+                  ) : null}
                 </View>
 
                 <Pressable
                   onPress={handleAddStaffSalary}
-                  className="bg-orange-500 py-4 rounded-xl active:opacity-90 mt-2"
+                  disabled={!selectedStaffId || !newSalary}
+                  className={`py-4 rounded-xl active:opacity-90 mt-2 ${
+                    selectedStaffId && newSalary ? 'bg-orange-500' : 'bg-stone-300 dark:bg-stone-700'
+                  }`}
                 >
-                  <Text className="text-white font-semibold text-center text-lg">Add Salary Record</Text>
+                  <Text className={`font-semibold text-center text-lg ${
+                    selectedStaffId && newSalary ? 'text-white' : 'text-stone-500'
+                  }`}>Add Salary Record</Text>
                 </Pressable>
               </View>
             </View>
