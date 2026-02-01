@@ -18,7 +18,8 @@ import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, Href } from 'expo-router';
+import EmptyState from '@/components/EmptyState';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -66,8 +67,8 @@ export default function DashboardScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
-                {greeting}, {displayName}
+              <Text className="text-orange-500 text-base font-bold tracking-wide">
+                🛍️ Oja
               </Text>
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
@@ -85,6 +86,9 @@ export default function DashboardScreen() {
             </View>
             <Text className="text-white text-3xl font-bold tracking-tight">
               {shopInfo?.name || 'Dashboard'}
+            </Text>
+            <Text className="text-stone-500 text-sm font-medium mt-1">
+              {greeting}, {displayName} 👋
             </Text>
           </Animated.View>
         </View>
@@ -118,6 +122,13 @@ export default function DashboardScreen() {
               </View>
             </View>
           </LinearGradient>
+          <Text className="text-stone-500 text-sm text-center mt-3 font-medium">
+            {summary.totalTransactions === 0
+              ? 'New day, new opportunities! 🌅'
+              : summary.totalSales >= 50000
+                ? 'Big day! Keep pushing! 💪🔥'
+                : 'Nice start — keep the sales coming! 💪'}
+          </Text>
         </Animated.View>
 
         {/* Payment Methods */}
@@ -211,10 +222,14 @@ export default function DashboardScreen() {
           </View>
 
           {salesToday.length === 0 ? (
-            <View className="bg-stone-900/60 rounded-2xl p-6 border border-stone-800 items-center">
-              <Clock size={32} color="#57534e" />
-              <Text className="text-stone-500 mt-3 text-center">No sales yet today</Text>
-              <Text className="text-stone-600 text-sm mt-1 text-center">Start a new sale from the POS tab</Text>
+            <View className="bg-stone-900/60 rounded-2xl border border-stone-800">
+              <EmptyState
+                icon={ShoppingCart}
+                title="No sales yet today"
+                description="Start your first sale from the Sell tab"
+                buttonLabel="Start Selling"
+                onButtonPress={() => router.push('/(tabs)/pos' as Href)}
+              />
             </View>
           ) : (
             <View className="gap-2">

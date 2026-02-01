@@ -190,6 +190,10 @@ interface RetailState {
   // Sync status
   pendingSyncCount: number;
   lastSyncTime: string | null;
+
+  // Demo
+  demoLoaded: boolean;
+  loadDemoData: () => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
@@ -220,6 +224,98 @@ const defaultCategories: Category[] = [
   { id: '8', name: 'Household', color: '#34495E', icon: 'home' },
 ];
 
+// ── Demo Data (auto-populates on first load) ────────────────────────────
+
+const today = () => new Date().toISOString().split('T')[0];
+const todayAt = (h: number, m: number) => {
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+};
+
+const DEMO_PRODUCTS: Product[] = [
+  { id: 'dp1',  name: 'Peak Milk 400g',           barcode: '5000112345601', category: 'Dairy',            costPrice: 2800, sellingPrice: 3500, quantity: 80,  unit: 'tin',    lowStockThreshold: 10, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp2',  name: 'Indomie Chicken 70g',       barcode: '5390002012345', category: 'Provisions',       costPrice: 180,  sellingPrice: 230,  quantity: 200, unit: 'pack',   lowStockThreshold: 30, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp3',  name: 'Coca-Cola 50cl',             barcode: '5449000000996', category: 'Beverages',        costPrice: 200,  sellingPrice: 250,  quantity: 120, unit: 'bottle', lowStockThreshold: 20, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp4',  name: 'Milo 400g',                  barcode: '7613036254670', category: 'Beverages',        costPrice: 2200, sellingPrice: 2700, quantity: 45,  unit: 'tin',    lowStockThreshold: 8,  createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp5',  name: 'Golden Penny Semovita 1kg',  barcode: '5060000000012', category: 'Grains & Cereals', costPrice: 900,  sellingPrice: 1100, quantity: 60,  unit: 'pack',   lowStockThreshold: 10, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp6',  name: 'Dangote Sugar 1kg',          barcode: '5060000000029', category: 'Provisions',       costPrice: 1200, sellingPrice: 1500, quantity: 55,  unit: 'pack',   lowStockThreshold: 10, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp7',  name: 'Kings Oil 1L',               barcode: '5060000000036', category: 'Provisions',       costPrice: 1800, sellingPrice: 2200, quantity: 40,  unit: 'bottle', lowStockThreshold: 8,  createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp8',  name: 'Dettol Soap 110g',           barcode: '5010044017072', category: 'Toiletries',       costPrice: 350,  sellingPrice: 450,  quantity: 90,  unit: 'bar',    lowStockThreshold: 15, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp9',  name: 'Minimie Chinchin 50g',       barcode: '5060000000043', category: 'Snacks',           costPrice: 100,  sellingPrice: 150,  quantity: 150, unit: 'pack',   lowStockThreshold: 20, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp10', name: 'Harpic Toilet Cleaner 500ml', barcode: '5060000000050', category: 'Household',       costPrice: 750,  sellingPrice: 950,  quantity: 30,  unit: 'bottle', lowStockThreshold: 5,  createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp11', name: 'Okin Biscuit 50g',           barcode: '5060000000067', category: 'Snacks',           costPrice: 80,   sellingPrice: 100,  quantity: 180, unit: 'pack',   lowStockThreshold: 25, createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+  { id: 'dp12', name: 'Chi Exotic Juice 1L',        barcode: '5060000000074', category: 'Beverages',        costPrice: 850,  sellingPrice: 1050, quantity: 35,  unit: 'pack',   lowStockThreshold: 5,  createdAt: todayAt(7,0), updatedAt: todayAt(7,0) },
+];
+
+const DEMO_CUSTOMERS: Customer[] = [
+  {
+    id: 'dc1', name: 'Mama Ngozi', phone: '08031234567', creditLimit: 50000, currentCredit: 8200,
+    transactions: [
+      { id: 'dt1', type: 'credit', amount: 8200, saleId: 'ds7', createdAt: todayAt(15, 30) },
+    ],
+    createdAt: todayAt(7, 0),
+  },
+  {
+    id: 'dc2', name: 'Alhaji Musa', phone: '08061234568', creditLimit: 100000, currentCredit: 0,
+    transactions: [
+      { id: 'dt2', type: 'credit', amount: 12000, createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
+      { id: 'dt3', type: 'payment', amount: 12000, note: 'Paid in full', createdAt: new Date(Date.now() - 1 * 86400000).toISOString() },
+    ],
+    createdAt: todayAt(7, 0),
+  },
+  {
+    id: 'dc3', name: 'Mrs. Adebayo', phone: '08091234569', creditLimit: 30000, currentCredit: 4750,
+    transactions: [
+      { id: 'dt4', type: 'credit', amount: 4750, saleId: 'ds8', createdAt: todayAt(17, 0) },
+    ],
+    createdAt: todayAt(7, 0),
+  },
+  {
+    id: 'dc4', name: 'Brother Emeka', phone: '07031234570', creditLimit: 20000, currentCredit: 0,
+    transactions: [],
+    createdAt: todayAt(7, 0),
+  },
+];
+
+const _dp = (id: string) => DEMO_PRODUCTS.find(p => p.id === id)!;
+
+const DEMO_SALES: Sale[] = [
+  // Sale 1 – 8:15 AM – cash ₦7,250
+  { id: 'ds1', items: [{ product: _dp('dp1'), quantity: 1 }, { product: _dp('dp2'), quantity: 5 }, { product: _dp('dp3'), quantity: 6 }],
+    subtotal: 6150, discount: 0, total: 6150, paymentMethod: 'cash', cashReceived: 7000, changeGiven: 850, createdAt: todayAt(8,15), synced: true },
+  // Sale 2 – 9:40 AM – transfer ₦5,400
+  { id: 'ds2', items: [{ product: _dp('dp4'), quantity: 2 }],
+    subtotal: 5400, discount: 0, total: 5400, paymentMethod: 'transfer', createdAt: todayAt(9,40), synced: true },
+  // Sale 3 – 10:55 AM – cash ₦8,350
+  { id: 'ds3', items: [{ product: _dp('dp5'), quantity: 3 }, { product: _dp('dp6'), quantity: 2 }, { product: _dp('dp7'), quantity: 1 }],
+    subtotal: 8500, discount: 150, total: 8350, paymentMethod: 'cash', cashReceived: 10000, changeGiven: 1650, createdAt: todayAt(10,55), synced: true },
+  // Sale 4 – 12:20 PM – pos ₦3,600
+  { id: 'ds4', items: [{ product: _dp('dp8'), quantity: 4 }, { product: _dp('dp9'), quantity: 8 }],
+    subtotal: 3000, discount: 0, total: 3000, paymentMethod: 'pos', createdAt: todayAt(12,20), synced: true },
+  // Sale 5 – 1:45 PM – cash ₦9,500
+  { id: 'ds5', items: [{ product: _dp('dp1'), quantity: 2 }, { product: _dp('dp12'), quantity: 2 }, { product: _dp('dp11'), quantity: 2 }],
+    subtotal: 9300, discount: 0, total: 9300, paymentMethod: 'cash', cashReceived: 10000, changeGiven: 700, createdAt: todayAt(13,45), synced: true },
+  // Sale 6 – 3:00 PM – transfer ₦11,000
+  { id: 'ds6', items: [{ product: _dp('dp7'), quantity: 3 }, { product: _dp('dp6'), quantity: 3 }],
+    subtotal: 11100, discount: 100, total: 11000, paymentMethod: 'transfer', createdAt: todayAt(15,0), synced: true },
+  // Sale 7 – 3:30 PM – credit ₦8,200 (Mama Ngozi)
+  { id: 'ds7', items: [{ product: _dp('dp4'), quantity: 2 }, { product: _dp('dp5'), quantity: 2 }, { product: _dp('dp9'), quantity: 4 }],
+    subtotal: 8200, discount: 0, total: 8200, paymentMethod: 'credit', customerId: 'dc1', customerName: 'Mama Ngozi', createdAt: todayAt(15,30), synced: true },
+  // Sale 8 – 5:00 PM – credit ₦4,750 (Mrs. Adebayo)
+  { id: 'ds8', items: [{ product: _dp('dp10'), quantity: 3 }, { product: _dp('dp8'), quantity: 2 }, { product: _dp('dp3'), quantity: 4 }],
+    subtotal: 4750, discount: 0, total: 4750, paymentMethod: 'credit', customerId: 'dc3', customerName: 'Mrs. Adebayo', createdAt: todayAt(17,0), synced: true },
+];
+
+const DEMO_EXPENSES: Expense[] = [
+  { id: 'de1', category: 'Generator Fuel', description: 'Diesel for generator', amount: 5000, paymentMethod: 'cash', createdAt: todayAt(7, 30) },
+  { id: 'de2', category: 'Phone/Data',     description: 'MTN data bundle',       amount: 2000, paymentMethod: 'transfer', createdAt: todayAt(9, 0) },
+  { id: 'de3', category: 'Transport',       description: 'Delivery bike fuel',    amount: 1500, paymentMethod: 'cash', createdAt: todayAt(11, 0) },
+  { id: 'de4', category: 'Shop Supplies',   description: 'Receipt paper rolls',   amount: 800,  paymentMethod: 'cash', createdAt: todayAt(14, 0) },
+];
+
+// ── Store ────────────────────────────────────────────────────────────────
+
 export const useRetailStore = create<RetailState>()(
   persist(
     (set, get) => ({
@@ -237,6 +333,7 @@ export const useRetailStore = create<RetailState>()(
       stockMovements: [],
       pendingSyncCount: 0,
       lastSyncTime: null,
+      demoLoaded: false,
 
       // Product actions
       addProduct: (product) => {
@@ -668,6 +765,16 @@ export const useRetailStore = create<RetailState>()(
           .sort((a, b) => b.totalPurchases - a.totalPurchases)
           .slice(0, 10);
       },
+      // Demo data loader
+      loadDemoData: () => {
+        set({
+          products: DEMO_PRODUCTS,
+          customers: DEMO_CUSTOMERS,
+          sales: DEMO_SALES,
+          expenses: DEMO_EXPENSES,
+          demoLoaded: true,
+        });
+      },
     }),
     {
       name: 'retail-store',
@@ -684,7 +791,13 @@ export const useRetailStore = create<RetailState>()(
         stockMovements: state.stockMovements,
         pendingSyncCount: state.pendingSyncCount,
         lastSyncTime: state.lastSyncTime,
+        demoLoaded: state.demoLoaded,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && !state.demoLoaded) {
+          state.loadDemoData();
+        }
+      },
     }
   )
 );
@@ -719,6 +832,10 @@ export const generateReceiptText = (sale: Sale, shopName: string, shopPhone?: st
     sale.changeGiven ? `Change: ${formatNaira(sale.changeGiven)}` : '',
     '',
     'Thank you for your patronage! 🙏',
+    '',
+    '━━━━━━━━━━━━━━━━',
+    '_Powered by Oja POS_',
+    'Download Oja: https://ojapos.app',
   ].filter(Boolean);
 
   return lines.join('\n');

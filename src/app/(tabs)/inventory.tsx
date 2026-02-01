@@ -17,6 +17,7 @@ import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import EmptyState from '@/components/EmptyState';
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
@@ -269,6 +270,17 @@ export default function InventoryScreen() {
           <Text className="text-stone-500 text-sm mb-3">
             {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
           </Text>
+          {filteredProducts.length === 0 && products.length === 0 && (
+            <View className="bg-stone-900/60 rounded-2xl border border-stone-800">
+              <EmptyState
+                icon={Package}
+                title="Your shelf is empty"
+                description="Add your first product to get started"
+                buttonLabel="Add Product"
+                onButtonPress={() => setShowAddModal(true)}
+              />
+            </View>
+          )}
           <View className="gap-3">
             {filteredProducts.map((product, index) => {
               const isLowStock = product.quantity <= product.lowStockThreshold;

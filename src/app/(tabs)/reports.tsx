@@ -15,6 +15,7 @@ import {
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useState, useMemo } from 'react';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import EmptyState from '@/components/EmptyState';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -285,9 +286,12 @@ export default function ReportsScreen() {
           </View>
 
           {topProducts.length === 0 ? (
-            <View className="bg-stone-900/60 rounded-xl p-6 border border-stone-800 items-center">
-              <Package size={32} color="#57534e" />
-              <Text className="text-stone-500 mt-3 text-center">No sales data yet</Text>
+            <View className="bg-stone-900/60 rounded-xl border border-stone-800">
+              <EmptyState
+                icon={BarChart3}
+                title="No data yet"
+                description="Make some sales to see your reports come alive"
+              />
             </View>
           ) : (
             <View className="gap-3">
@@ -339,9 +343,12 @@ export default function ReportsScreen() {
           <Text className="text-white text-lg font-semibold mb-4">Recent Transactions</Text>
 
           {recentSales.length === 0 ? (
-            <View className="bg-stone-900/60 rounded-xl p-6 border border-stone-800 items-center">
-              <ShoppingCart size={32} color="#57534e" />
-              <Text className="text-stone-500 mt-3 text-center">No transactions yet</Text>
+            <View className="bg-stone-900/60 rounded-xl border border-stone-800">
+              <EmptyState
+                icon={ShoppingCart}
+                title="No transactions yet"
+                description="Your sales will appear here as you make them"
+              />
             </View>
           ) : (
             <View className="gap-2">

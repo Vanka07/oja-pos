@@ -18,6 +18,7 @@ import { useRetailStore, formatNaira, type Customer } from '@/store/retailStore'
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import EmptyState from '@/components/EmptyState';
 
 export default function CreditBookScreen() {
   const insets = useSafeAreaInsets();
@@ -183,6 +184,17 @@ export default function CreditBookScreen() {
           <Text className="text-stone-500 text-sm mb-3">
             {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
           </Text>
+          {filteredCustomers.length === 0 && customers.length === 0 && (
+            <View className="bg-stone-900/60 rounded-2xl border border-stone-800">
+              <EmptyState
+                icon={Users}
+                title="No customers yet"
+                description="Add your first customer to start tracking credit"
+                buttonLabel="Add Customer"
+                onButtonPress={() => setShowAddModal(true)}
+              />
+            </View>
+          )}
           <View className="gap-3">
             {filteredCustomers.map((customer, index) => {
               const hasDebt = customer.currentCredit > 0;

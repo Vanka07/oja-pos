@@ -88,20 +88,20 @@ export default function OnboardingSetup() {
               <Text className="text-white text-3xl font-bold mb-2">
                 Set up your shop
               </Text>
-              <Text className="text-stone-400 text-base mb-8">
-                Tell us about your business so we can personalize Oja for you.
+              <Text className="text-stone-400 text-base leading-6 mb-8">
+                Tell us about your business so we can personalize Oja for you. Takes less than a minute!
               </Text>
             </Animated.View>
 
             {/* Form */}
             <View className="gap-5">
               <Animated.View entering={FadeInDown.delay(200).duration(600)}>
-                <Text className="text-stone-400 text-sm mb-2 ml-1">Shop Name *</Text>
+                <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Shop Name *</Text>
                 <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.name ? 'border-red-500' : 'border-stone-800'}`}>
                   <Store size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-white text-base"
-                    placeholder="e.g. Mama Titi Supermarket"
+                    placeholder="e.g. Mama Nkechi Supermarket"
                     placeholderTextColor="#57534e"
                     value={formData.name}
                     onChangeText={(text) => {
@@ -116,7 +116,7 @@ export default function OnboardingSetup() {
               </Animated.View>
 
               <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-                <Text className="text-stone-400 text-sm mb-2 ml-1">Your Name *</Text>
+                <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Your Name *</Text>
                 <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.ownerName ? 'border-red-500' : 'border-stone-800'}`}>
                   <User size={20} color="#78716c" />
                   <TextInput
@@ -136,12 +136,12 @@ export default function OnboardingSetup() {
               </Animated.View>
 
               <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-                <Text className="text-stone-400 text-sm mb-2 ml-1">Phone Number *</Text>
+                <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Phone Number *</Text>
                 <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.phone ? 'border-red-500' : 'border-stone-800'}`}>
                   <Phone size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-white text-base"
-                    placeholder="e.g. 08012345678"
+                    placeholder="08012345678"
                     placeholderTextColor="#57534e"
                     keyboardType="phone-pad"
                     value={formData.phone}
@@ -157,12 +157,12 @@ export default function OnboardingSetup() {
               </Animated.View>
 
               <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-                <Text className="text-stone-400 text-sm mb-2 ml-1">Shop Address (Optional)</Text>
+                <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Shop Address (Optional)</Text>
                 <View className="bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-800">
                   <MapPin size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-white text-base"
-                    placeholder="e.g. 15 Market Road, Ikeja, Lagos"
+                    placeholder="15 Balogun Street, Lagos"
                     placeholderTextColor="#57534e"
                     value={formData.address}
                     onChangeText={(text) => setFormData({ ...formData, address: text })}

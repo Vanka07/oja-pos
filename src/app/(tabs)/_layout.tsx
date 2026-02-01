@@ -5,7 +5,7 @@ import { LayoutDashboard, ShoppingCart, Package, Users, MoreHorizontal } from 'l
 
 function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<{ size: number; color: string }>; color: string; focused: boolean }) {
   return (
-    <View className={`items-center justify-center ${focused ? 'opacity-100' : 'opacity-60'}`}>
+    <View className={`items-center justify-center ${focused ? 'opacity-100' : 'opacity-60'}`} style={{ width: 48, height: 48 }}>
       <Icon size={24} color={color} />
     </View>
   );
@@ -27,15 +27,15 @@ export default function TabLayout() {
           paddingBottom: 28,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 12,
+          fontWeight: '600',
           marginTop: 4,
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Dashboard',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={LayoutDashboard} color={color} focused={focused} />
           ),
@@ -62,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="customers"
         options={{
-          title: 'Credit',
+          title: 'Credit Book',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={Users} color={color} focused={focused} />
           ),

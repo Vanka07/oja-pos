@@ -18,8 +18,8 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     icon: <ShoppingBag size={64} color="white" />,
-    title: 'Welcome to Oja',
-    description: 'The complete point-of-sale system built for Nigerian retail businesses. Simple, fast, and reliable.',
+    title: 'Oja — Your Market, Your Money',
+    description: 'Run your shop smarter. Track every naira that enters and leaves your business — from morning till night.',
     gradient: ['#ea580c', '#c2410c', '#9a3412'],
   },
   {
@@ -30,20 +30,20 @@ const slides: OnboardingSlide[] = [
         <Wifi size={48} color="white" />
       </View>
     ),
-    title: 'Works Offline',
-    description: 'No internet? No problem. Make sales, track inventory, and run your business even without network. Data syncs when you\'re back online.',
+    title: 'No Light? No Wahala',
+    description: 'Sell anywhere, anytime — even when NEPA takes light. Everything works offline and syncs when network returns.',
     gradient: ['#059669', '#047857', '#065f46'],
   },
   {
     icon: <Package size={64} color="white" />,
-    title: 'Manage Inventory',
-    description: 'Track stock levels, get low-stock alerts, and never run out of your best-selling products again.',
+    title: 'Know Your Stock',
+    description: 'Never tell a customer "e don finish" again. Get alerts before you run out of your best-selling products.',
     gradient: ['#2563eb', '#1d4ed8', '#1e40af'],
   },
   {
     icon: <BarChart3 size={64} color="white" />,
-    title: 'See Your Profits',
-    description: 'Daily, weekly, and monthly reports show you exactly how your business is performing. Know your numbers.',
+    title: 'See Your Profit',
+    description: 'Know exactly how much you made today, this week, this month. Your money, your numbers.',
     gradient: ['#7c3aed', '#6d28d9', '#5b21b6'],
   },
 ];
