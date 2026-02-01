@@ -133,7 +133,7 @@ export default function InventoryScreen() {
                 </Pressable>
               )}
             </View>
-            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Inventory</Text>
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Stock</Text>
           </Animated.View>
         </View>
 

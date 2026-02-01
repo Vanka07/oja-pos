@@ -86,7 +86,7 @@ export default function OnboardingSetup() {
             {/* Header */}
             <Animated.View entering={FadeInDown.delay(100).duration(600)}>
               <View className="w-16 h-16 rounded-2xl bg-orange-500/20 items-center justify-center mb-6">
-                <Store size={32} color="#f97316" />
+                <Store size={32} color="#e05e1b" />
               </View>
               <Text className="text-stone-900 dark:text-white text-3xl font-bold mb-2">
                 Set up your shop
@@ -186,7 +186,7 @@ export default function OnboardingSetup() {
               className="active:scale-98"
             >
               <LinearGradient
-                colors={['#ea580c', '#c2410c']}
+                colors={['#e05e1b', '#b84a15']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={{ borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}

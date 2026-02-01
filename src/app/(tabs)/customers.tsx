@@ -121,7 +121,7 @@ export default function CreditBookScreen() {
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Text className="text-stone-500 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
-          <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Credit Book</Text>
+          <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Credit Book</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <View className="w-20 h-20 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center mb-4">
@@ -160,7 +160,7 @@ export default function CreditBookScreen() {
                 <Plus size={18} color="white" />
               </Pressable>
             </View>
-            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               Credit Book
             </Text>
           </Animated.View>

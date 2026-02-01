@@ -155,7 +155,7 @@ export default function ReportsScreen() {
             return (
               <View key={index} className="items-center flex-1">
                 {showLabels && <Text className="text-stone-500 text-[10px] mb-1">{item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}</Text>}
-                <View style={{ height: barHeight, backgroundColor: item.sales > 0 ? '#f97316' : (isDark ? '#44403c' : '#d6d3d1'), width: data.length > 12 ? '80%' : '60%', borderRadius: 4 }} />
+                <View style={{ height: barHeight, backgroundColor: item.sales > 0 ? '#e05e1b' : (isDark ? '#44403c' : '#d6d3d1'), width: data.length > 12 ? '80%' : '60%', borderRadius: 4 }} />
                 {showLabels && <Text className="text-stone-500 text-xs mt-2">{item.day}</Text>}
               </View>
             );
@@ -204,7 +204,7 @@ export default function ReportsScreen() {
         <VictoryChart theme={VictoryTheme?.material} domainPadding={20} width={SCREEN_WIDTH - 60} height={200} padding={{ top: 20, bottom: 40, left: 50, right: 20 }}>
           <VictoryAxis style={{ axis: { stroke: isDark ? '#44403c' : '#d6d3d1' }, tickLabels: { fill: '#a8a29e', fontSize: data.length > 12 ? 7 : 10, angle: data.length > 12 ? -45 : 0 } }} />
           <VictoryAxis dependentAxis tickFormat={(t: number) => `₦${(t / 1000).toFixed(0)}k`} style={{ axis: { stroke: isDark ? '#44403c' : '#d6d3d1' }, tickLabels: { fill: '#a8a29e', fontSize: 10 }, grid: { stroke: isDark ? '#292524' : '#e7e5e4' } }} />
-          <VictoryBar data={data} x="day" y="sales" style={{ data: { fill: '#f97316', borderRadius: 4 } }} cornerRadius={{ top: 4 }} />
+          <VictoryBar data={data} x="day" y="sales" style={{ data: { fill: '#e05e1b', borderRadius: 4 } }} cornerRadius={{ top: 4 }} />
         </VictoryChart>
       </View>
     );
@@ -239,7 +239,7 @@ export default function ReportsScreen() {
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
-          <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
+          <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <View className="w-20 h-20 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center mb-4">
@@ -259,7 +259,7 @@ export default function ReportsScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
-            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
           </Animated.View>
         </View>
 
@@ -343,7 +343,7 @@ export default function ReportsScreen() {
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-stone-900 dark:text-white text-lg font-semibold">Top Selling Products</Text>
             <View className="flex-row items-center gap-1">
-              <BarChart3 size={16} color="#f97316" />
+              <BarChart3 size={16} color="#e05e1b" />
               <Text className="text-orange-500 text-sm">By quantity</Text>
             </View>
           </View>

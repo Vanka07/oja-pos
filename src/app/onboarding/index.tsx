@@ -20,7 +20,7 @@ const slides: OnboardingSlide[] = [
     icon: <ShoppingBag size={64} color="white" />,
     title: 'Oja — Your Market, Your Money',
     description: 'Run your shop smarter. Track every naira that enters and leaves your business — from morning till night.',
-    gradient: ['#ea580c', '#c2410c', '#9a3412'],
+    gradient: ['#e05e1b', '#b84a15', '#8f3a10'],
   },
   {
     icon: (

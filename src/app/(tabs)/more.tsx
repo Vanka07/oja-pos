@@ -53,7 +53,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 const expenseIcons: Record<string, React.ReactNode> = {
-  'Rent': <Store size={18} color="#f97316" />,
+  'Rent': <Store size={18} color="#e05e1b" />,
   'Electricity (NEPA)': <Zap size={18} color="#eab308" />,
   'Generator Fuel': <Fuel size={18} color="#ef4444" />,
   'Staff Salary': <UsersIcon size={18} color="#3b82f6" />,
@@ -348,7 +348,7 @@ export default function MoreScreen() {
             <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
               Settings & Tools
             </Text>
-            <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               More
             </Text>
           </Animated.View>
@@ -365,7 +365,7 @@ export default function MoreScreen() {
             className="active:scale-[0.99]"
           >
             <LinearGradient
-              colors={currentCashSession ? ['#059669', '#047857'] : ['#ea580c', '#c2410c']}
+              colors={currentCashSession ? ['#059669', '#047857'] : ['#e05e1b', '#b84a15']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{ borderRadius: 20, padding: 20 }}
@@ -463,7 +463,7 @@ export default function MoreScreen() {
                 className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
-                  <UserCircle size={20} color="#f97316" />
+                  <UserCircle size={20} color="#e05e1b" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Switch Staff</Text>
@@ -704,9 +704,9 @@ export default function MoreScreen() {
             >
               <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
                 {isPrintingTest ? (
-                  <ActivityIndicator size="small" color="#f97316" />
+                  <ActivityIndicator size="small" color="#e05e1b" />
                 ) : (
-                  <Printer size={20} color="#f97316" />
+                  <Printer size={20} color="#e05e1b" />
                 )}
               </View>
               <View className="flex-1">
@@ -813,7 +813,7 @@ export default function MoreScreen() {
                 className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
-                  <Store size={20} color="#f97316" />
+                  <Store size={20} color="#e05e1b" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Shop Profile</Text>

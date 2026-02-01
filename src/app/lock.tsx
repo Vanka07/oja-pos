@@ -75,7 +75,7 @@ export default function LockScreen() {
     <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <Animated.View entering={FadeIn.duration(600)} className="items-center">
         <View className="w-16 h-16 rounded-full bg-orange-500/20 items-center justify-center mb-6">
-          <Lock size={28} color="#f97316" />
+          <Lock size={28} color="#e05e1b" />
         </View>
         <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Enter PIN</Text>
         <Text className="text-stone-500 text-sm mb-8">

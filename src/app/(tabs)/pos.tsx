@@ -185,7 +185,7 @@ export default function POSScreen() {
           <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
             Sell
           </Text>
-          <Text className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
+          <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
             New Sale
           </Text>
         </Animated.View>
@@ -219,7 +219,7 @@ export default function POSScreen() {
                 onPress={() => setShowScanner(true)}
                 className="bg-orange-500/20 border border-orange-500/40 rounded-xl p-3 active:opacity-80"
               >
-                <ScanBarcode size={22} color="#f97316" />
+                <ScanBarcode size={22} color="#e05e1b" />
               </Pressable>
             </View>
           </Animated.View>
@@ -274,7 +274,7 @@ export default function POSScreen() {
               {filteredProducts.map((product, index) => {
                 const inCart = cart.find((i) => i.product.id === product.id);
                 const firstLetter = product.name.charAt(0).toUpperCase();
-                const letterColors = ['#f97316', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
+                const letterColors = ['#e05e1b', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
                 const colorIndex = firstLetter.charCodeAt(0) % letterColors.length;
                 const placeholderColor = letterColors[colorIndex];
                 return (
@@ -339,7 +339,7 @@ export default function POSScreen() {
         >
           <View className="mx-5">
             <LinearGradient
-              colors={['#ea580c', '#c2410c']}
+              colors={['#e05e1b', '#b84a15']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{ borderRadius: 20, padding: 16 }}
@@ -418,14 +418,14 @@ export default function POSScreen() {
                           onPress={() => handleQuantityChange(item.product.id, -1)}
                           className="p-2"
                         >
-                          <Minus size={16} color="#f97316" />
+                          <Minus size={16} color="#e05e1b" />
                         </Pressable>
                         <Text className="text-stone-900 dark:text-white font-medium px-2">{item.quantity}</Text>
                         <Pressable
                           onPress={() => handleQuantityChange(item.product.id, 1)}
                           className="p-2"
                         >
-                          <Plus size={16} color="#f97316" />
+                          <Plus size={16} color="#e05e1b" />
                         </Pressable>
                       </View>
                       <Text className="text-stone-900 dark:text-white font-semibold w-20 text-right">
