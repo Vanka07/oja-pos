@@ -7,9 +7,12 @@ import { Store, X, RotateCcw } from 'lucide-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 
 export default function ShopProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
@@ -55,9 +58,9 @@ export default function ShopProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
       <KeyboardAvoidingView
@@ -97,7 +100,7 @@ export default function ShopProfileScreen() {
             <View>
               <Text className="text-stone-400 text-sm mb-2">Shop Name *</Text>
               <TextInput
-                className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-4 text-white text-base"
+                className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder="e.g. Mama Nkechi Store"
                 placeholderTextColor="#57534e"
                 value={name}
@@ -108,7 +111,7 @@ export default function ShopProfileScreen() {
             <View>
               <Text className="text-stone-400 text-sm mb-2">Owner Name</Text>
               <TextInput
-                className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-4 text-white text-base"
+                className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder="e.g. Nkechi Okafor"
                 placeholderTextColor="#57534e"
                 value={ownerName}
@@ -119,7 +122,7 @@ export default function ShopProfileScreen() {
             <View>
               <Text className="text-stone-400 text-sm mb-2">Phone Number</Text>
               <TextInput
-                className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-4 text-white text-base"
+                className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder="e.g. 08031234567"
                 placeholderTextColor="#57534e"
                 keyboardType="phone-pad"
@@ -131,7 +134,7 @@ export default function ShopProfileScreen() {
             <View>
               <Text className="text-stone-400 text-sm mb-2">Address</Text>
               <TextInput
-                className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-4 text-white text-base"
+                className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder="e.g. 12 Market Road, Ikeja"
                 placeholderTextColor="#57534e"
                 value={address}
@@ -142,7 +145,7 @@ export default function ShopProfileScreen() {
 
             <View>
               <Text className="text-stone-400 text-sm mb-2">Currency</Text>
-              <View className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-4">
+              <View className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4">
                 <Text className="text-stone-500 text-base">🇳🇬 Nigerian Naira (₦ NGN)</Text>
               </View>
             </View>
@@ -156,7 +159,7 @@ export default function ShopProfileScreen() {
             </Pressable>
 
             {/* Reset App */}
-            <View className="mt-8 pt-6 border-t border-stone-800">
+            <View className="mt-8 pt-6 border-t border-stone-200 dark:border-stone-800">
               <Text className="text-stone-600 text-xs uppercase tracking-wide mb-3">Danger Zone</Text>
               <Pressable
                 onPress={handleReset}

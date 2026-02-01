@@ -27,19 +27,22 @@ import {
   Cloud,
   RefreshCw,
   LogOut,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { APP_VERSION } from '@/store/updateStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { useThemeStore } from '@/store/themeStore';
 import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
+import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 
 const expenseIcons: Record<string, React.ReactNode> = {
   'Rent': <Store size={18} color="#f97316" />,
@@ -56,6 +59,8 @@ const expenseIcons: Record<string, React.ReactNode> = {
 
 export default function MoreScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showExpensesListModal, setShowExpensesListModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
@@ -64,6 +69,10 @@ export default function MoreScreen() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [closingNote, setClosingNote] = useState('');
+
+  // Theme
+  const themePreference = useThemeStore((s) => s.preference);
+  const setThemePreference = useThemeStore((s) => s.setPreference);
 
   // Calculator state
   const [costPrice, setCostPrice] = useState('');
@@ -183,21 +192,37 @@ export default function MoreScreen() {
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const dateStr = new Date().toISOString().split('T')[0];
-      const filePath = FileSystem.documentDirectory + `oja-backup-${dateStr}.json`;
+      const filename = `oja-backup-${dateStr}.json`;
 
-      await FileSystem.writeAsStringAsync(filePath, jsonString, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(filePath, {
-          mimeType: 'application/json',
-          dialogTitle: 'Export Oja POS Backup',
-          UTI: 'public.json',
-        });
+      if (Platform.OS === 'web') {
+        // Web: use Blob download
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
       } else {
-        Alert.alert('Export Complete', 'Backup file saved but sharing is not available on this device.');
+        // Native: use expo-file-system + expo-sharing
+        const FileSystem = await import('expo-file-system');
+        const Sharing = await import('expo-sharing');
+        const filePath = FileSystem.documentDirectory + filename;
+
+        await FileSystem.writeAsStringAsync(filePath, jsonString, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(filePath, {
+            mimeType: 'application/json',
+            dialogTitle: 'Export Oja POS Backup',
+            UTI: 'public.json',
+          });
+        } else {
+          Alert.alert('Export Complete', 'Backup file saved but sharing is not available on this device.');
+        }
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -244,10 +269,14 @@ export default function MoreScreen() {
       })
     : 'Never';
 
+  const gradientColors: [string, string, string] = isDark
+    ? ['#292524', '#1c1917', '#0c0a09']
+    : ['#f5f5f4', '#fafaf9', '#ffffff'];
+
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={gradientColors}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -259,10 +288,10 @@ export default function MoreScreen() {
         {/* Header */}
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
               Settings & Tools
             </Text>
-            <Text className="text-white text-3xl font-bold tracking-tight">
+            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
               More
             </Text>
           </Animated.View>
@@ -318,25 +347,25 @@ export default function MoreScreen() {
           {canAddExpense && (
             <Pressable
               onPress={() => setShowExpenseModal(true)}
-              className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:scale-98"
+              className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
             >
               <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mb-3">
                 <Receipt size={20} color="#ef4444" />
               </View>
-              <Text className="text-white font-medium">Add Expense</Text>
-              <Text className="text-stone-500 text-xs mt-1">Record costs</Text>
+              <Text className="text-stone-900 dark:text-white font-medium">Add Expense</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs mt-1">Record costs</Text>
             </Pressable>
           )}
 
           <Pressable
             onPress={() => setShowCalculatorModal(true)}
-            className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:scale-98"
+            className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <Calculator size={20} color="#10b981" />
             </View>
-            <Text className="text-white font-medium">Price Calculator</Text>
-            <Text className="text-stone-500 text-xs mt-1">Set margins</Text>
+            <Text className="text-stone-900 dark:text-white font-medium">Price Calculator</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs mt-1">Set margins</Text>
           </Pressable>
         </Animated.View>
 
@@ -347,13 +376,13 @@ export default function MoreScreen() {
         >
           <Pressable
             onPress={() => setShowExpensesListModal(true)}
-            className="bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:opacity-90"
+            className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:opacity-90"
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-stone-500 text-xs uppercase tracking-wide">Today's Expenses</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Today's Expenses</Text>
                 <Text className="text-red-400 text-2xl font-bold mt-1">{formatNaira(todayExpenseTotal)}</Text>
-                <Text className="text-stone-500 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </View>
@@ -365,19 +394,19 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(500).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Staff</Text>
-          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Staff</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {hasStaff && (
               <Pressable
                 onPress={() => router.push('/staff-switch')}
-                className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
                   <UserCircle size={20} color="#f97316" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-medium">Switch Staff</Text>
-                  <Text className="text-stone-500 text-sm">
+                  <Text className="text-stone-900 dark:text-white font-medium">Switch Staff</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
                     {currentStaff ? `Current: ${currentStaff.name}` : 'No one logged in'}
                   </Text>
                 </View>
@@ -388,14 +417,14 @@ export default function MoreScreen() {
             {canManageStaff && (
               <Pressable
                 onPress={() => router.push('/staff')}
-                className="flex-row items-center p-4 active:bg-stone-800/50"
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-amber-500/20 items-center justify-center mr-3">
                   <Shield size={20} color="#f59e0b" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-medium">Staff Management</Text>
-                  <Text className="text-stone-500 text-sm">{staffMembers.length} staff member{staffMembers.length !== 1 ? 's' : ''}</Text>
+                  <Text className="text-stone-900 dark:text-white font-medium">Staff Management</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">{staffMembers.length} staff member{staffMembers.length !== 1 ? 's' : ''}</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -410,30 +439,30 @@ export default function MoreScreen() {
             className="mx-5 mt-4"
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-stone-500 text-xs uppercase tracking-wide">Recent Activity</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Recent Activity</Text>
               {canManageStaff && (
                 <Pressable onPress={() => router.push('/staff')} className="active:opacity-70">
                   <Text className="text-orange-500 text-xs font-medium">View All</Text>
                 </Pressable>
               )}
             </View>
-            <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+            <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
               {recentActivities.map((activity, index) => (
                 <View
                   key={activity.id}
-                  className={`flex-row items-center p-3 ${index < recentActivities.length - 1 ? 'border-b border-stone-800' : ''}`}
+                  className={`flex-row items-center p-3 ${index < recentActivities.length - 1 ? 'border-b border-stone-200 dark:border-stone-800' : ''}`}
                 >
-                  <View className="w-7 h-7 rounded-full bg-stone-800 items-center justify-center mr-3">
-                    <Text className="text-white text-xs font-bold">{activity.staffName.charAt(0)}</Text>
+                  <View className="w-7 h-7 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">
+                    <Text className="text-stone-900 dark:text-white text-xs font-bold">{activity.staffName.charAt(0)}</Text>
                   </View>
                   <View className="flex-1">
-                    <Text className="text-stone-300 text-sm" numberOfLines={1}>{activity.description}</Text>
-                    <Text className="text-stone-600 text-xs">
+                    <Text className="text-stone-600 dark:text-stone-300 text-sm" numberOfLines={1}>{activity.description}</Text>
+                    <Text className="text-stone-400 dark:text-stone-600 text-xs">
                       {activity.staffName} • {new Date(activity.createdAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
                   {activity.amount !== undefined && (
-                    <Text className="text-stone-400 text-sm font-medium">{formatNaira(activity.amount)}</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm font-medium">{formatNaira(activity.amount)}</Text>
                   )}
                 </View>
               ))}
@@ -441,31 +470,70 @@ export default function MoreScreen() {
           </Animated.View>
         )}
 
+        {/* Appearance Section */}
+        <Animated.View
+          entering={FadeInDown.delay(540).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Appearance</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 p-3">
+            <View className="flex-row gap-2">
+              {([
+                { key: 'dark' as const, label: 'Dark', icon: <Moon size={16} color={themePreference === 'dark' ? '#fff' : (isDark ? '#a8a29e' : '#57534e')} /> },
+                { key: 'light' as const, label: 'Light', icon: <Sun size={16} color={themePreference === 'light' ? '#fff' : (isDark ? '#a8a29e' : '#57534e')} /> },
+                { key: 'system' as const, label: 'System', icon: <Monitor size={16} color={themePreference === 'system' ? '#fff' : (isDark ? '#a8a29e' : '#57534e')} /> },
+              ]).map((item) => (
+                <Pressable
+                  key={item.key}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setThemePreference(item.key);
+                  }}
+                  className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-lg ${
+                    themePreference === item.key
+                      ? 'bg-orange-500'
+                      : 'bg-stone-200 dark:bg-stone-800'
+                  }`}
+                >
+                  {item.icon}
+                  <Text className={`font-medium text-sm ${
+                    themePreference === item.key
+                      ? 'text-white'
+                      : 'text-stone-600 dark:text-stone-400'
+                  }`}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </Animated.View>
+
         {/* Cloud Sync Section */}
         <Animated.View
           entering={FadeInDown.delay(550).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Cloud Sync</Text>
-          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Cloud Sync</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {cloudAuth.isAuthenticated ? (
               <>
                 {/* Sync Status */}
-                <View className="p-4 border-b border-stone-800">
+                <View className="p-4 border-b border-stone-200 dark:border-stone-800">
                   <View className="flex-row items-center gap-3 mb-2">
                     <View className={`w-3 h-3 rounded-full ${isSyncing ? 'bg-orange-400' : 'bg-emerald-400'}`} />
-                    <Text className="text-white font-medium">
+                    <Text className="text-stone-900 dark:text-white font-medium">
                       {isSyncing ? 'Syncing...' : 'Connected'}
                     </Text>
                   </View>
-                  <Text className="text-stone-500 text-sm">Last synced: {lastSyncDisplay}</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Last synced: {lastSyncDisplay}</Text>
                 </View>
 
                 {/* Sync Now */}
                 <Pressable
                   onPress={handleSyncNow}
                   disabled={isSyncing}
-                  className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+                  className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
                 >
                   <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
                     {isSyncing ? (
@@ -475,36 +543,36 @@ export default function MoreScreen() {
                     )}
                   </View>
                   <View className="flex-1">
-                    <Text className="text-white font-medium">Sync Now</Text>
-                    <Text className="text-stone-500 text-sm">Push & pull latest data</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">Sync Now</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Push & pull latest data</Text>
                   </View>
                 </Pressable>
 
                 {/* Sign Out */}
                 <Pressable
                   onPress={handleCloudSignOut}
-                  className="flex-row items-center p-4 active:bg-stone-800/50"
+                  className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
                 >
                   <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
                     <LogOut size={20} color="#ef4444" />
                   </View>
                   <View className="flex-1">
                     <Text className="text-red-400 font-medium">Sign Out</Text>
-                    <Text className="text-stone-500 text-sm">Stop cloud sync</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Stop cloud sync</Text>
                   </View>
                 </Pressable>
               </>
             ) : (
               <Pressable
                 onPress={() => router.push('/cloud-auth')}
-                className="flex-row items-center p-4 active:bg-stone-800/50"
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
                   <Cloud size={20} color="#3b82f6" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-medium">Enable Cloud Sync</Text>
-                  <Text className="text-stone-500 text-sm">Back up & sync across devices</Text>
+                  <Text className="text-stone-900 dark:text-white font-medium">Enable Cloud Sync</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Back up & sync across devices</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -517,18 +585,18 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">Shop Settings</Text>
-          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">Shop Settings</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <Pressable
               onPress={() => router.push('/shop-profile')}
-              className="flex-row items-center p-4 border-b border-stone-800 active:bg-stone-800/50"
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
             >
               <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
                 <Store size={20} color="#f97316" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-medium">Shop Profile</Text>
-                <Text className="text-stone-500 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
+                <Text className="text-stone-900 dark:text-white font-medium">Shop Profile</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
@@ -536,7 +604,7 @@ export default function MoreScreen() {
             <Pressable
               onPress={handleExportData}
               disabled={isExporting}
-              className="flex-row items-center p-4 active:bg-stone-800/50"
+              className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
             >
               <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
                 {isExporting ? (
@@ -546,8 +614,8 @@ export default function MoreScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
-                <Text className="text-stone-500 text-sm">Backup your records</Text>
+                <Text className="text-stone-900 dark:text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Backup your records</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
@@ -559,15 +627,15 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 text-xs uppercase tracking-wide mb-3">About</Text>
-          <View className="bg-stone-900/60 rounded-xl border border-stone-800 overflow-hidden">
+          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-3">About</Text>
+          <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <View className="flex-row items-center p-4">
-              <View className="w-10 h-10 rounded-xl bg-stone-800 items-center justify-center mr-3">
+              <View className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">
                 <Info size={20} color="#78716c" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-medium">Oja POS</Text>
-                <Text className="text-stone-500 text-sm">Version {APP_VERSION}</Text>
+                <Text className="text-stone-900 dark:text-white font-medium">Oja POS</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Version {APP_VERSION}</Text>
               </View>
             </View>
           </View>
@@ -589,11 +657,11 @@ export default function MoreScreen() {
             className="flex-1 bg-black/60"
             onPress={() => setShowExpenseModal(false)}
           />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-white text-xl font-bold">Add Expense</Text>
+                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Add Expense</Text>
                   <Pressable onPress={() => setShowExpenseModal(false)}>
                     <X size={24} color="#78716c" />
                   </Pressable>
@@ -601,7 +669,7 @@ export default function MoreScreen() {
 
                 <View className="gap-4">
                   <View>
-                    <Text className="text-stone-400 text-sm mb-2">Category</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
                       {expenseCategories.map((cat) => (
                         <Pressable
@@ -610,11 +678,11 @@ export default function MoreScreen() {
                           className={`mr-2 px-3 py-2 rounded-lg border flex-row items-center gap-2 ${
                             expenseForm.category === cat
                               ? 'bg-orange-500/20 border-orange-500'
-                              : 'bg-stone-800 border-stone-700'
+                              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
                           }`}
                         >
                           {expenseIcons[cat]}
-                          <Text className={expenseForm.category === cat ? 'text-orange-400 font-medium' : 'text-stone-400'}>
+                          <Text className={expenseForm.category === cat ? 'text-orange-400 font-medium' : 'text-stone-600 dark:text-stone-400'}>
                             {cat}
                           </Text>
                         </Pressable>
@@ -623,9 +691,9 @@ export default function MoreScreen() {
                   </View>
 
                   <View>
-                    <Text className="text-stone-400 text-sm mb-2">Amount (₦) *</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Amount (₦) *</Text>
                     <TextInput
-                      className="bg-stone-800 rounded-xl px-4 py-4 text-white text-center text-2xl font-bold"
+                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                       placeholder="0"
                       placeholderTextColor="#57534e"
                       keyboardType="numeric"
@@ -635,9 +703,9 @@ export default function MoreScreen() {
                   </View>
 
                   <View>
-                    <Text className="text-stone-400 text-sm mb-2">Description (Optional)</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Description (Optional)</Text>
                     <TextInput
-                      className="bg-stone-800 rounded-xl px-4 py-3 text-white"
+                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                       placeholder="e.g. Diesel for generator"
                       placeholderTextColor="#57534e"
                       value={expenseForm.description}
@@ -646,7 +714,7 @@ export default function MoreScreen() {
                   </View>
 
                   <View>
-                    <Text className="text-stone-400 text-sm mb-2">Paid With</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Paid With</Text>
                     <View className="flex-row gap-2">
                       {(['cash', 'transfer', 'pos'] as const).map((method) => (
                         <Pressable
@@ -655,11 +723,11 @@ export default function MoreScreen() {
                           className={`flex-1 py-3 rounded-lg border ${
                             expenseForm.paymentMethod === method
                               ? 'bg-orange-500/20 border-orange-500'
-                              : 'bg-stone-800 border-stone-700'
+                              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
                           }`}
                         >
                           <Text className={`text-center font-medium capitalize ${
-                            expenseForm.paymentMethod === method ? 'text-orange-400' : 'text-stone-400'
+                            expenseForm.paymentMethod === method ? 'text-orange-400' : 'text-stone-600 dark:text-stone-400'
                           }`}>
                             {method}
                           </Text>
@@ -696,10 +764,10 @@ export default function MoreScreen() {
             className="flex-1 bg-black/60"
             onPress={() => setShowCashModal(false)}
           />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
               <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">
+                <Text className="text-stone-900 dark:text-white text-xl font-bold">
                   {currentCashSession ? 'Close Cash Register' : 'Open Cash Register'}
                 </Text>
                 <Pressable onPress={() => setShowCashModal(false)}>
@@ -708,13 +776,13 @@ export default function MoreScreen() {
               </View>
 
               {currentCashSession && (
-                <View className="bg-stone-800/50 rounded-xl p-4 mb-4">
+                <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-stone-400">Opening Cash</Text>
-                    <Text className="text-white font-medium">{formatNaira(currentCashSession.openingCash)}</Text>
+                    <Text className="text-stone-500 dark:text-stone-400">Opening Cash</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">{formatNaira(currentCashSession.openingCash)}</Text>
                   </View>
                   <View className="flex-row justify-between">
-                    <Text className="text-stone-400">Expected Cash</Text>
+                    <Text className="text-stone-500 dark:text-stone-400">Expected Cash</Text>
                     <Text className="text-emerald-400 font-bold">{formatNaira(expectedCash)}</Text>
                   </View>
                 </View>
@@ -722,11 +790,11 @@ export default function MoreScreen() {
 
               <View className="gap-4">
                 <View>
-                  <Text className="text-stone-400 text-sm mb-2">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">
                     {currentCashSession ? 'Count Your Cash (₦)' : 'Opening Cash (₦)'}
                   </Text>
                   <TextInput
-                    className="bg-stone-800 rounded-xl px-4 py-4 text-white text-center text-2xl font-bold"
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                     placeholder="0"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -738,9 +806,9 @@ export default function MoreScreen() {
 
                 {currentCashSession && (
                   <View>
-                    <Text className="text-stone-400 text-sm mb-2">Note (Optional)</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
                     <TextInput
-                      className="bg-stone-800 rounded-xl px-4 py-3 text-white"
+                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                       placeholder="e.g. Short by 500 - gave change"
                       placeholderTextColor="#57534e"
                       value={closingNote}
@@ -776,10 +844,10 @@ export default function MoreScreen() {
           className="flex-1 bg-black/60"
           onPress={() => setShowExpensesListModal(false)}
         />
-        <View className="bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 20 }}>
+        <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 20 }}>
           <View className="p-6">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-white text-xl font-bold">Today's Expenses</Text>
+              <Text className="text-stone-900 dark:text-white text-xl font-bold">Today's Expenses</Text>
               <Pressable onPress={() => setShowExpensesListModal(false)}>
                 <X size={24} color="#78716c" />
               </Pressable>
@@ -796,13 +864,13 @@ export default function MoreScreen() {
                   {todayExpenses.map((expense) => (
                     <View
                       key={expense.id}
-                      className="bg-stone-800/50 rounded-xl p-4 flex-row items-center"
+                      className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 flex-row items-center"
                     >
-                      <View className="w-10 h-10 rounded-xl bg-stone-800 items-center justify-center mr-3">
+                      <View className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">
                         {expenseIcons[expense.category] || expenseIcons['Other']}
                       </View>
                       <View className="flex-1">
-                        <Text className="text-white font-medium">{expense.description}</Text>
+                        <Text className="text-stone-900 dark:text-white font-medium">{expense.description}</Text>
                         <Text className="text-stone-500 text-xs">
                           {expense.category} • {expense.paymentMethod}
                         </Text>
@@ -832,11 +900,11 @@ export default function MoreScreen() {
             className="flex-1 bg-black/60"
             onPress={() => setShowCalculatorModal(false)}
           />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-white text-xl font-bold">Price Calculator</Text>
+                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Price Calculator</Text>
                   <Pressable onPress={() => setShowCalculatorModal(false)}>
                     <X size={24} color="#78716c" />
                   </Pressable>
@@ -844,13 +912,13 @@ export default function MoreScreen() {
 
                 <View className="gap-4">
                   {/* Calculate Margin */}
-                  <View className="bg-stone-800/50 rounded-xl p-4">
-                    <Text className="text-white font-medium mb-3">Calculate Profit Margin</Text>
+                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4">
+                    <Text className="text-stone-900 dark:text-white font-medium mb-3">Calculate Profit Margin</Text>
                     <View className="flex-row gap-3 mb-3">
                       <View className="flex-1">
-                        <Text className="text-stone-400 text-xs mb-1">Cost Price</Text>
+                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Cost Price</Text>
                         <TextInput
-                          className="bg-stone-800 rounded-lg px-3 py-2 text-white"
+                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                           placeholder="0"
                           placeholderTextColor="#57534e"
                           keyboardType="numeric"
@@ -859,9 +927,9 @@ export default function MoreScreen() {
                         />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-stone-400 text-xs mb-1">Selling Price</Text>
+                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Selling Price</Text>
                         <TextInput
-                          className="bg-stone-800 rounded-lg px-3 py-2 text-white"
+                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                           placeholder="0"
                           placeholderTextColor="#57534e"
                           keyboardType="numeric"
@@ -871,13 +939,13 @@ export default function MoreScreen() {
                       </View>
                     </View>
                     {calculatedMargin && (
-                      <View className="bg-stone-800 rounded-lg p-3 flex-row justify-between">
+                      <View className="bg-stone-200 dark:bg-stone-800 rounded-lg p-3 flex-row justify-between">
                         <View>
-                          <Text className="text-stone-400 text-xs">Profit</Text>
+                          <Text className="text-stone-500 dark:text-stone-400 text-xs">Profit</Text>
                           <Text className="text-emerald-400 font-bold">{formatNaira(calculatedMargin.profit)}</Text>
                         </View>
                         <View className="items-end">
-                          <Text className="text-stone-400 text-xs">Margin</Text>
+                          <Text className="text-stone-500 dark:text-stone-400 text-xs">Margin</Text>
                           <Text className="text-emerald-400 font-bold">{calculatedMargin.margin.toFixed(1)}%</Text>
                         </View>
                       </View>
@@ -885,13 +953,13 @@ export default function MoreScreen() {
                   </View>
 
                   {/* Suggest Price */}
-                  <View className="bg-stone-800/50 rounded-xl p-4">
-                    <Text className="text-white font-medium mb-3">Suggest Selling Price</Text>
+                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4">
+                    <Text className="text-stone-900 dark:text-white font-medium mb-3">Suggest Selling Price</Text>
                     <View className="flex-row gap-3 mb-3">
                       <View className="flex-1">
-                        <Text className="text-stone-400 text-xs mb-1">Cost Price</Text>
+                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Cost Price</Text>
                         <TextInput
-                          className="bg-stone-800 rounded-lg px-3 py-2 text-white"
+                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                           placeholder="0"
                           placeholderTextColor="#57534e"
                           keyboardType="numeric"
@@ -900,9 +968,9 @@ export default function MoreScreen() {
                         />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-stone-400 text-xs mb-1">Target Margin %</Text>
+                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Target Margin %</Text>
                         <TextInput
-                          className="bg-stone-800 rounded-lg px-3 py-2 text-white"
+                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                           placeholder="20"
                           placeholderTextColor="#57534e"
                           keyboardType="numeric"

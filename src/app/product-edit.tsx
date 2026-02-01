@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +17,8 @@ import * as Haptics from 'expo-haptics';
 
 export default function ProductEditScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const params = useLocalSearchParams<{ productId: string }>();
 
@@ -80,10 +83,10 @@ export default function ProductEditScreen() {
 
   if (!product) {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center">
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center">
         <Package size={48} color="#78716c" />
         <Text className="text-stone-400 mt-4 text-lg">Product not found</Text>
-        <Pressable onPress={() => router.back()} className="mt-4 px-6 py-3 bg-stone-800 rounded-xl">
+        <Pressable onPress={() => router.back()} className="mt-4 px-6 py-3 bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl">
           <Text className="text-white font-medium">Go Back</Text>
         </Pressable>
       </View>
@@ -91,9 +94,9 @@ export default function ProductEditScreen() {
   }
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -138,7 +141,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Product Name *</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-white border border-stone-800"
+                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="e.g. Indomie Chicken 70g"
                   placeholderTextColor="#57534e"
                   value={formData.name}
@@ -149,7 +152,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Barcode</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-white border border-stone-800"
+                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="Scan or enter barcode"
                   placeholderTextColor="#57534e"
                   value={formData.barcode}
@@ -171,13 +174,13 @@ export default function ProductEditScreen() {
                       className={`mr-2 px-4 py-2 rounded-full border ${
                         formData.category === cat.name
                           ? 'bg-orange-500 border-orange-500'
-                          : 'bg-stone-900 border-stone-700'
+                          : 'bg-white dark:bg-stone-900 border-stone-700'
                       }`}
                     >
                       <Text
                         className={
                           formData.category === cat.name
-                            ? 'text-white font-medium'
+                            ? 'text-stone-900 dark:text-white font-medium'
                             : 'text-stone-400'
                         }
                       >
@@ -192,7 +195,7 @@ export default function ProductEditScreen() {
                 <View className="flex-1">
                   <Text className="text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
-                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-white border border-stone-800"
+                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -203,7 +206,7 @@ export default function ProductEditScreen() {
                 <View className="flex-1">
                   <Text className="text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
-                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-white border border-stone-800"
+                    className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="0"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
@@ -242,12 +245,12 @@ export default function ProductEditScreen() {
                       className={`mr-2 px-4 py-2 rounded-full border ${
                         formData.unit === unit
                           ? 'bg-orange-500 border-orange-500'
-                          : 'bg-stone-900 border-stone-700'
+                          : 'bg-white dark:bg-stone-900 border-stone-700'
                       }`}
                     >
                       <Text
                         className={
-                          formData.unit === unit ? 'text-white font-medium' : 'text-stone-400'
+                          formData.unit === unit ? 'text-stone-900 dark:text-white font-medium' : 'text-stone-400'
                         }
                       >
                         {unit}
@@ -260,7 +263,7 @@ export default function ProductEditScreen() {
               <View>
                 <Text className="text-stone-400 text-sm mb-2">Low Stock Threshold</Text>
                 <TextInput
-                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-white border border-stone-800"
+                  className="bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="10"
                   placeholderTextColor="#57534e"
                   keyboardType="numeric"
@@ -279,7 +282,7 @@ export default function ProductEditScreen() {
               Stock Adjustment
             </Text>
 
-            <View className="bg-stone-900/80 rounded-2xl border border-stone-800 p-4">
+            <View className="bg-white/80 dark:bg-stone-900/80 rounded-2xl border border-stone-200 dark:border-stone-800 p-4">
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-stone-400 text-sm">Current Stock</Text>
                 <View className="flex-row items-center gap-2">
@@ -290,7 +293,7 @@ export default function ProductEditScreen() {
 
               <View className="mb-4">
                 <TextInput
-                  className="bg-stone-800 rounded-xl px-4 py-4 text-white text-center text-2xl font-bold border border-stone-700"
+                  className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold border border-stone-700"
                   placeholder="0"
                   placeholderTextColor="#57534e"
                   keyboardType="numeric"

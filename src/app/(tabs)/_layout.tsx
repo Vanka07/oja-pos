@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { LayoutDashboard, ShoppingCart, Package, Users, MoreHorizontal } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 
 function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<{ size: number; color: string }>; color: string; focused: boolean }) {
   const size = Platform.OS === 'web' ? 20 : 24;
@@ -15,15 +16,18 @@ function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<
 }
 
 export default function TabLayout() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#f97316',
-        tabBarInactiveTintColor: '#78716c',
+        tabBarInactiveTintColor: isDark ? '#78716c' : '#a8a29e',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1c1917',
-          borderTopColor: '#292524',
+          backgroundColor: isDark ? '#1c1917' : '#ffffff',
+          borderTopColor: isDark ? '#292524' : '#e7e5e4',
           borderTopWidth: 1,
           height: Platform.OS === 'web' ? 56 : 85,
           paddingTop: Platform.OS === 'web' ? 4 : 8,

@@ -5,11 +5,14 @@ import { X, Lock, Delete } from 'lucide-react-native';
 import { useStaffStore, type StaffMember } from '@/store/staffStore';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Animated, { FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 export default function StaffSwitchScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [pin, setPin] = useState('');
@@ -106,7 +109,7 @@ export default function StaffSwitchScreen() {
                 <Pressable
                   key={colIndex}
                   onPress={handleDelete}
-                  className="w-20 h-16 rounded-2xl bg-stone-800/50 items-center justify-center active:bg-stone-700"
+                  className="w-20 h-16 rounded-2xl bg-stone-100/50 dark:bg-stone-800/50 items-center justify-center active:bg-stone-200 dark:active:bg-stone-700"
                 >
                   <Delete size={24} color="#a8a29e" />
                 </Pressable>
@@ -116,7 +119,7 @@ export default function StaffSwitchScreen() {
               <Pressable
                 key={colIndex}
                 onPress={() => handlePinDigit(String(digit))}
-                className="w-20 h-16 rounded-2xl bg-stone-800/80 items-center justify-center active:bg-stone-700 border border-stone-700"
+                className="w-20 h-16 rounded-2xl bg-stone-200/80 dark:bg-stone-800/80 items-center justify-center active:bg-stone-200 dark:active:bg-stone-700 border border-stone-700"
               >
                 <Text className="text-white text-2xl font-semibold">{digit}</Text>
               </Pressable>
@@ -128,9 +131,9 @@ export default function StaffSwitchScreen() {
   );
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -140,7 +143,7 @@ export default function StaffSwitchScreen() {
           <Text className="text-white text-xl font-bold">Switch Staff</Text>
           <Pressable
             onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-stone-900 border border-stone-800 items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center"
           >
             <X size={20} color="#a8a29e" />
           </Pressable>

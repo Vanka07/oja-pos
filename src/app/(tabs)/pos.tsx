@@ -21,6 +21,7 @@ import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sa
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
 import { useState, useMemo, useCallback, useRef } from 'react';
+import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -28,6 +29,8 @@ type PaymentMethod = Sale['paymentMethod'];
 
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -104,7 +107,6 @@ export default function POSScreen() {
       setLastSale(sale);
       setShowPaymentModal(false);
       setShowSuccessModal(true);
-      // Log staff activity
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
       logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
     }
@@ -115,7 +117,6 @@ export default function POSScreen() {
     const receipt = generateReceiptText(lastSale, shopInfo.name, shopInfo.phone);
     const url = `whatsapp://send?text=${encodeURIComponent(receipt)}`;
     Linking.openURL(url).catch(() => {
-      // WhatsApp not installed, try regular share
       Share.share({ message: receipt });
     });
   }, [lastSale, shopInfo]);
@@ -130,20 +131,24 @@ export default function POSScreen() {
     }
   }, [lastSale, shopInfo]);
 
+  const gradientColors: [string, string, string] = isDark
+    ? ['#292524', '#1c1917', '#0c0a09']
+    : ['#f5f5f4', '#fafaf9', '#ffffff'];
+
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={gradientColors}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8 }} className="px-5 pb-4">
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-          <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
+          <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
             Point of Sale
           </Text>
-          <Text className="text-white text-3xl font-bold tracking-tight">
+          <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
             New Sale
           </Text>
         </Animated.View>
@@ -158,10 +163,10 @@ export default function POSScreen() {
             className="px-5 mb-4"
           >
             <View className="flex-row items-center gap-2">
-              <View className="flex-1 bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-800">
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
                 <Search size={20} color="#78716c" />
                 <TextInput
-                  className="flex-1 py-3 px-3 text-white text-base"
+                  className="flex-1 py-3 px-3 text-stone-900 dark:text-white text-base"
                   placeholder="Search products..."
                   placeholderTextColor="#78716c"
                   value={searchQuery}
@@ -195,10 +200,10 @@ export default function POSScreen() {
                 className={`mr-2 px-4 py-2 rounded-full border ${
                   !selectedCategory
                     ? 'bg-orange-500 border-orange-500'
-                    : 'bg-stone-900/60 border-stone-800'
+                    : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'
                 }`}
               >
-                <Text className={!selectedCategory ? 'text-white font-medium' : 'text-stone-400'}>
+                <Text className={!selectedCategory ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>
                   All
                 </Text>
               </Pressable>
@@ -209,11 +214,11 @@ export default function POSScreen() {
                   className={`mr-2 px-4 py-2 rounded-full border ${
                     selectedCategory === cat.name
                       ? 'bg-orange-500 border-orange-500'
-                      : 'bg-stone-900/60 border-stone-800'
+                      : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'
                   }`}
                 >
                   <Text
-                    className={selectedCategory === cat.name ? 'text-white font-medium' : 'text-stone-400'}
+                    className={selectedCategory === cat.name ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}
                   >
                     {cat.name}
                   </Text>
@@ -239,20 +244,20 @@ export default function POSScreen() {
                   >
                     <Pressable
                       onPress={() => handleAddToCart(product)}
-                      className={`bg-stone-900/80 rounded-xl p-3 border ${
-                        inCart ? 'border-orange-500' : 'border-stone-800'
+                      className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-3 border ${
+                        inCart ? 'border-orange-500' : 'border-stone-200 dark:border-stone-800'
                       } active:scale-95`}
                     >
-                      <Text className="text-white font-medium text-sm mb-1" numberOfLines={2}>
+                      <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>
                         {product.name}
                       </Text>
-                      <Text className="text-stone-500 text-xs mb-2">{product.category}</Text>
+                      <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
                       <View className="flex-row items-center justify-between">
                         <Text className="text-orange-400 font-bold text-base">
                           {formatNaira(product.sellingPrice)}
                         </Text>
-                        <View className="bg-stone-800 px-2 py-0.5 rounded">
-                          <Text className="text-stone-400 text-xs">{product.quantity}</Text>
+                        <View className="bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded">
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">{product.quantity}</Text>
                         </View>
                       </View>
                       {inCart && (
@@ -326,10 +331,10 @@ export default function POSScreen() {
             className="flex-1 bg-black/60"
             onPress={() => setShowPaymentModal(false)}
           />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
               <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Complete Payment</Text>
+                <Text className="text-stone-900 dark:text-white text-xl font-bold">Complete Payment</Text>
                 <Pressable onPress={() => setShowPaymentModal(false)}>
                   <X size={24} color="#78716c" />
                 </Pressable>
@@ -341,10 +346,10 @@ export default function POSScreen() {
                   <Animated.View
                     key={item.product.id}
                     layout={Layout.springify()}
-                    className="flex-row items-center justify-between py-3 border-b border-stone-800"
+                    className="flex-row items-center justify-between py-3 border-b border-stone-200 dark:border-stone-800"
                   >
                     <View className="flex-1">
-                      <Text className="text-white font-medium" numberOfLines={1}>
+                      <Text className="text-stone-900 dark:text-white font-medium" numberOfLines={1}>
                         {item.product.name}
                       </Text>
                       <Text className="text-stone-500 text-sm">
@@ -352,14 +357,14 @@ export default function POSScreen() {
                       </Text>
                     </View>
                     <View className="flex-row items-center gap-3">
-                      <View className="flex-row items-center bg-stone-800 rounded-lg">
+                      <View className="flex-row items-center bg-stone-200 dark:bg-stone-800 rounded-lg">
                         <Pressable
                           onPress={() => handleQuantityChange(item.product.id, -1)}
                           className="p-2"
                         >
                           <Minus size={16} color="#f97316" />
                         </Pressable>
-                        <Text className="text-white font-medium px-2">{item.quantity}</Text>
+                        <Text className="text-stone-900 dark:text-white font-medium px-2">{item.quantity}</Text>
                         <Pressable
                           onPress={() => handleQuantityChange(item.product.id, 1)}
                           className="p-2"
@@ -367,7 +372,7 @@ export default function POSScreen() {
                           <Plus size={16} color="#f97316" />
                         </Pressable>
                       </View>
-                      <Text className="text-white font-semibold w-20 text-right">
+                      <Text className="text-stone-900 dark:text-white font-semibold w-20 text-right">
                         {formatNaira(item.product.sellingPrice * item.quantity)}
                       </Text>
                     </View>
@@ -376,24 +381,24 @@ export default function POSScreen() {
               </ScrollView>
 
               {/* Totals */}
-              <View className="bg-stone-800/50 rounded-xl p-4 mb-6">
+              <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-6">
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-400">Subtotal</Text>
-                  <Text className="text-white font-medium">{formatNaira(cartSubtotal)}</Text>
+                  <Text className="text-stone-500 dark:text-stone-400">Subtotal</Text>
+                  <Text className="text-stone-900 dark:text-white font-medium">{formatNaira(cartSubtotal)}</Text>
                 </View>
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-400">Discount</Text>
+                  <Text className="text-stone-500 dark:text-stone-400">Discount</Text>
                   <Text className="text-orange-400 font-medium">-{formatNaira(cartDiscount)}</Text>
                 </View>
-                <View className="h-px bg-stone-700 my-2" />
+                <View className="h-px bg-stone-300 dark:bg-stone-700 my-2" />
                 <View className="flex-row justify-between">
-                  <Text className="text-white font-semibold text-lg">Total</Text>
+                  <Text className="text-stone-900 dark:text-white font-semibold text-lg">Total</Text>
                   <Text className="text-orange-400 font-bold text-xl">{formatNaira(cartTotal)}</Text>
                 </View>
               </View>
 
               {/* Payment Methods */}
-              <Text className="text-stone-400 text-sm mb-3">Select Payment Method</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-3">Select Payment Method</Text>
               <View className="gap-3">
                 <Pressable
                   onPress={() => handleCompleteSale('cash')}
@@ -403,7 +408,7 @@ export default function POSScreen() {
                     <Banknote size={20} color="#10b981" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-white font-medium">Cash</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">Cash</Text>
                     <Text className="text-stone-500 text-xs">Receive payment in cash</Text>
                   </View>
                 </Pressable>
@@ -416,7 +421,7 @@ export default function POSScreen() {
                     <Smartphone size={20} color="#3b82f6" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-white font-medium">Bank Transfer</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">Bank Transfer</Text>
                     <Text className="text-stone-500 text-xs">Mobile banking / USSD</Text>
                   </View>
                 </Pressable>
@@ -429,7 +434,7 @@ export default function POSScreen() {
                     <CreditCard size={20} color="#a855f7" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-white font-medium">POS Terminal</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">POS Terminal</Text>
                     <Text className="text-stone-500 text-xs">Card payment via POS</Text>
                   </View>
                 </Pressable>
@@ -442,7 +447,7 @@ export default function POSScreen() {
                     <Users size={20} color="#f59e0b" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-white font-medium">Credit Sale</Text>
+                    <Text className="text-stone-900 dark:text-white font-medium">Credit Sale</Text>
                     <Text className="text-stone-500 text-xs">Customer pays later</Text>
                   </View>
                 </Pressable>
@@ -506,28 +511,28 @@ export default function POSScreen() {
         <View className="flex-1 bg-black/80 items-center justify-center px-8">
           <Animated.View
             entering={FadeInUp.duration(400)}
-            className="bg-stone-900 rounded-3xl p-8 w-full items-center"
+            className="bg-white dark:bg-stone-900 rounded-3xl p-8 w-full items-center"
           >
             <View className="w-20 h-20 rounded-full bg-emerald-500/20 items-center justify-center mb-4">
               <Check size={40} color="#10b981" />
             </View>
-            <Text className="text-white text-2xl font-bold mb-2">Sale Complete!</Text>
-            <Text className="text-stone-400 text-center mb-6">
+            <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Sale Complete!</Text>
+            <Text className="text-stone-500 dark:text-stone-400 text-center mb-6">
               Transaction recorded successfully
             </Text>
             {lastSale && (
-              <View className="bg-stone-800/50 rounded-xl p-4 w-full mb-6">
+              <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 w-full mb-6">
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-400">Total</Text>
-                  <Text className="text-white font-bold text-lg">{formatNaira(lastSale.total)}</Text>
+                  <Text className="text-stone-500 dark:text-stone-400">Total</Text>
+                  <Text className="text-stone-900 dark:text-white font-bold text-lg">{formatNaira(lastSale.total)}</Text>
                 </View>
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-400">Payment</Text>
+                  <Text className="text-stone-500 dark:text-stone-400">Payment</Text>
                   <Text className="text-orange-400 font-medium capitalize">{lastSale.paymentMethod}</Text>
                 </View>
                 <View className="flex-row justify-between">
-                  <Text className="text-stone-400">Items</Text>
-                  <Text className="text-stone-300">{lastSale.items.length} product{lastSale.items.length > 1 ? 's' : ''}</Text>
+                  <Text className="text-stone-500 dark:text-stone-400">Items</Text>
+                  <Text className="text-stone-600 dark:text-stone-300">{lastSale.items.length} product{lastSale.items.length > 1 ? 's' : ''}</Text>
                 </View>
               </View>
             )}
@@ -543,10 +548,10 @@ export default function POSScreen() {
               </Pressable>
               <Pressable
                 onPress={shareReceipt}
-                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-800 py-3 rounded-xl active:opacity-90"
+                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
               >
                 <Share2 size={18} color="#a8a29e" />
-                <Text className="text-stone-300 font-medium">Share</Text>
+                <Text className="text-stone-600 dark:text-stone-300 font-medium">Share</Text>
               </Pressable>
             </View>
 

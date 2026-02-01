@@ -5,9 +5,12 @@ import { useState, useCallback } from 'react';
 import { Lock, Delete } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 
 export default function LockScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
   const unlock = useAuthStore((s) => s.unlock);
@@ -50,7 +53,7 @@ export default function LockScreen() {
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
   return (
-    <View className="flex-1 bg-stone-950 items-center justify-center" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <Animated.View entering={FadeIn.duration(600)} className="items-center">
         <View className="w-16 h-16 rounded-full bg-orange-500/20 items-center justify-center mb-6">
           <Lock size={28} color="#f97316" />
@@ -88,14 +91,14 @@ export default function LockScreen() {
                 ) : key === 'del' ? (
                   <Pressable
                     onPress={handleDelete}
-                    className="h-16 rounded-2xl items-center justify-center active:bg-stone-800"
+                    className="h-16 rounded-2xl items-center justify-center active:bg-stone-200 dark:bg-stone-800"
                   >
                     <Delete size={24} color="#a8a29e" />
                   </Pressable>
                 ) : (
                   <Pressable
                     onPress={() => handlePress(key)}
-                    className="h-16 rounded-2xl bg-stone-900 border border-stone-800 items-center justify-center active:bg-stone-800"
+                    className="h-16 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center active:bg-stone-200 dark:bg-stone-800"
                   >
                     <Text className="text-white text-2xl font-medium">{key}</Text>
                   </Pressable>

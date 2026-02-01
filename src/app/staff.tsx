@@ -18,13 +18,14 @@ import { useStaffStore, hasPermission, type StaffMember, type StaffRole } from '
 import { formatNaira } from '@/store/retailStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 const ROLE_COLORS: Record<StaffRole, { bg: string; text: string; border: string }> = {
   owner: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/40' },
   manager: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/40' },
-  cashier: { bg: 'bg-stone-700/40', text: 'text-stone-300', border: 'border-stone-600' },
+  cashier: { bg: 'bg-stone-700/40', text: 'text-stone-600 dark:text-stone-300', border: 'border-stone-600' },
 };
 
 const ROLE_ICONS: Record<StaffRole, React.ReactNode> = {
@@ -35,6 +36,8 @@ const ROLE_ICONS: Record<StaffRole, React.ReactNode> = {
 
 export default function StaffScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -171,7 +174,7 @@ export default function StaffScreen() {
       <View>
         <Text className="text-stone-400 text-sm mb-2">Name *</Text>
         <TextInput
-          className="bg-stone-800 rounded-xl px-4 py-3 text-white"
+          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. Chidi Okafor"
           placeholderTextColor="#57534e"
           value={formData.name}
@@ -182,7 +185,7 @@ export default function StaffScreen() {
       <View>
         <Text className="text-stone-400 text-sm mb-2">Phone</Text>
         <TextInput
-          className="bg-stone-800 rounded-xl px-4 py-3 text-white"
+          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. 08012345678"
           placeholderTextColor="#57534e"
           keyboardType="phone-pad"
@@ -196,7 +199,7 @@ export default function StaffScreen() {
           {isEdit ? 'New PIN (leave blank to keep current)' : '4-Digit PIN *'}
         </Text>
         <TextInput
-          className="bg-stone-800 rounded-xl px-4 py-4 text-white text-center text-2xl font-bold tracking-[12px]"
+          className="bg-stone-100 dark:bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
           placeholder="• • • •"
           placeholderTextColor="#57534e"
           keyboardType="numeric"
@@ -247,9 +250,9 @@ export default function StaffScreen() {
   };
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -260,7 +263,7 @@ export default function StaffScreen() {
             <View className="flex-row items-center gap-3">
               <Pressable
                 onPress={() => router.back()}
-                className="w-10 h-10 rounded-full bg-stone-900 border border-stone-800 items-center justify-center"
+                className="w-10 h-10 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 items-center justify-center"
               >
                 <ChevronLeft size={20} color="#a8a29e" />
               </Pressable>
@@ -285,7 +288,7 @@ export default function StaffScreen() {
 
       {/* Tab Selector */}
       <Animated.View entering={FadeInDown.delay(200).duration(600)} className="px-5 mb-4">
-        <View className="flex-row bg-stone-900/80 rounded-xl p-1 border border-stone-800">
+        <View className="flex-row bg-white/80 dark:bg-stone-900/80 rounded-xl p-1 border border-stone-200 dark:border-stone-800">
           <Pressable
             onPress={() => setActiveTab('staff')}
             className={`flex-1 py-3 rounded-lg ${activeTab === 'staff' ? 'bg-orange-500' : ''}`}
@@ -333,8 +336,8 @@ export default function StaffScreen() {
                     key={member.id}
                     entering={FadeIn.delay(100 + index * 50).duration(400)}
                   >
-                    <View className={`bg-stone-900/80 rounded-xl p-4 border ${
-                      !member.active ? 'border-stone-800 opacity-60' : 'border-stone-800'
+                    <View className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border ${
+                      !member.active ? 'border-stone-200 dark:border-stone-800 opacity-60' : 'border-stone-200 dark:border-stone-800'
                     }`}>
                       <View className="flex-row items-center justify-between">
                         <View className="flex-row items-center gap-3 flex-1">
@@ -373,7 +376,7 @@ export default function StaffScreen() {
                             </Pressable>
                             <Pressable
                               onPress={() => openEditModal(member)}
-                              className="bg-stone-800 p-1.5 rounded"
+                              className="bg-stone-200 dark:bg-stone-800 p-1.5 rounded"
                             >
                               <Edit3 size={14} color="#a8a29e" />
                             </Pressable>
@@ -411,7 +414,7 @@ export default function StaffScreen() {
                     key={activity.id}
                     entering={FadeIn.delay(50 + index * 30).duration(300)}
                   >
-                    <View className="bg-stone-900/60 rounded-xl p-3 border border-stone-800">
+                    <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-3 border border-stone-200 dark:border-stone-800">
                       <View className="flex-row items-center justify-between mb-1">
                         <View className="flex-row items-center gap-2">
                           <View className="w-7 h-7 rounded-full bg-stone-800 items-center justify-center">
@@ -454,7 +457,7 @@ export default function StaffScreen() {
           className="flex-1"
         >
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
@@ -489,7 +492,7 @@ export default function StaffScreen() {
           className="flex-1"
         >
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowEditModal(false)} />
-          <View className="bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">

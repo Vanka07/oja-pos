@@ -19,6 +19,7 @@ import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
 import { useState, useCallback, useMemo } from 'react';
+import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter, Href } from 'expo-router';
 import EmptyState from '@/components/EmptyState';
@@ -26,6 +27,8 @@ import EmptyState from '@/components/EmptyState';
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [refreshing, setRefreshing] = useState(false);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
@@ -52,10 +55,14 @@ export default function DashboardScreen() {
   const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
   const displayName = shopInfo?.ownerName?.split(' ')[0] || 'there';
 
+  const gradientColors: [string, string, string] = isDark
+    ? ['#292524', '#1c1917', '#0c0a09']
+    : ['#f5f5f4', '#fafaf9', '#ffffff'];
+
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={gradientColors}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -72,7 +79,7 @@ export default function DashboardScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-base font-bold tracking-wide">
-                <Text className="text-emerald-500">🛒</Text><Text className="text-emerald-500"> O</Text><Text className="text-white">j</Text><Text className="text-emerald-500">a</Text>
+                <Text className="text-emerald-500">🛒</Text><Text className="text-emerald-500"> O</Text><Text className="text-stone-900 dark:text-white">j</Text><Text className="text-emerald-500">a</Text>
               </Text>
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
@@ -88,22 +95,22 @@ export default function DashboardScreen() {
                 )}
               </View>
             </View>
-            <Text className="text-white text-3xl font-bold tracking-tight">
+            <Text className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">
               {shopInfo?.name || 'Dashboard'}
             </Text>
-            <Text className="text-stone-500 text-sm font-medium mt-1">
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium mt-1">
               {greeting}, {displayName} 👋
             </Text>
             {staffMembers.length > 0 && currentStaff && (
               <Pressable
                 onPress={() => router.push('/staff-switch')}
-                className="flex-row items-center gap-2 mt-2 bg-stone-900/80 self-start px-3 py-1.5 rounded-full border border-stone-800 active:opacity-80"
+                className="flex-row items-center gap-2 mt-2 bg-white/80 dark:bg-stone-900/80 self-start px-3 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 active:opacity-80"
               >
                 <UserCircle size={14} color="#f97316" />
                 <Text className="text-orange-400 text-xs font-medium">
                   {currentStaff.name}
                 </Text>
-                <Text className="text-stone-600 text-xs">• Switch</Text>
+                <Text className="text-stone-400 dark:text-stone-600 text-xs">• Switch</Text>
               </Pressable>
             )}
           </Animated.View>
@@ -138,7 +145,7 @@ export default function DashboardScreen() {
               </View>
             </View>
           </LinearGradient>
-          <Text className="text-stone-500 text-sm text-center mt-3 font-medium">
+          <Text className="text-stone-500 dark:text-stone-500 text-sm text-center mt-3 font-medium">
             {summary.totalTransactions === 0
               ? 'New day, new opportunities! 🌅'
               : summary.totalSales >= 50000
@@ -153,17 +160,17 @@ export default function DashboardScreen() {
           className="mx-5 mt-4"
         >
           <View className="flex-row gap-3">
-            <View className="flex-1 bg-stone-900/80 rounded-2xl p-4 border border-stone-800">
-              <Text className="text-stone-500 text-xs uppercase tracking-wide mb-1">Cash</Text>
-              <Text className="text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
+            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Cash</Text>
+              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
             </View>
-            <View className="flex-1 bg-stone-900/80 rounded-2xl p-4 border border-stone-800">
-              <Text className="text-stone-500 text-xs uppercase tracking-wide mb-1">Transfer</Text>
-              <Text className="text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
+            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Transfer</Text>
+              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
             </View>
-            <View className="flex-1 bg-stone-900/80 rounded-2xl p-4 border border-stone-800">
-              <Text className="text-stone-500 text-xs uppercase tracking-wide mb-1">POS</Text>
-              <Text className="text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
+            <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+              <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">POS</Text>
+              <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
             </View>
           </View>
         </Animated.View>
@@ -174,25 +181,25 @@ export default function DashboardScreen() {
           className="flex-row mx-5 mt-4 gap-3"
         >
           <Pressable
-            className="flex-1 bg-stone-900/80 rounded-2xl p-4 border border-stone-800 active:scale-98"
+            className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
             onPress={() => router.push('/(tabs)/inventory')}
           >
             <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mb-3">
               <Package size={20} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 text-xs uppercase tracking-wide mb-1">Total Products</Text>
-            <Text className="text-white text-2xl font-bold">{products.length}</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Total Products</Text>
+            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </Pressable>
 
           <Pressable
-            className="flex-1 bg-stone-900/80 rounded-2xl p-4 border border-stone-800 active:scale-98"
+            className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
             onPress={() => router.push('/(tabs)/pos')}
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
             </View>
-            <Text className="text-stone-500 text-xs uppercase tracking-wide mb-1">Sales Today</Text>
-            <Text className="text-white text-2xl font-bold">{salesToday.length}</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide mb-1">Sales Today</Text>
+            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{salesToday.length}</Text>
           </Pressable>
         </Animated.View>
 
@@ -213,7 +220,7 @@ export default function DashboardScreen() {
                   </View>
                   <View>
                     <Text className="text-amber-400 font-semibold text-base">Low Stock Alert</Text>
-                    <Text className="text-stone-500 text-sm">{lowStock.length} products need restocking</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-sm">{lowStock.length} products need restocking</Text>
                   </View>
                 </View>
                 <ArrowRight size={20} color="#78716c" />
@@ -228,7 +235,7 @@ export default function DashboardScreen() {
           className="mx-5 mt-6"
         >
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-white text-lg font-semibold">Recent Sales</Text>
+            <Text className="text-stone-900 dark:text-white text-lg font-semibold">Recent Sales</Text>
             <Pressable
               className="active:opacity-70"
               onPress={() => router.push('/(tabs)/reports')}
@@ -238,7 +245,7 @@ export default function DashboardScreen() {
           </View>
 
           {salesToday.length === 0 ? (
-            <View className="bg-stone-900/60 rounded-2xl border border-stone-800">
+            <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState
                 icon={ShoppingCart}
                 title="No sales yet today"
@@ -254,7 +261,7 @@ export default function DashboardScreen() {
                   key={sale.id}
                   entering={FadeInRight.delay(700 + index * 100).duration(400)}
                 >
-                  <View className="bg-stone-900/60 rounded-xl p-4 border border-stone-800 flex-row items-center justify-between">
+                  <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-4 border border-stone-200 dark:border-stone-800 flex-row items-center justify-between">
                     <View className="flex-row items-center gap-3">
                       <View className={`w-2 h-2 rounded-full ${
                         sale.paymentMethod === 'cash' ? 'bg-emerald-500' :
@@ -262,10 +269,10 @@ export default function DashboardScreen() {
                         sale.paymentMethod === 'pos' ? 'bg-purple-500' : 'bg-amber-500'
                       }`} />
                       <View>
-                        <Text className="text-white font-medium">
+                        <Text className="text-stone-900 dark:text-white font-medium">
                           {sale.items.length} item{sale.items.length > 1 ? 's' : ''}
                         </Text>
-                        <Text className="text-stone-500 text-xs">
+                        <Text className="text-stone-500 dark:text-stone-500 text-xs">
                           {new Date(sale.createdAt).toLocaleTimeString('en-NG', {
                             hour: '2-digit',
                             minute: '2-digit'
@@ -273,7 +280,7 @@ export default function DashboardScreen() {
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-white font-semibold">{formatNaira(sale.total)}</Text>
+                    <Text className="text-stone-900 dark:text-white font-semibold">{formatNaira(sale.total)}</Text>
                   </View>
                 </Animated.View>
               ))}
@@ -287,7 +294,7 @@ export default function DashboardScreen() {
             entering={FadeInDown.delay(800).duration(600)}
             className="mx-5 mt-6"
           >
-            <Text className="text-white text-lg font-semibold mb-4">Restock Soon</Text>
+            <Text className="text-stone-900 dark:text-white text-lg font-semibold mb-4">Restock Soon</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -300,11 +307,11 @@ export default function DashboardScreen() {
                   entering={FadeInRight.delay(900 + index * 100).duration(400)}
                   className="mr-3"
                 >
-                  <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800 w-36">
-                    <Text className="text-white font-medium text-sm mb-1" numberOfLines={2}>
+                  <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 w-36">
+                    <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>
                       {product.name}
                     </Text>
-                    <Text className="text-stone-500 text-xs mb-2">{product.category}</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
                     <View className="flex-row items-center gap-1">
                       <View className="bg-red-500/20 px-2 py-0.5 rounded">
                         <Text className="text-red-400 text-xs font-medium">{product.quantity} left</Text>

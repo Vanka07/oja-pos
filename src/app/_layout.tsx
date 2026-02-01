@@ -2,16 +2,17 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from '@/lib/useColorScheme';
+import { useColorScheme } from 'nativewind';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { useThemeStore } from '@/store/themeStore';
 import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, Appearance } from 'react-native';
 import LockScreen from './lock';
 
 export const unstable_settings = {
@@ -70,7 +71,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   }, [hasCompletedOnboarding, segments, isReady, router]);
 
   if (!isReady) {
-    return <View className="flex-1 bg-stone-950" />;
+    return <View className="flex-1 bg-stone-50 dark:bg-stone-950" />;
   }
 
   // Show lock screen if PIN is set and app is locked
@@ -95,13 +96,33 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const themePreference = useThemeStore((s) => s.preference);
+
+  // Apply theme preference
+  useEffect(() => {
+    if (themePreference === 'system') {
+      const systemScheme = Appearance.getColorScheme() || 'dark';
+      setColorScheme(systemScheme);
+    } else {
+      setColorScheme(themePreference);
+    }
+  }, [themePreference, setColorScheme]);
+
+  // Listen for system theme changes when set to 'system'
+  useEffect(() => {
+    if (themePreference !== 'system') return;
+    const subscription = Appearance.addChangeListener(({ colorScheme: newScheme }) => {
+      setColorScheme(newScheme || 'dark');
+    });
+    return () => subscription.remove();
+  }, [themePreference, setColorScheme]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardProvider>
-          <StatusBar style="light" />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
           <RootLayoutNav colorScheme={colorScheme} />
         </KeyboardProvider>
       </GestureHandlerRootView>

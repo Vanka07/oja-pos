@@ -8,10 +8,13 @@ import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { syncAll } from '@/lib/syncService';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 
 export default function CloudAuthScreen() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signup');
   const [email, setEmail] = useState('');
@@ -52,9 +55,9 @@ export default function CloudAuthScreen() {
   };
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -71,7 +74,7 @@ export default function CloudAuthScreen() {
           <View style={{ paddingTop: insets.top + 8 }} className="px-5 flex-row items-center">
             <Pressable
               onPress={() => router.back()}
-              className="w-10 h-10 rounded-full bg-stone-800/50 items-center justify-center mr-3"
+              className="w-10 h-10 rounded-full bg-stone-100/50 dark:bg-stone-800/50 items-center justify-center mr-3"
             >
               <ArrowLeft size={20} color="#a8a29e" />
             </Pressable>
@@ -98,10 +101,10 @@ export default function CloudAuthScreen() {
             {/* Email */}
             <View>
               <Text className="text-stone-400 text-sm mb-2">Email</Text>
-              <View className="flex-row items-center bg-stone-800/80 rounded-xl border border-stone-700 px-4">
+              <View className="flex-row items-center bg-stone-200/80 dark:bg-stone-800/80 rounded-xl border border-stone-700 px-4">
                 <Mail size={18} color="#78716c" />
                 <TextInput
-                  className="flex-1 py-4 pl-3 text-white text-base"
+                  className="flex-1 py-4 pl-3 text-stone-900 dark:text-white text-base"
                   placeholder="your@email.com"
                   placeholderTextColor="#57534e"
                   keyboardType="email-address"
@@ -116,10 +119,10 @@ export default function CloudAuthScreen() {
             {/* Password */}
             <View>
               <Text className="text-stone-400 text-sm mb-2">Password</Text>
-              <View className="flex-row items-center bg-stone-800/80 rounded-xl border border-stone-700 px-4">
+              <View className="flex-row items-center bg-stone-200/80 dark:bg-stone-800/80 rounded-xl border border-stone-700 px-4">
                 <Lock size={18} color="#78716c" />
                 <TextInput
-                  className="flex-1 py-4 pl-3 text-white text-base"
+                  className="flex-1 py-4 pl-3 text-stone-900 dark:text-white text-base"
                   placeholder="Min 6 characters"
                   placeholderTextColor="#57534e"
                   secureTextEntry
@@ -173,7 +176,7 @@ export default function CloudAuthScreen() {
 
           {/* Info */}
           <Animated.View entering={FadeInDown.delay(300).duration(600)} className="px-5 mt-6">
-            <View className="bg-stone-800/30 rounded-xl p-4 border border-stone-800">
+            <View className="bg-stone-100/30 dark:bg-stone-800/30 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
               <Text className="text-stone-500 text-xs leading-5">
                 ☁️ Your data is encrypted and stored securely.{'\n'}
                 📱 Works offline — syncs when you're back online.{'\n'}

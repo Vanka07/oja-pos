@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Store, User, Phone, MapPin, Check } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
@@ -10,6 +11,8 @@ import * as Haptics from 'expo-haptics';
 
 export default function OnboardingSetup() {
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
@@ -63,9 +66,9 @@ export default function OnboardingSetup() {
   };
 
   return (
-    <View className="flex-1 bg-stone-950">
+    <View className="flex-1 bg-stone-50 dark:bg-stone-950">
       <LinearGradient
-        colors={['#292524', '#1c1917', '#0c0a09']}
+        colors={isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff']}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
@@ -97,10 +100,10 @@ export default function OnboardingSetup() {
             <View className="gap-5">
               <Animated.View entering={FadeInDown.delay(200).duration(600)}>
                 <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Shop Name *</Text>
-                <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.name ? 'border-red-500' : 'border-stone-800'}`}>
+                <View className={`bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.name ? 'border-red-500' : 'border-stone-200 dark:border-stone-800'}`}>
                   <Store size={20} color="#78716c" />
                   <TextInput
-                    className="flex-1 py-4 px-3 text-white text-base"
+                    className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
                     placeholder="e.g. Mama Nkechi Supermarket"
                     placeholderTextColor="#57534e"
                     value={formData.name}
@@ -117,10 +120,10 @@ export default function OnboardingSetup() {
 
               <Animated.View entering={FadeInDown.delay(300).duration(600)}>
                 <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Your Name *</Text>
-                <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.ownerName ? 'border-red-500' : 'border-stone-800'}`}>
+                <View className={`bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.ownerName ? 'border-red-500' : 'border-stone-200 dark:border-stone-800'}`}>
                   <User size={20} color="#78716c" />
                   <TextInput
-                    className="flex-1 py-4 px-3 text-white text-base"
+                    className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
                     placeholder="e.g. Adaobi Okonkwo"
                     placeholderTextColor="#57534e"
                     value={formData.ownerName}
@@ -137,10 +140,10 @@ export default function OnboardingSetup() {
 
               <Animated.View entering={FadeInDown.delay(400).duration(600)}>
                 <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Phone Number *</Text>
-                <View className={`bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.phone ? 'border-red-500' : 'border-stone-800'}`}>
+                <View className={`bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border ${errors.phone ? 'border-red-500' : 'border-stone-200 dark:border-stone-800'}`}>
                   <Phone size={20} color="#78716c" />
                   <TextInput
-                    className="flex-1 py-4 px-3 text-white text-base"
+                    className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
                     placeholder="08012345678"
                     placeholderTextColor="#57534e"
                     keyboardType="phone-pad"
@@ -158,10 +161,10 @@ export default function OnboardingSetup() {
 
               <Animated.View entering={FadeInDown.delay(500).duration(600)}>
                 <Text className="text-stone-400 text-sm font-medium mb-2 ml-1">Shop Address (Optional)</Text>
-                <View className="bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-800">
+                <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
                   <MapPin size={20} color="#78716c" />
                   <TextInput
-                    className="flex-1 py-4 px-3 text-white text-base"
+                    className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
                     placeholder="15 Balogun Street, Lagos"
                     placeholderTextColor="#57534e"
                     value={formData.address}
