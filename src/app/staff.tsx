@@ -44,12 +44,10 @@ export default function StaffScreen() {
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [activeTab, setActiveTab] = useState<'staff' | 'activity'>('staff');
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    pin: '',
-    role: 'cashier' as StaffRole,
-  });
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formPin, setFormPin] = useState('');
+  const [formRole, setFormRole] = useState<StaffRole>('cashier');
 
   const staff = useStaffStore((s) => s.staff);
   const currentStaff = useStaffStore((s) => s.currentStaff);
@@ -63,13 +61,16 @@ export default function StaffScreen() {
   const recentActivities = useMemo(() => activities.slice(0, 50), [activities]);
 
   const resetForm = useCallback(() => {
-    setFormData({ name: '', phone: '', pin: '', role: 'cashier' });
+    setFormName('');
+    setFormPhone('');
+    setFormPin('');
+    setFormRole('cashier');
   }, []);
 
   const handleAddStaff = useCallback(() => {
-    if (!formData.name || formData.pin.length !== 4) return;
+    if (!formName || formPin.length !== 4) return;
     // Check for duplicate PIN
-    const pinExists = staff.some((s) => s.pin === formData.pin);
+    const pinExists = staff.some((s) => s.pin === formPin);
     if (pinExists) {
       Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN. Choose a different one.');
       return;
@@ -77,21 +78,21 @@ export default function StaffScreen() {
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addStaff({
-      name: formData.name,
-      phone: formData.phone,
-      pin: formData.pin,
-      role: formData.role,
+      name: formName,
+      phone: formPhone,
+      pin: formPin,
+      role: formRole,
       active: true,
     });
     resetForm();
     setShowAddModal(false);
-  }, [formData, staff, addStaff, resetForm]);
+  }, [formName, formPhone, formPin, formRole, staff, addStaff, resetForm]);
 
   const handleEditStaff = useCallback(() => {
-    if (!editingStaff || !formData.name) return;
+    if (!editingStaff || !formName) return;
     // Check for duplicate PIN (excluding current staff)
-    if (formData.pin.length === 4) {
-      const pinExists = staff.some((s) => s.pin === formData.pin && s.id !== editingStaff.id);
+    if (formPin.length === 4) {
+      const pinExists = staff.some((s) => s.pin === formPin && s.id !== editingStaff.id);
       if (pinExists) {
         Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN.');
         return;
@@ -100,27 +101,25 @@ export default function StaffScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const updates: Partial<StaffMember> = {
-      name: formData.name,
-      phone: formData.phone,
-      role: formData.role,
+      name: formName,
+      phone: formPhone,
+      role: formRole,
     };
-    if (formData.pin.length === 4) {
-      updates.pin = formData.pin;
+    if (formPin.length === 4) {
+      updates.pin = formPin;
     }
     updateStaff(editingStaff.id, updates);
     setShowEditModal(false);
     setEditingStaff(null);
     resetForm();
-  }, [editingStaff, formData, staff, updateStaff, resetForm]);
+  }, [editingStaff, formName, formPhone, formPin, formRole, staff, updateStaff, resetForm]);
 
   const openEditModal = useCallback((member: StaffMember) => {
     setEditingStaff(member);
-    setFormData({
-      name: member.name,
-      phone: member.phone,
-      pin: '',
-      role: member.role,
-    });
+    setFormName(member.name);
+    setFormPhone(member.phone);
+    setFormPin('');
+    setFormRole(member.role);
     setShowEditModal(true);
   }, []);
 
@@ -146,7 +145,7 @@ export default function StaffScreen() {
     updateStaff(member.id, { active: !member.active });
   }, [updateStaff]);
 
-  const RoleSelector = ({ selected, onSelect }: { selected: StaffRole; onSelect: (r: StaffRole) => void }) => (
+  const renderRoleSelector = (selected: StaffRole, onSelect: (r: StaffRole) => void) => (
     <View className="flex-row gap-2">
       {(['owner', 'manager', 'cashier'] as StaffRole[]).map((role) => (
         <Pressable
@@ -169,7 +168,7 @@ export default function StaffScreen() {
     </View>
   );
 
-  const StaffForm = ({ isEdit }: { isEdit: boolean }) => (
+  const renderStaffForm = (isEdit: boolean) => (
     <View className="gap-4">
       <View>
         <Text className="text-stone-400 text-sm mb-2">Name *</Text>
@@ -179,8 +178,8 @@ export default function StaffScreen() {
           placeholderTextColor="#57534e"
           autoCapitalize="words"
           autoCorrect={false}
-          value={formData.name}
-          onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
+          value={formName}
+          onChangeText={setFormName}
         />
       </View>
 
@@ -190,10 +189,9 @@ export default function StaffScreen() {
           className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
           placeholder="e.g. 08012345678"
           placeholderTextColor="#57534e"
-          keyboardType={Platform.OS === 'web' ? 'default' : 'phone-pad'}
           inputMode="tel"
-          value={formData.phone}
-          onChangeText={(text) => setFormData((prev) => ({ ...prev, phone: text.replace(/[^0-9+\-\s]/g, '') }))}
+          value={formPhone}
+          onChangeText={setFormPhone}
         />
       </View>
 
@@ -205,21 +203,16 @@ export default function StaffScreen() {
           className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
           placeholder="• • • •"
           placeholderTextColor="#57534e"
-          keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
           inputMode="numeric"
           maxLength={4}
-          secureTextEntry={Platform.OS !== 'web'}
-          value={formData.pin}
-          onChangeText={(text) => setFormData((prev) => ({ ...prev, pin: text.replace(/[^0-9]/g, '') }))}
+          value={formPin}
+          onChangeText={(text) => setFormPin(text.replace(/[^0-9]/g, ''))}
         />
       </View>
 
       <View>
         <Text className="text-stone-400 text-sm mb-2">Role</Text>
-        <RoleSelector
-          selected={formData.role}
-          onSelect={(role) => setFormData({ ...formData, role })}
-        />
+        {renderRoleSelector(formRole, setFormRole)}
       </View>
 
       <Pressable
@@ -477,7 +470,7 @@ export default function StaffScreen() {
                     </Text>
                   </View>
                 )}
-                <StaffForm isEdit={false} />
+                {renderStaffForm(false)}
               </View>
             </ScrollView>
           </View>
@@ -505,7 +498,7 @@ export default function StaffScreen() {
                     <X size={24} color="#78716c" />
                   </Pressable>
                 </View>
-                <StaffForm isEdit={true} />
+                {renderStaffForm(true)}
               </View>
             </ScrollView>
           </View>
