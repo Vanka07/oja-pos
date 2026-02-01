@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/lib/storage';
 
 // Types
 export type StaffRole = 'owner' | 'manager' | 'cashier';
@@ -157,7 +157,7 @@ export const useStaffStore = create<StaffState>()(
     }),
     {
       name: 'oja-staff-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
     }
   )
 );

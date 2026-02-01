@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/lib/storage';
 
 export const APP_VERSION = '1.0.0';
 export const BUILD_NUMBER = 1;
@@ -67,7 +67,7 @@ export const useUpdateStore = create<UpdateState>()(
     }),
     {
       name: 'update-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
     }
   )
 );

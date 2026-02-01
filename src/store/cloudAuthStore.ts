@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
@@ -188,7 +188,7 @@ export const useCloudAuthStore = create<CloudAuthState>()(
     }),
     {
       name: 'cloud-auth-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
       partialize: (state) => ({
         shopId: state.shopId,
         isAuthenticated: state.isAuthenticated,

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/lib/storage';
 
 type ThemePreference = 'dark' | 'light' | 'system';
 
@@ -17,7 +17,7 @@ export const useThemeStore = create<ThemeStore>()(
     }),
     {
       name: 'oja-theme',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
     }
   )
 );

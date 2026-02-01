@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getStorageItem, setStorageItem } from './storage';
 import { supabase } from './supabase';
 import { useRetailStore } from '@/store/retailStore';
 import type { Product, Sale, Customer, Expense, StockMovement } from '@/store/retailStore';
@@ -56,7 +56,7 @@ async function syncProducts(shopId: string): Promise<void> {
   }
 
   // Pull remote products
-  const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  const lastSync = getStorageItem(LAST_SYNC_KEY);
   let query = supabase
     .from('products')
     .select('*')
@@ -114,7 +114,7 @@ async function syncSales(shopId: string): Promise<void> {
   const localSales = store.sales;
 
   // Get already-synced sale IDs
-  const syncedRaw = await AsyncStorage.getItem(SYNCED_SALES_KEY);
+  const syncedRaw = getStorageItem(SYNCED_SALES_KEY);
   const syncedIds = new Set<string>(syncedRaw ? JSON.parse(syncedRaw) : []);
 
   // Push unsynced sales
@@ -153,7 +153,7 @@ async function syncSales(shopId: string): Promise<void> {
     } else {
       // Mark as synced
       unsyncedSales.forEach((s) => syncedIds.add(s.id));
-      await AsyncStorage.setItem(SYNCED_SALES_KEY, JSON.stringify([...syncedIds]));
+      setStorageItem(SYNCED_SALES_KEY, JSON.stringify([...syncedIds]));
 
       // Update synced flag in store
       useRetailStore.setState((state) => ({
@@ -166,7 +166,7 @@ async function syncSales(shopId: string): Promise<void> {
   }
 
   // Pull remote sales not in local
-  const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  const lastSync = getStorageItem(LAST_SYNC_KEY);
   let query = supabase
     .from('sales')
     .select('*')
@@ -229,7 +229,7 @@ async function syncSales(shopId: string): Promise<void> {
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ),
       }));
-      await AsyncStorage.setItem(SYNCED_SALES_KEY, JSON.stringify([...syncedIds]));
+      setStorageItem(SYNCED_SALES_KEY, JSON.stringify([...syncedIds]));
     }
   }
 }
@@ -261,7 +261,7 @@ async function syncCustomers(shopId: string): Promise<void> {
   }
 
   // Pull remote
-  const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  const lastSync = getStorageItem(LAST_SYNC_KEY);
   let query = supabase
     .from('customers')
     .select('*')
@@ -324,7 +324,7 @@ async function syncExpenses(shopId: string): Promise<void> {
   }
 
   // Pull remote
-  const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  const lastSync = getStorageItem(LAST_SYNC_KEY);
   let query = supabase
     .from('expenses')
     .select('*')
@@ -406,7 +406,7 @@ export async function syncAll(shopId: string): Promise<boolean> {
 
     // Update last sync time
     const now = new Date().toISOString();
-    await AsyncStorage.setItem(LAST_SYNC_KEY, now);
+    setStorageItem(LAST_SYNC_KEY, now);
 
     useRetailStore.setState({ lastSyncTime: now });
 
@@ -439,5 +439,5 @@ export function stopAutoSync() {
 }
 
 export async function getLastSyncTime(): Promise<string | null> {
-  return AsyncStorage.getItem(LAST_SYNC_KEY);
+  return getStorageItem(LAST_SYNC_KEY);
 }

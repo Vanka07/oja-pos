@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/lib/storage';
 
 // Types
 export interface Product {
@@ -832,7 +832,7 @@ export const useRetailStore = create<RetailState>()(
     }),
     {
       name: 'retail-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
       partialize: (state) => ({
         products: state.products,
         categories: state.categories,
