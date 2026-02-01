@@ -8,6 +8,7 @@ import {
   ArrowDownRight,
   DollarSign,
   ShoppingCart,
+  Receipt,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -79,7 +80,51 @@ export default function ReportsScreen() {
     return getTopSellingProducts(days);
   }, [dateRange, getTopSellingProducts]);
 
-  const recentSales = useMemo(() => sales.slice(0, 10), [sales]);
+  const recentSales = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    let cutoff: Date;
+    if (dateRange === 'today') {
+      cutoff = new Date(todayStr);
+    } else if (dateRange === 'week') {
+      cutoff = new Date(now);
+      cutoff.setDate(now.getDate() - 7);
+    } else if (dateRange === 'month') {
+      cutoff = new Date(now);
+      cutoff.setDate(now.getDate() - 30);
+    } else {
+      cutoff = new Date(now);
+      cutoff.setDate(now.getDate() - 365);
+    }
+    return sales
+      .filter((s) => new Date(s.createdAt) >= cutoff)
+      .slice(0, 10);
+  }, [sales, dateRange]);
+
+  const bestDay = useMemo(() => {
+    if (dateRange === 'today') return null;
+    const today = new Date();
+    const periodDays = dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;
+    const dailyMap: Record<string, { total: number; count: number }> = {};
+    for (let i = 0; i < periodDays; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const summary = getDailySummary(dateStr);
+      if (summary.totalSales > 0) {
+        dailyMap[dateStr] = { total: summary.totalSales, count: summary.totalTransactions };
+      }
+    }
+    const entries = Object.entries(dailyMap);
+    if (entries.length === 0) return null;
+    const best = entries.reduce((a, b) => (a[1].total > b[1].total ? a : b));
+    const bestDate = new Date(best[0] + 'T12:00:00');
+    return {
+      dateStr: bestDate.toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' }),
+      total: best[1].total,
+      count: best[1].count,
+    };
+  }, [dateRange, getDailySummary]);
 
   const chartData = useMemo(() => {
     if (dateRange === 'week') {
@@ -276,7 +321,7 @@ export default function ReportsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(600)} className="mx-5 mt-4">
-          <LinearGradient colors={['#059669', '#047857', '#065f46']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 24 }}>
+          <LinearGradient colors={['#e05e1b', '#c2410c', '#9a3412']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 24 }}>
             <View className="flex-row items-center gap-2 mb-2">
               <TrendingUp size={20} color="rgba(255,255,255,0.8)" />
               <Text className="text-white/80 text-sm font-medium">Total Revenue</Text>
@@ -290,6 +335,18 @@ export default function ReportsScreen() {
             )}
           </LinearGradient>
         </Animated.View>
+
+        {bestDay && (
+          <Animated.View entering={FadeInDown.delay(340).duration(600)} className="mx-5 mt-3">
+            <View className="bg-amber-50 dark:bg-amber-950/40 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800/50 flex-row items-center">
+              <Text className="text-lg mr-2">🏆</Text>
+              <Text className="text-stone-700 dark:text-stone-300 text-sm flex-1">
+                <Text className="font-semibold">Best Day: </Text>
+                {bestDay.dateStr} — {formatNaira(bestDay.total)} ({bestDay.count} sale{bestDay.count !== 1 ? 's' : ''})
+              </Text>
+            </View>
+          </Animated.View>
+        )}
 
         {(dateRange === 'week' || dateRange === 'month' || dateRange === 'year') && (
           <Animated.View entering={FadeInDown.delay(350).duration(600)} className="mx-5 mt-4">
@@ -316,28 +373,23 @@ export default function ReportsScreen() {
               <DollarSign size={16} color="#10b981" />
             </View>
             <Text className="text-stone-500 text-xs uppercase tracking-wide">Profit</Text>
-            <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(getDateRangeData.profit)}</Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(getDateRangeData.profit)}</Text>
+              {getDateRangeData.totalSales > 0 && (
+                <View className="bg-emerald-500/20 rounded-full px-2 py-0.5">
+                  <Text className="text-emerald-500 text-xs font-semibold">↑ {(getDateRangeData.profit / getDateRangeData.totalSales * 100).toFixed(1)}%</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
+            <View className="w-8 h-8 rounded-lg bg-orange-500/20 items-center justify-center mb-2">
+              <Receipt size={16} color="#e05e1b" />
+            </View>
+            <Text className="text-stone-500 text-xs uppercase tracking-wide">Avg. Sale</Text>
+            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{formatNaira(getDateRangeData.totalTransactions > 0 ? Math.round(getDateRangeData.totalSales / getDateRangeData.totalTransactions) : 0)}</Text>
           </View>
         </Animated.View>
-
-        {paymentBreakdown.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(500).duration(600)} className="mx-5 mt-4">
-            <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-900 dark:text-white font-semibold mb-4">Payment Methods</Text>
-              <View className="h-4 rounded-full overflow-hidden flex-row mb-4">
-                {paymentBreakdown.map((item) => <View key={item.method} style={{ width: `${item.percentage}%`, backgroundColor: item.color }} />)}
-              </View>
-              <View className="flex-row flex-wrap gap-3">
-                {paymentBreakdown.map((item) => (
-                  <View key={item.method} className="flex-row items-center gap-2">
-                    <View className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <Text className="text-stone-600 dark:text-stone-400 text-sm">{item.method}: {formatNaira(item.amount)} ({item.percentage.toFixed(0)}%)</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </Animated.View>
-        )}
 
         <Animated.View entering={FadeInDown.delay(600).duration(600)} className="mx-5 mt-6">
           <View className="flex-row items-center justify-between mb-4">
@@ -390,11 +442,14 @@ export default function ReportsScreen() {
                 <Animated.View key={sale.id} entering={FadeInRight.delay(900 + index * 50).duration(400)}>
                   <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
                     <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-3">
+                      <View className="flex-row items-center gap-3 flex-1">
                         <View className={`w-2 h-2 rounded-full ${sale.paymentMethod === 'cash' ? 'bg-emerald-500' : sale.paymentMethod === 'transfer' ? 'bg-blue-500' : sale.paymentMethod === 'pos' ? 'bg-purple-500' : 'bg-amber-500'}`} />
-                        <View>
+                        <View className="flex-1">
                           <Text className="text-stone-900 dark:text-white font-medium">{sale.items.length} item{sale.items.length > 1 ? 's' : ''}</Text>
                           <Text className="text-stone-500 text-xs">{new Date(sale.createdAt).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} • {sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}</Text>
+                          <Text className="text-stone-400 dark:text-stone-500 text-xs mt-0.5" numberOfLines={1}>
+                            {sale.items.slice(0, 3).map((item) => `${item.quantity}x ${item.product.name}`).join(', ')}{sale.items.length > 3 ? ` + ${sale.items.length - 3} more` : ''}
+                          </Text>
                         </View>
                       </View>
                       <Text className="text-stone-900 dark:text-white font-semibold">{formatNaira(sale.total)}</Text>
