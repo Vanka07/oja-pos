@@ -1,0 +1,386 @@
+import { View, Text, ScrollView, Pressable, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Calendar,
+  TrendingUp,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Package,
+  DollarSign,
+  ShoppingCart,
+  Users
+} from 'lucide-react-native';
+import { useRetailStore, formatNaira } from '@/store/retailStore';
+import { useState, useMemo } from 'react';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+type DateRange = 'today' | 'week' | 'month';
+
+export default function ReportsScreen() {
+  const insets = useSafeAreaInsets();
+  const [dateRange, setDateRange] = useState<DateRange>('today');
+
+  const sales = useRetailStore((s) => s.sales);
+  const products = useRetailStore((s) => s.products);
+  const getDailySummary = useRetailStore((s) => s.getDailySummary);
+  const getTopSellingProducts = useRetailStore((s) => s.getTopSellingProducts);
+  const getSalesByDateRange = useRetailStore((s) => s.getSalesByDateRange);
+
+  const getDateRangeData = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (dateRange === 'today') {
+      return getDailySummary(todayStr);
+    }
+
+    const startDate = new Date();
+    if (dateRange === 'week') {
+      startDate.setDate(today.getDate() - 7);
+    } else {
+      startDate.setDate(today.getDate() - 30);
+    }
+
+    const rangeSales = getSalesByDateRange(startDate.toISOString().split('T')[0], todayStr);
+
+    return {
+      date: `${startDate.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}`,
+      totalSales: rangeSales.reduce((sum, s) => sum + s.total, 0),
+      totalTransactions: rangeSales.length,
+      cashSales: rangeSales.filter((s) => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0),
+      transferSales: rangeSales.filter((s) => s.paymentMethod === 'transfer').reduce((sum, s) => sum + s.total, 0),
+      posSales: rangeSales.filter((s) => s.paymentMethod === 'pos').reduce((sum, s) => sum + s.total, 0),
+      creditSales: rangeSales.filter((s) => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0),
+      profit: rangeSales.reduce((sum, s) => {
+        return sum + s.items.reduce((itemSum, item) => {
+          return itemSum + (item.product.sellingPrice - item.product.costPrice) * item.quantity;
+        }, 0);
+      }, 0),
+    };
+  }, [dateRange, getDailySummary, getSalesByDateRange]);
+
+  const topProducts = useMemo(() => {
+    const days = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : 30;
+    return getTopSellingProducts(days);
+  }, [dateRange, getTopSellingProducts]);
+
+  const recentSales = useMemo(() => {
+    return sales.slice(0, 10);
+  }, [sales]);
+
+  // Calculate week-over-week or month-over-month change
+  const getPreviousPeriodChange = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    let currentStart: Date;
+    let previousStart: Date;
+    let previousEnd: Date;
+
+    if (dateRange === 'today') {
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdaySummary = getDailySummary(yesterday.toISOString().split('T')[0]);
+      if (yesterdaySummary.totalSales === 0) return null;
+      const change = ((getDateRangeData.totalSales - yesterdaySummary.totalSales) / yesterdaySummary.totalSales) * 100;
+      return { change, label: 'vs yesterday' };
+    }
+
+    if (dateRange === 'week') {
+      currentStart = new Date(today);
+      currentStart.setDate(today.getDate() - 7);
+      previousEnd = new Date(currentStart);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      previousStart = new Date(previousEnd);
+      previousStart.setDate(previousEnd.getDate() - 7);
+    } else {
+      currentStart = new Date(today);
+      currentStart.setDate(today.getDate() - 30);
+      previousEnd = new Date(currentStart);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      previousStart = new Date(previousEnd);
+      previousStart.setDate(previousEnd.getDate() - 30);
+    }
+
+    const previousSales = getSalesByDateRange(
+      previousStart.toISOString().split('T')[0],
+      previousEnd.toISOString().split('T')[0]
+    );
+    const previousTotal = previousSales.reduce((sum, s) => sum + s.total, 0);
+
+    if (previousTotal === 0) return null;
+    const change = ((getDateRangeData.totalSales - previousTotal) / previousTotal) * 100;
+    return { change, label: dateRange === 'week' ? 'vs last week' : 'vs last month' };
+  }, [dateRange, getDateRangeData, getDailySummary, getSalesByDateRange]);
+
+  const paymentBreakdown = useMemo(() => {
+    const total = getDateRangeData.totalSales || 1;
+    return [
+      { method: 'Cash', amount: getDateRangeData.cashSales, percentage: (getDateRangeData.cashSales / total) * 100, color: '#10b981' },
+      { method: 'Transfer', amount: getDateRangeData.transferSales, percentage: (getDateRangeData.transferSales / total) * 100, color: '#3b82f6' },
+      { method: 'POS', amount: getDateRangeData.posSales, percentage: (getDateRangeData.posSales / total) * 100, color: '#a855f7' },
+      { method: 'Credit', amount: getDateRangeData.creditSales, percentage: (getDateRangeData.creditSales / total) * 100, color: '#f59e0b' },
+    ].filter(p => p.amount > 0);
+  }, [getDateRangeData]);
+
+  return (
+    <View className="flex-1 bg-stone-950">
+      <LinearGradient
+        colors={['#292524', '#1c1917', '#0c0a09']}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+          <Animated.View entering={FadeInDown.delay(100).duration(600)}>
+            <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">
+              Analytics
+            </Text>
+            <Text className="text-white text-3xl font-bold tracking-tight">
+              Reports
+            </Text>
+          </Animated.View>
+        </View>
+
+        {/* Date Range Selector */}
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(600)}
+          className="px-5 mt-6"
+        >
+          <View className="flex-row bg-stone-900/80 rounded-xl p-1 border border-stone-800">
+            {(['today', 'week', 'month'] as DateRange[]).map((range) => (
+              <Pressable
+                key={range}
+                onPress={() => setDateRange(range)}
+                className={`flex-1 py-3 rounded-lg ${
+                  dateRange === range ? 'bg-orange-500' : ''
+                }`}
+              >
+                <Text
+                  className={`text-center font-medium ${
+                    dateRange === range ? 'text-white' : 'text-stone-400'
+                  }`}
+                >
+                  {range === 'today' ? 'Today' : range === 'week' ? '7 Days' : '30 Days'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* Revenue Card */}
+        <Animated.View
+          entering={FadeInDown.delay(300).duration(600)}
+          className="mx-5 mt-4"
+        >
+          <LinearGradient
+            colors={['#059669', '#047857', '#065f46']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 24, padding: 24 }}
+          >
+            <View className="flex-row items-center gap-2 mb-2">
+              <TrendingUp size={20} color="rgba(255,255,255,0.8)" />
+              <Text className="text-white/80 text-sm font-medium">Total Revenue</Text>
+            </View>
+            <Text className="text-white text-4xl font-bold tracking-tight mb-2">
+              {formatNaira(getDateRangeData.totalSales)}
+            </Text>
+            {getPreviousPeriodChange && (
+              <View className="flex-row items-center gap-1">
+                {getPreviousPeriodChange.change >= 0 ? (
+                  <ArrowUpRight size={16} color="#a7f3d0" />
+                ) : (
+                  <ArrowDownRight size={16} color="#fca5a5" />
+                )}
+                <Text className={getPreviousPeriodChange.change >= 0 ? 'text-emerald-200' : 'text-red-200'}>
+                  {Math.abs(getPreviousPeriodChange.change).toFixed(1)}% {getPreviousPeriodChange.label}
+                </Text>
+              </View>
+            )}
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Key Metrics */}
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(600)}
+          className="flex-row mx-5 mt-4 gap-3"
+        >
+          <View className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800">
+            <View className="w-8 h-8 rounded-lg bg-blue-500/20 items-center justify-center mb-2">
+              <ShoppingCart size={16} color="#3b82f6" />
+            </View>
+            <Text className="text-stone-500 text-xs uppercase tracking-wide">Transactions</Text>
+            <Text className="text-white text-2xl font-bold">{getDateRangeData.totalTransactions}</Text>
+          </View>
+          <View className="flex-1 bg-stone-900/80 rounded-xl p-4 border border-stone-800">
+            <View className="w-8 h-8 rounded-lg bg-emerald-500/20 items-center justify-center mb-2">
+              <DollarSign size={16} color="#10b981" />
+            </View>
+            <Text className="text-stone-500 text-xs uppercase tracking-wide">Profit</Text>
+            <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(getDateRangeData.profit)}</Text>
+          </View>
+        </Animated.View>
+
+        {/* Payment Methods Breakdown */}
+        {paymentBreakdown.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.delay(500).duration(600)}
+            className="mx-5 mt-4"
+          >
+            <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800">
+              <Text className="text-white font-semibold mb-4">Payment Methods</Text>
+
+              {/* Bar visualization */}
+              <View className="h-4 rounded-full overflow-hidden flex-row mb-4">
+                {paymentBreakdown.map((item, index) => (
+                  <View
+                    key={item.method}
+                    style={{
+                      width: `${item.percentage}%`,
+                      backgroundColor: item.color,
+                    }}
+                  />
+                ))}
+              </View>
+
+              {/* Legend */}
+              <View className="flex-row flex-wrap gap-3">
+                {paymentBreakdown.map((item) => (
+                  <View key={item.method} className="flex-row items-center gap-2">
+                    <View
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <Text className="text-stone-400 text-sm">
+                      {item.method}: {formatNaira(item.amount)} ({item.percentage.toFixed(0)}%)
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Top Selling Products */}
+        <Animated.View
+          entering={FadeInDown.delay(600).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-white text-lg font-semibold">Top Selling Products</Text>
+            <View className="flex-row items-center gap-1">
+              <BarChart3 size={16} color="#f97316" />
+              <Text className="text-orange-500 text-sm">By quantity</Text>
+            </View>
+          </View>
+
+          {topProducts.length === 0 ? (
+            <View className="bg-stone-900/60 rounded-xl p-6 border border-stone-800 items-center">
+              <Package size={32} color="#57534e" />
+              <Text className="text-stone-500 mt-3 text-center">No sales data yet</Text>
+            </View>
+          ) : (
+            <View className="gap-3">
+              {topProducts.slice(0, 5).map((item, index) => (
+                <Animated.View
+                  key={item.product.id}
+                  entering={FadeInRight.delay(700 + index * 100).duration(400)}
+                >
+                  <View className="bg-stone-900/60 rounded-xl p-4 border border-stone-800">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-3 flex-1">
+                        <View className={`w-8 h-8 rounded-lg items-center justify-center ${
+                          index === 0 ? 'bg-amber-500/20' :
+                          index === 1 ? 'bg-stone-500/20' :
+                          index === 2 ? 'bg-orange-800/20' : 'bg-stone-800'
+                        }`}>
+                          <Text className={`font-bold ${
+                            index === 0 ? 'text-amber-400' :
+                            index === 1 ? 'text-stone-300' :
+                            index === 2 ? 'text-orange-700' : 'text-stone-500'
+                          }`}>
+                            #{index + 1}
+                          </Text>
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-white font-medium" numberOfLines={1}>
+                            {item.product.name}
+                          </Text>
+                          <Text className="text-stone-500 text-xs">{item.product.category}</Text>
+                        </View>
+                      </View>
+                      <View className="items-end">
+                        <Text className="text-white font-bold">{item.totalSold}</Text>
+                        <Text className="text-stone-500 text-xs">units sold</Text>
+                      </View>
+                    </View>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+          )}
+        </Animated.View>
+
+        {/* Recent Transactions */}
+        <Animated.View
+          entering={FadeInDown.delay(800).duration(600)}
+          className="mx-5 mt-6"
+        >
+          <Text className="text-white text-lg font-semibold mb-4">Recent Transactions</Text>
+
+          {recentSales.length === 0 ? (
+            <View className="bg-stone-900/60 rounded-xl p-6 border border-stone-800 items-center">
+              <ShoppingCart size={32} color="#57534e" />
+              <Text className="text-stone-500 mt-3 text-center">No transactions yet</Text>
+            </View>
+          ) : (
+            <View className="gap-2">
+              {recentSales.map((sale, index) => (
+                <Animated.View
+                  key={sale.id}
+                  entering={FadeInRight.delay(900 + index * 50).duration(400)}
+                >
+                  <View className="bg-stone-900/60 rounded-xl p-4 border border-stone-800">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-3">
+                        <View className={`w-2 h-2 rounded-full ${
+                          sale.paymentMethod === 'cash' ? 'bg-emerald-500' :
+                          sale.paymentMethod === 'transfer' ? 'bg-blue-500' :
+                          sale.paymentMethod === 'pos' ? 'bg-purple-500' : 'bg-amber-500'
+                        }`} />
+                        <View>
+                          <Text className="text-white font-medium">
+                            {sale.items.length} item{sale.items.length > 1 ? 's' : ''}
+                          </Text>
+                          <Text className="text-stone-500 text-xs">
+                            {new Date(sale.createdAt).toLocaleDateString('en-NG', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })} • {sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text className="text-white font-semibold">{formatNaira(sale.total)}</Text>
+                    </View>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+          )}
+        </Animated.View>
+      </ScrollView>
+    </View>
+  );
+}
