@@ -18,9 +18,11 @@ import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import EmptyState from '@/components/EmptyState';
+import { useRouter } from 'expo-router';
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
@@ -108,6 +110,10 @@ export default function InventoryScreen() {
     setShowStockModal(false);
     setSelectedProduct(null);
   }, [selectedProduct, stockAdjustment, adjustStock]);
+
+  const openProductEdit = useCallback((product: Product) => {
+    router.push({ pathname: '/product-edit', params: { productId: product.id } });
+  }, [router]);
 
   const openStockModal = useCallback((product: Product) => {
     setSelectedProduct(product);
@@ -294,7 +300,7 @@ export default function InventoryScreen() {
                   layout={Layout.springify()}
                 >
                   <Pressable
-                    onPress={() => openStockModal(product)}
+                    onPress={() => openProductEdit(product)}
                     className={`bg-stone-900/80 rounded-xl p-4 border ${
                       isLowStock ? 'border-amber-500/50' : 'border-stone-800'
                     } active:scale-[0.99]`}

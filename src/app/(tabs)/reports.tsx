@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -18,6 +18,26 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import EmptyState from '@/components/EmptyState';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Conditionally import victory-native for native platforms
+let VictoryBar: any = null;
+let VictoryChart: any = null;
+let VictoryTheme: any = null;
+let VictoryAxis: any = null;
+let VictoryPie: any = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    const victory = require('victory-native');
+    VictoryBar = victory.VictoryBar;
+    VictoryChart = victory.VictoryChart;
+    VictoryTheme = victory.VictoryTheme;
+    VictoryAxis = victory.VictoryAxis;
+    VictoryPie = victory.VictoryPie;
+  } catch (e) {
+    // victory-native not available
+  }
+}
 
 type DateRange = 'today' | 'week' | 'month';
 
@@ -73,14 +93,27 @@ export default function ReportsScreen() {
     return sales.slice(0, 10);
   }, [sales]);
 
+  // Daily sales data for bar chart (last 7 days)
+  const dailySalesData = useMemo(() => {
+    const data = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const summary = getDailySummary(dateStr);
+      const dayLabel = date.toLocaleDateString('en-NG', { weekday: 'short' });
+      data.push({
+        day: dayLabel,
+        sales: summary.totalSales,
+        label: dateStr,
+      });
+    }
+    return data;
+  }, [getDailySummary]);
+
   // Calculate week-over-week or month-over-month change
   const getPreviousPeriodChange = useMemo(() => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-
-    let currentStart: Date;
-    let previousStart: Date;
-    let previousEnd: Date;
 
     if (dateRange === 'today') {
       const yesterday = new Date(today);
@@ -91,15 +124,19 @@ export default function ReportsScreen() {
       return { change, label: 'vs yesterday' };
     }
 
+    const todayStr = today.toISOString().split('T')[0];
+    let previousStart: Date;
+    let previousEnd: Date;
+
     if (dateRange === 'week') {
-      currentStart = new Date(today);
+      const currentStart = new Date(today);
       currentStart.setDate(today.getDate() - 7);
       previousEnd = new Date(currentStart);
       previousEnd.setDate(previousEnd.getDate() - 1);
       previousStart = new Date(previousEnd);
       previousStart.setDate(previousEnd.getDate() - 7);
     } else {
-      currentStart = new Date(today);
+      const currentStart = new Date(today);
       currentStart.setDate(today.getDate() - 30);
       previousEnd = new Date(currentStart);
       previousEnd.setDate(previousEnd.getDate() - 1);
@@ -127,6 +164,160 @@ export default function ReportsScreen() {
       { method: 'Credit', amount: getDateRangeData.creditSales, percentage: (getDateRangeData.creditSales / total) * 100, color: '#f59e0b' },
     ].filter(p => p.amount > 0);
   }, [getDateRangeData]);
+
+  // Simple bar chart for web (no victory dependency)
+  const WebBarChart = () => {
+    const maxSales = Math.max(...dailySalesData.map(d => d.sales), 1);
+    return (
+      <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800">
+        <Text className="text-white font-semibold mb-4">Daily Sales (Last 7 Days)</Text>
+        <View className="flex-row items-end justify-between" style={{ height: 140 }}>
+          {dailySalesData.map((item, index) => {
+            const barHeight = Math.max((item.sales / maxSales) * 120, 4);
+            return (
+              <View key={index} className="items-center flex-1">
+                <Text className="text-stone-500 text-[10px] mb-1">
+                  {item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}
+                </Text>
+                <View
+                  style={{
+                    height: barHeight,
+                    backgroundColor: item.sales > 0 ? '#f97316' : '#44403c',
+                    width: '60%',
+                    borderRadius: 4,
+                  }}
+                />
+                <Text className="text-stone-500 text-xs mt-2">{item.day}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  // Simple donut visualization for web
+  const WebPieChart = () => {
+    if (paymentBreakdown.length === 0) return null;
+    const total = paymentBreakdown.reduce((s, p) => s + p.amount, 0);
+    return (
+      <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800 mt-4">
+        <Text className="text-white font-semibold mb-4">Payment Breakdown</Text>
+        {/* Stacked bar */}
+        <View className="h-6 rounded-full overflow-hidden flex-row mb-4">
+          {paymentBreakdown.map((item) => (
+            <View
+              key={item.method}
+              style={{
+                width: `${item.percentage}%`,
+                backgroundColor: item.color,
+              }}
+            />
+          ))}
+        </View>
+        {/* Legend */}
+        <View className="gap-2">
+          {paymentBreakdown.map((item) => (
+            <View key={item.method} className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <View className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <Text className="text-stone-400 text-sm">{item.method}</Text>
+              </View>
+              <Text className="text-white text-sm font-medium">
+                {formatNaira(item.amount)} ({item.percentage.toFixed(0)}%)
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  // Native chart components using victory-native
+  const NativeBarChart = () => {
+    if (!VictoryChart || !VictoryBar || !VictoryAxis) return <WebBarChart />;
+    const maxSales = Math.max(...dailySalesData.map(d => d.sales), 1);
+    return (
+      <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800">
+        <Text className="text-white font-semibold mb-2">Daily Sales (Last 7 Days)</Text>
+        <VictoryChart
+          theme={VictoryTheme?.material}
+          domainPadding={20}
+          width={SCREEN_WIDTH - 60}
+          height={200}
+          padding={{ top: 20, bottom: 40, left: 50, right: 20 }}
+        >
+          <VictoryAxis
+            style={{
+              axis: { stroke: '#44403c' },
+              tickLabels: { fill: '#a8a29e', fontSize: 10 },
+            }}
+          />
+          <VictoryAxis
+            dependentAxis
+            tickFormat={(t: number) => `₦${(t / 1000).toFixed(0)}k`}
+            style={{
+              axis: { stroke: '#44403c' },
+              tickLabels: { fill: '#a8a29e', fontSize: 10 },
+              grid: { stroke: '#292524' },
+            }}
+          />
+          <VictoryBar
+            data={dailySalesData}
+            x="day"
+            y="sales"
+            style={{
+              data: {
+                fill: '#f97316',
+                borderRadius: 4,
+              },
+            }}
+            cornerRadius={{ top: 4 }}
+          />
+        </VictoryChart>
+      </View>
+    );
+  };
+
+  const NativePieChart = () => {
+    if (!VictoryPie || paymentBreakdown.length === 0) return <WebPieChart />;
+    const pieData = paymentBreakdown.map((item) => ({
+      x: item.method,
+      y: item.amount,
+    }));
+    return (
+      <View className="bg-stone-900/80 rounded-xl p-4 border border-stone-800 mt-4">
+        <Text className="text-white font-semibold mb-2">Payment Breakdown</Text>
+        <View className="items-center">
+          <VictoryPie
+            data={pieData}
+            colorScale={paymentBreakdown.map((p) => p.color)}
+            width={SCREEN_WIDTH - 80}
+            height={200}
+            innerRadius={50}
+            labelRadius={80}
+            style={{
+              labels: { fill: 'white', fontSize: 11, fontWeight: 'bold' },
+            }}
+            labels={({ datum }: { datum: { x: string; y: number } }) =>
+              `${datum.x}\n${((datum.y / getDateRangeData.totalSales) * 100).toFixed(0)}%`
+            }
+          />
+        </View>
+        {/* Legend */}
+        <View className="flex-row flex-wrap gap-3 mt-2">
+          {paymentBreakdown.map((item) => (
+            <View key={item.method} className="flex-row items-center gap-2">
+              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+              <Text className="text-stone-400 text-sm">
+                {item.method}: {formatNaira(item.amount)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <View className="flex-1 bg-stone-950">
@@ -211,6 +402,26 @@ export default function ReportsScreen() {
           </LinearGradient>
         </Animated.View>
 
+        {/* Charts Section */}
+        {dateRange === 'week' && (
+          <Animated.View
+            entering={FadeInDown.delay(350).duration(600)}
+            className="mx-5 mt-4"
+          >
+            {Platform.OS === 'web' ? <WebBarChart /> : <NativeBarChart />}
+          </Animated.View>
+        )}
+
+        {/* Payment Pie/Donut Chart */}
+        {paymentBreakdown.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.delay(380).duration(600)}
+            className="mx-5"
+          >
+            {Platform.OS === 'web' ? <WebPieChart /> : <NativePieChart />}
+          </Animated.View>
+        )}
+
         {/* Key Metrics */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(600)}
@@ -232,7 +443,7 @@ export default function ReportsScreen() {
           </View>
         </Animated.View>
 
-        {/* Payment Methods Breakdown */}
+        {/* Payment Methods Breakdown (card layout - always shown) */}
         {paymentBreakdown.length > 0 && (
           <Animated.View
             entering={FadeInDown.delay(500).duration(600)}
@@ -243,7 +454,7 @@ export default function ReportsScreen() {
 
               {/* Bar visualization */}
               <View className="h-4 rounded-full overflow-hidden flex-row mb-4">
-                {paymentBreakdown.map((item, index) => (
+                {paymentBreakdown.map((item) => (
                   <View
                     key={item.method}
                     style={{
