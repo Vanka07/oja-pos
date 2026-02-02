@@ -24,12 +24,14 @@ const FEATURE_ACCESS: Record<string, PlanType> = {
 
 export const FREE_PRODUCT_LIMIT = 50;
 
-export function canAccess(feature: string): boolean {
-  const requiredPlan = FEATURE_ACCESS[feature];
-  if (!requiredPlan) return true; // Unknown features default to accessible
-  if (requiredPlan === 'starter') return true; // Free features always accessible
-  // Premium feature — check subscription
-  return useSubscriptionStore.getState().isPremium();
+// TODO: Re-enable gating after testing — currently all features are unlocked
+export function canAccess(_feature: string): boolean {
+  return true;
+  // Original gating logic (preserved for re-enabling):
+  // const requiredPlan = FEATURE_ACCESS[feature];
+  // if (!requiredPlan) return true;
+  // if (requiredPlan === 'starter') return true;
+  // return useSubscriptionStore.getState().isPremium();
 }
 
 export const FEATURE_DESCRIPTIONS: Record<string, { name: string; description: string }> = {

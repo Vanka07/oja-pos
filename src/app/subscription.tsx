@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, Linking, TextInput, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -6,16 +6,18 @@ import {
   Crown,
   Check,
   X as XIcon,
-  MessageCircle,
+  CreditCard,
   Sparkles,
+  Mail,
 } from 'lucide-react-native';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { maskCode } from '@/lib/activationCode';
 import { useColorScheme } from 'nativewind';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { buildCheckoutUrl, generateReference } from '@/lib/paystack';
+import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-
-const WHATSAPP_NUMBER = '2349030539254';
-const WHATSAPP_MESSAGE = 'Hi! I want to upgrade my Oja POS to the Business plan.';
 
 const STARTER_FEATURES = [
   'Point of Sale',
@@ -49,10 +51,37 @@ export default function SubscriptionScreen() {
   const expiresAt = useSubscriptionStore((s) => s.expiresAt);
   const isPremium = useSubscriptionStore((s) => s.isPremium)();
   const daysRemaining = useSubscriptionStore((s) => s.daysRemaining)();
+  const activationCode = useSubscriptionStore((s) => s.activationCode);
 
-  const handleWhatsApp = () => {
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
-    Linking.openURL(url);
+  const cloudAuth = useCloudAuthStore();
+  const [email, setEmail] = useState(cloudAuth.session?.user?.email || '');
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePayWithPaystack = () => {
+    const userEmail = cloudAuth.session?.user?.email || email.trim();
+    if (!userEmail) {
+      setShowEmailInput(true);
+      return;
+    }
+    
+    setIsLoading(true);
+    const reference = generateReference();
+    const checkoutUrl = buildCheckoutUrl({
+      email: userEmail,
+      reference,
+      shopId: cloudAuth.shopId || undefined,
+    });
+    
+    setIsLoading(false);
+    router.push({
+      pathname: '/pay',
+      params: {
+        url: encodeURIComponent(checkoutUrl),
+        reference,
+        email: userEmail,
+      },
+    });
   };
 
   const gradientColors: [string, string, string] = isDark
@@ -190,16 +219,52 @@ export default function SubscriptionScreen() {
         {/* CTA */}
         {!isPremium && (
           <Animated.View entering={FadeInDown.delay(500).duration(600)} className="mx-5 mt-6">
+            {/* Email input (shown when no cloud auth email) */}
+            {showEmailInput && !cloudAuth.session?.user?.email && (
+              <View className="mb-4">
+                <Text className="text-stone-400 text-sm mb-2">Enter your email to continue</Text>
+                <View className="flex-row items-center bg-white/10 dark:bg-stone-800 rounded-xl border border-stone-700 px-4">
+                  <Mail size={18} color="#78716c" />
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="your@email.com"
+                    placeholderTextColor="#57534e"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    className="flex-1 text-white py-3.5 ml-3 text-base"
+                  />
+                </View>
+              </View>
+            )}
+
             <Pressable
-              onPress={handleWhatsApp}
-              className="bg-[#25D366] py-4 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-90"
+              onPress={handlePayWithPaystack}
+              disabled={isLoading}
+              className="bg-[#e05e1b] py-4 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-90"
             >
-              <MessageCircle size={20} color="white" />
-              <Text className="text-white font-semibold text-base">Upgrade via WhatsApp</Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <CreditCard size={20} color="white" />
+                  <Text className="text-white font-semibold text-base">
+                    Pay with Paystack — ₦5,000/mo
+                  </Text>
+                </>
+              )}
             </Pressable>
             <Text className="text-stone-400 text-xs text-center mt-3">
-              Contact us to activate your Business plan. Pay via transfer.
+              Secure payment via card, bank transfer, or USSD
             </Text>
+
+            <Pressable
+              onPress={() => router.push('/activate')}
+              className="mt-4 py-3 items-center active:opacity-70"
+            >
+              <Text className="text-orange-500 font-semibold text-sm">Have an activation code?</Text>
+            </Pressable>
           </Animated.View>
         )}
 
@@ -209,6 +274,11 @@ export default function SubscriptionScreen() {
               <Text className="text-emerald-400 font-medium text-center">
                 ✅ You're on the Business plan. Enjoy all premium features!
               </Text>
+              {activationCode && (
+                <Text className="text-emerald-500/60 text-xs text-center mt-2">
+                  Activated with: {maskCode(activationCode)}
+                </Text>
+              )}
             </View>
           </Animated.View>
         )}
