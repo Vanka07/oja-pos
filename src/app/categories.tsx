@@ -6,6 +6,8 @@ import { useColorScheme } from 'nativewind';
 import { ArrowLeft, Plus, Pencil, Trash2, X, Check, Package } from 'lucide-react-native';
 import { useRetailStore, type Category } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -31,6 +33,9 @@ export default function CategoriesScreen() {
 
   const currentStaff = useStaffStore((s) => s.currentStaff);
   const canManage = !currentStaff || hasPermission(currentStaff.role, 'manage_categories');
+
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
 
   const categories = useRetailStore((s) => s.categories);
   const products = useRetailStore((s) => s.products);
@@ -252,7 +257,7 @@ export default function CategoriesScreen() {
                 <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category Name *</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white text-base"
-                  placeholder="e.g. Hair Products, Drinks, Electronics"
+                  placeholder={placeholders.categoryExample}
                   placeholderTextColor="#57534e"
                   value={formName}
                   onChangeText={setFormName}

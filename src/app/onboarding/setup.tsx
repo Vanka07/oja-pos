@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useRetailStore } from '@/store/retailStore';
 import { businessTemplates } from '@/lib/businessTemplates';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import * as Haptics from 'expo-haptics';
 
 export default function OnboardingSetup() {
@@ -20,6 +21,7 @@ export default function OnboardingSetup() {
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
   const businessType = useOnboardingStore((s) => s.businessType);
   const addCategory = useRetailStore((s) => s.addCategory);
+  const placeholders = getPlaceholders(businessType);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -115,7 +117,7 @@ export default function OnboardingSetup() {
                   <Store size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
-                    placeholder="e.g. Mama Nkechi Supermarket"
+                    placeholder={placeholders.shopName}
                     placeholderTextColor="#57534e"
                     value={formData.name}
                     onChangeText={(text) => {
@@ -135,7 +137,7 @@ export default function OnboardingSetup() {
                   <User size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
-                    placeholder="e.g. Adaobi Okonkwo"
+                    placeholder={placeholders.ownerName}
                     placeholderTextColor="#57534e"
                     value={formData.ownerName}
                     onChangeText={(text) => {
@@ -176,7 +178,7 @@ export default function OnboardingSetup() {
                   <MapPin size={20} color="#78716c" />
                   <TextInput
                     className="flex-1 py-4 px-3 text-stone-900 dark:text-white text-base"
-                    placeholder="15 Balogun Street, Lagos"
+                    placeholder={placeholders.address}
                     placeholderTextColor="#57534e"
                     value={formData.address}
                     onChangeText={(text) => setFormData({ ...formData, address: text })}

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 
@@ -30,6 +32,9 @@ export default function ProductEditScreen() {
   useEffect(() => {
     if (!canEdit) router.back();
   }, [canEdit, router]);
+
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
 
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
@@ -164,7 +169,7 @@ export default function ProductEditScreen() {
                 <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
-                  placeholder="e.g. Indomie Chicken 70g"
+                  placeholder={placeholders.productName}
                   placeholderTextColor="#57534e"
                   value={formData.name}
                   onChangeText={(text) => setFormData({ ...formData, name: text })}

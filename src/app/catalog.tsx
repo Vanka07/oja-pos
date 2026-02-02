@@ -6,6 +6,7 @@ import { useColorScheme } from 'nativewind';
 import { ArrowLeft, Share2, Copy, ExternalLink, Check, ShoppingBag, Eye } from 'lucide-react-native';
 import { useCatalogStore } from '@/store/catalogStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useRetailStore } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { generateCatalogUrl, generateShareMessage } from '@/lib/catalogGenerator';
@@ -37,6 +38,8 @@ export default function CatalogScreen() {
   const generateSlug = useCatalogStore((s) => s.generateSlug);
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
   const products = useRetailStore((s) => s.products);
 
   const [copied, setCopied] = useState(false);
@@ -216,7 +219,7 @@ export default function CatalogScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Link Name</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
-                    placeholder="e.g. mama-nkechi-supermarket"
+                    placeholder={placeholders.catalogSlug}
                     placeholderTextColor="#57534e"
                     value={shopSlug || ''}
                     onChangeText={setShopSlug}
@@ -230,7 +233,7 @@ export default function CatalogScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Description</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
-                    placeholder="e.g. Your one-stop shop for groceries & household items"
+                    placeholder={placeholders.catalogDescription}
                     placeholderTextColor="#57534e"
                     value={shopDescription}
                     onChangeText={setShopDescription}

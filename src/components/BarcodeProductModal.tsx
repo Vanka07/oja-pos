@@ -17,6 +17,8 @@ import { useColorScheme } from 'nativewind';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { lookupBarcode, type BarcodeResult } from '@/lib/barcodeLookup';
 import { useRetailStore } from '@/store/retailStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 
 interface BarcodeProductModalProps {
   visible: boolean;
@@ -45,6 +47,8 @@ export default function BarcodeProductModal({
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const categories = useRetailStore((s) => s.categories);
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
 
   const [loading, setLoading] = useState(true);
   const [lookupResult, setLookupResult] = useState<BarcodeResult | null>(null);
@@ -219,7 +223,7 @@ export default function BarcodeProductModal({
                   </Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white text-base mb-4 border border-stone-200 dark:border-stone-700"
-                    placeholder="e.g. Indomie Chicken 70g"
+                    placeholder={placeholders.productName}
                     placeholderTextColor="#78716c"
                     value={name}
                     onChangeText={setName}

@@ -20,6 +20,8 @@ import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import EmptyState from '@/components/EmptyState';
 import { useRouter } from 'expo-router';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
@@ -34,6 +36,9 @@ export default function InventoryScreen() {
   const [showUpsell, setShowUpsell] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState('');
+
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -303,7 +308,7 @@ export default function InventoryScreen() {
                 <View className="gap-4">
                   <View>
                     <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
-                    <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="e.g. Indomie Chicken 70g" placeholderTextColor="#57534e" value={formData.name} onChangeText={(text) => setFormData({ ...formData, name: text })} />
+                    <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder={placeholders.productName} placeholderTextColor="#57534e" value={formData.name} onChangeText={(text) => setFormData({ ...formData, name: text })} />
                   </View>
                   <View>
                     <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Barcode (Optional)</Text>

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, generatePaymentReceiptText, type Customer } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { getCreditRisk, getCreditSummary, generateReminderMessage, wasRemindedRecently, daysSinceReminder, shouldFreezeCredit, getOverdueCustomers } from '@/lib/creditIntelligence';
 import { useState, useMemo, useCallback } from 'react';
@@ -60,10 +61,12 @@ export default function CreditBookScreen() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    creditLimit: '50000',
+    creditLimit: '',
   });
 
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
   const customers = useRetailStore((s) => s.customers);
   const addCustomer = useRetailStore((s) => s.addCustomer);
   const recordCreditPayment = useRetailStore((s) => s.recordCreditPayment);
@@ -109,7 +112,7 @@ export default function CreditBookScreen() {
       creditLimit: parseFloat(formData.creditLimit) || 50000,
     });
 
-    setFormData({ name: '', phone: '', creditLimit: '50000' });
+    setFormData({ name: '', phone: '', creditLimit: '' });
     setShowAddModal(false);
   }, [formData, addCustomer]);
 
@@ -497,7 +500,7 @@ export default function CreditBookScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Customer Name *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-                    placeholder="e.g. Mama Ngozi"
+                    placeholder={placeholders.customerName}
                     placeholderTextColor="#57534e"
                     value={formData.name}
                     onChangeText={(text) => setFormData({ ...formData, name: text })}
@@ -518,7 +521,7 @@ export default function CreditBookScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-                    placeholder="50000"
+                    placeholder="e.g. 50000"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
                     value={formData.creditLimit}

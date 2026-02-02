@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Store, X, RotateCcw } from 'lucide-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -25,6 +26,8 @@ export default function ShopProfileScreen() {
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const resetOnboarding = useOnboardingStore((s) => s.resetOnboarding);
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const placeholders = getPlaceholders(businessType);
 
   const [name, setName] = useState(shopInfo?.name || '');
   const [ownerName, setOwnerName] = useState(shopInfo?.ownerName || '');
@@ -109,7 +112,7 @@ export default function ShopProfileScreen() {
               <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Name *</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
-                placeholder="e.g. Mama Nkechi Store"
+                placeholder={placeholders.shopName}
                 placeholderTextColor="#57534e"
                 value={name}
                 onChangeText={setName}
@@ -120,7 +123,7 @@ export default function ShopProfileScreen() {
               <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Owner Name</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
-                placeholder="e.g. Nkechi Okafor"
+                placeholder={placeholders.ownerName}
                 placeholderTextColor="#57534e"
                 value={ownerName}
                 onChangeText={setOwnerName}
@@ -131,7 +134,7 @@ export default function ShopProfileScreen() {
               <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
-                placeholder="e.g. 08031234567"
+                placeholder="e.g. 08012345678"
                 placeholderTextColor="#57534e"
                 keyboardType="phone-pad"
                 value={phone}
@@ -143,7 +146,7 @@ export default function ShopProfileScreen() {
               <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Address</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
-                placeholder="e.g. 12 Market Road, Ikeja"
+                placeholder={placeholders.address}
                 placeholderTextColor="#57534e"
                 value={address}
                 onChangeText={setAddress}
