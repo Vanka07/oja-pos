@@ -232,14 +232,9 @@ export const expenseCategories = [
 
 // Default categories for Nigerian retail
 const defaultCategories: Category[] = [
-  { id: '1', name: 'Beverages', color: '#E67E22', icon: '☕' },
-  { id: '2', name: 'Provisions', color: '#27AE60', icon: '📦' },
-  { id: '3', name: 'Dairy', color: '#3498DB', icon: '🥛' },
-  { id: '4', name: 'Grains & Cereals', color: '#F39C12', icon: '🌾' },
-  { id: '5', name: 'Toiletries', color: '#9B59B6', icon: '🧴' },
-  { id: '6', name: 'Frozen Foods', color: '#1ABC9C', icon: '❄️' },
-  { id: '7', name: 'Snacks', color: '#E74C3C', icon: '🍪' },
-  { id: '8', name: 'Household', color: '#34495E', icon: '🏠' },
+  { id: '1', name: 'General', color: '#E67E22', icon: '📦' },
+  { id: '2', name: 'Services', color: '#3498DB', icon: '✨' },
+  { id: '3', name: 'Other', color: '#9B59B6', icon: '🏷️' },
 ];
 
 // ── Demo Data (auto-populates on first load) ────────────────────────────
