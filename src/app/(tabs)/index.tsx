@@ -269,7 +269,7 @@ export default function DashboardScreen() {
             {canViewReports && (
               <Pressable
                 className="active:opacity-70"
-                onPress={() => router.push('/(tabs)/reports')}
+                onPress={() => router.push('/activity-log')}
               >
                 <Text className="text-orange-500 text-sm font-medium">{t('dashboard.viewAll')}</Text>
               </Pressable>
@@ -293,7 +293,10 @@ export default function DashboardScreen() {
                   key={sale.id}
                   entering={FadeInRight.delay(700 + index * 100).duration(400)}
                 >
-                  <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-4 border border-stone-200 dark:border-stone-800 flex-row items-center justify-between">
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/sale-detail', params: { id: sale.id } })}
+                    className="bg-white/60 dark:bg-stone-900/60 rounded-xl p-4 border border-stone-200 dark:border-stone-800 flex-row items-center justify-between active:opacity-80"
+                  >
                     <View className="flex-row items-center gap-3">
                       <View className={`w-2 h-2 rounded-full ${
                         sale.paymentMethod === 'cash' ? 'bg-emerald-500' :
@@ -313,7 +316,7 @@ export default function DashboardScreen() {
                       </View>
                     </View>
                     <Text className="text-stone-900 dark:text-white font-semibold">{formatNaira(sale.total)}</Text>
-                  </View>
+                  </Pressable>
                 </Animated.View>
               ))}
             </View>

@@ -103,6 +103,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
           <Stack.Screen name="activate" options={{ presentation: 'modal', headerShown: false }} />
           <Stack.Screen name="language" options={{ presentation: 'modal', headerShown: false }} />
           <Stack.Screen name="pay" options={{ headerShown: false }} />
+          <Stack.Screen name="activity-log" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="sale-detail" options={{ presentation: 'modal', headerShown: false }} />
         </Stack>
         {Platform.OS === 'web' && <InstallPrompt />}
       </View>

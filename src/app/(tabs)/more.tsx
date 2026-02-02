@@ -559,8 +559,8 @@ export default function MoreScreen() {
           >
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Recent Activity</Text>
-              {canManageStaff && (
-                <Pressable onPress={() => router.push('/staff')} className="active:opacity-70">
+              {canViewActivity && (
+                <Pressable onPress={() => router.push('/activity-log')} className="active:opacity-70">
                   <Text className="text-orange-500 text-xs font-medium">View All</Text>
                 </Pressable>
               )}
