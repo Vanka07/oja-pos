@@ -7,11 +7,14 @@
 
 export const PAYSTACK_PUBLIC_KEY = 'pk_test_25d612955358dd9ac5ee6f429181c83d054514d2';
 
+export const PLAN_AMOUNTS = {
+  growth: 250000,   // ₦2,500 in kobo
+  business: 500000, // ₦5,000 in kobo
+} as const;
+
 export const PAYSTACK_CONFIG = {
   publicKey: PAYSTACK_PUBLIC_KEY,
-  amount: 500000, // ₦5,000 in kobo
   currency: 'NGN',
-  plan: 'business',
   callbackUrl: 'https://ojapos.app/payment-callback',
   channels: ['card', 'bank', 'ussd', 'bank_transfer'] as const,
 };
@@ -31,6 +34,7 @@ export function generateReference(): string {
  */
 export function buildCheckoutUrl(params: {
   email: string;
+  plan?: 'growth' | 'business';
   amount?: number;
   reference?: string;
   shopId?: string;
@@ -38,14 +42,18 @@ export function buildCheckoutUrl(params: {
 }): string {
   const {
     email,
-    amount = PAYSTACK_CONFIG.amount,
+    plan = 'business',
+    amount,
     reference = generateReference(),
     shopId,
     shopName,
   } = params;
 
+  const finalAmount = amount ?? PLAN_AMOUNTS[plan];
+  const planLabel = plan === 'growth' ? 'Growth - ₦2,500/mo' : 'Business - ₦5,000/mo';
+
   const metadata = JSON.stringify({
-    plan: PAYSTACK_CONFIG.plan,
+    plan,
     duration: 30,
     shop_id: shopId || '',
     shop_name: shopName || '',
@@ -53,7 +61,7 @@ export function buildCheckoutUrl(params: {
       {
         display_name: 'Plan',
         variable_name: 'plan',
-        value: 'Business - ₦5,000/mo',
+        value: planLabel,
       },
     ],
   });
@@ -61,7 +69,7 @@ export function buildCheckoutUrl(params: {
   const queryParams = new URLSearchParams({
     key: PAYSTACK_CONFIG.publicKey,
     email,
-    amount: amount.toString(),
+    amount: finalAmount.toString(),
     ref: reference,
     currency: PAYSTACK_CONFIG.currency,
     callback_url: PAYSTACK_CONFIG.callbackUrl,

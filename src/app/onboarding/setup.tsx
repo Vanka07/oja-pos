@@ -7,6 +7,8 @@ import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { useRetailStore } from '@/store/retailStore';
+import { businessTemplates } from '@/lib/businessTemplates';
 import * as Haptics from 'expo-haptics';
 
 export default function OnboardingSetup() {
@@ -16,6 +18,9 @@ export default function OnboardingSetup() {
   const router = useRouter();
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
+  const businessType = useOnboardingStore((s) => s.businessType);
+  const addProduct = useRetailStore((s) => s.addProduct);
+  const addCategory = useRetailStore((s) => s.addCategory);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -62,6 +67,14 @@ export default function OnboardingSetup() {
     });
 
     completeOnboarding();
+
+    // Load business template products and categories
+    if (businessType && businessTemplates[businessType]) {
+      const template = businessTemplates[businessType];
+      template.categories.forEach((cat) => addCategory(cat));
+      template.products.forEach((prod) => addProduct(prod));
+    }
+
     router.replace('/(tabs)');
   };
 

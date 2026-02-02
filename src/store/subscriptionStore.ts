@@ -3,7 +3,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from '@/lib/storage';
 import { validateCode } from '@/lib/activationCode';
 
-export type PlanType = 'starter' | 'business';
+export type PlanType = 'starter' | 'growth' | 'business';
+
+/** Plan hierarchy for comparison: higher number = higher tier */
+export const PLAN_LEVEL: Record<PlanType, number> = {
+  starter: 0,
+  growth: 1,
+  business: 2,
+};
 
 interface SubscriptionState {
   plan: PlanType;
@@ -57,7 +64,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       isPremium: () => {
         const { plan, expiresAt } = get();
-        if (plan !== 'business') return false;
+        if (plan === 'starter') return false;
         if (!expiresAt) return false;
         return new Date(expiresAt) > new Date();
       },
@@ -103,9 +110,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           activationCode: normalized,
         });
 
+        const planLabel = result.plan === 'growth' ? 'Growth' : 'Business';
         return {
           success: true,
-          message: `Business plan activated for ${result.days} days!`,
+          message: `${planLabel} plan activated for ${result.days} days!`,
         };
       },
     }),

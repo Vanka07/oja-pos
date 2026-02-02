@@ -57,12 +57,12 @@ export default function OnboardingWelcome() {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
-      router.replace('/onboarding/setup');
+      router.push('/onboarding/business-type');
     }
   };
 
   const handleSkip = () => {
-    router.replace('/onboarding/setup');
+    router.push('/onboarding/business-type');
   };
 
   const slide = slides[currentSlide];

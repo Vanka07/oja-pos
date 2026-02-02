@@ -171,10 +171,15 @@ export function validateCode(code: string): ValidationResult {
 
   if (sigPart !== expectedEncoded) return { valid: false };
 
+  // Plan detection: codes starting with 'G' prefix in the random part → growth plan
+  // Otherwise default to business
+  const planIndicator = payload[1]; // second char after duration
+  const plan: PlanType = planIndicator === 'G' ? 'growth' : 'business';
+
   return {
     valid: true,
     days,
-    plan: 'business' as PlanType,
+    plan,
   };
 }
 

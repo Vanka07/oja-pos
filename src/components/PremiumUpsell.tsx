@@ -1,11 +1,13 @@
 import { View, Text, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Lock, Crown, CreditCard, X, Mail } from 'lucide-react-native';
+import { Lock, Crown, CreditCard, X, Mail, TrendingUp, Sparkles } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { buildCheckoutUrl, generateReference } from '@/lib/paystack';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { getRequiredPlan } from '@/lib/premiumFeatures';
+import type { PlanType } from '@/store/subscriptionStore';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 
 interface PremiumUpsellProps {
@@ -13,9 +15,10 @@ interface PremiumUpsellProps {
   onClose: () => void;
   featureName: string;
   featureDescription: string;
+  feature?: string; // feature key to determine which plan is needed
 }
 
-export default function PremiumUpsell({ visible, onClose, featureName, featureDescription }: PremiumUpsellProps) {
+export default function PremiumUpsell({ visible, onClose, featureName, featureDescription, feature }: PremiumUpsellProps) {
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -24,24 +27,35 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
   const cloudAuth = useCloudAuthStore();
   const [email, setEmail] = useState(cloudAuth.session?.user?.email || '');
   const [showEmailInput, setShowEmailInput] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<'growth' | 'business' | null>(null);
 
-  const handlePayWithPaystack = () => {
+  // Determine the minimum plan needed for this feature
+  const requiredPlan: 'growth' | 'business' = feature
+    ? (getRequiredPlan(feature) === 'business' ? 'business' : 'growth')
+    : 'growth';
+
+  const isGrowthFeature = requiredPlan === 'growth';
+  const accentColor = isGrowthFeature ? '#0d9488' : '#e05e1b';
+  const planLabel = isGrowthFeature ? 'Growth' : 'Business';
+  const planPrice = isGrowthFeature ? '₦2,500' : '₦5,000';
+
+  const handlePayWithPaystack = (targetPlan: 'growth' | 'business') => {
     const userEmail = cloudAuth.session?.user?.email || email.trim();
     if (!userEmail) {
       setShowEmailInput(true);
       return;
     }
-    
-    setIsLoading(true);
+
+    setIsLoading(targetPlan);
     const reference = generateReference();
     const checkoutUrl = buildCheckoutUrl({
       email: userEmail,
+      plan: targetPlan,
       reference,
       shopId: cloudAuth.shopId || undefined,
     });
-    
-    setIsLoading(false);
+
+    setIsLoading(null);
     onClose();
     setTimeout(() => {
       router.push({
@@ -71,20 +85,27 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
                 <X size={24} color="#78716c" />
               </Pressable>
 
-              {/* Lock icon */}
+              {/* Icon */}
               <View className="items-center mb-5">
-                <View className="w-16 h-16 rounded-full bg-orange-500/20 items-center justify-center mb-4">
-                  <Crown size={32} color="#e05e1b" />
+                <View
+                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
+                  style={{ backgroundColor: accentColor + '33' }}
+                >
+                  {isGrowthFeature ? (
+                    <TrendingUp size={32} color={accentColor} />
+                  ) : (
+                    <Crown size={32} color={accentColor} />
+                  )}
                 </View>
                 <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-xl font-bold text-center">
-                  Business Plan Feature
+                  {planLabel} Plan Feature
                 </Text>
               </View>
 
               {/* Feature info */}
               <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-2xl p-4 mb-5">
                 <View className="flex-row items-center gap-2 mb-2">
-                  <Lock size={16} color="#e05e1b" />
+                  <Lock size={16} color={accentColor} />
                   <Text className="text-stone-900 dark:text-white font-semibold">{featureName}</Text>
                 </View>
                 <Text className="text-stone-500 dark:text-stone-400 text-sm leading-5">
@@ -92,11 +113,11 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
                 </Text>
               </View>
 
-              {/* Price */}
+              {/* Price — primary recommendation */}
               <View className="items-center mb-5">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Upgrade to Business</Text>
-                <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-orange-500 text-3xl font-extrabold">
-                  ₦5,000<Text className="text-stone-400 text-base font-normal">/mo</Text>
+                <Text className="text-stone-500 dark:text-stone-400 text-sm">Upgrade to {planLabel}</Text>
+                <Text style={{ fontFamily: 'Poppins-ExtraBold', color: accentColor }} className="text-3xl font-extrabold">
+                  {planPrice}<Text className="text-stone-400 text-base font-normal">/mo</Text>
                 </Text>
               </View>
 
@@ -119,21 +140,40 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
                 </View>
               )}
 
-              {/* Paystack CTA */}
+              {/* Primary CTA */}
               <Pressable
-                onPress={handlePayWithPaystack}
-                disabled={isLoading}
-                className="bg-[#e05e1b] py-4 rounded-2xl flex-row items-center justify-center gap-2 mb-3 active:opacity-90"
+                onPress={() => handlePayWithPaystack(requiredPlan)}
+                disabled={isLoading === requiredPlan}
+                style={{ backgroundColor: accentColor }}
+                className="py-4 rounded-2xl flex-row items-center justify-center gap-2 mb-3 active:opacity-90"
               >
-                {isLoading ? (
+                {isLoading === requiredPlan ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <>
                     <CreditCard size={20} color="white" />
-                    <Text className="text-white font-semibold text-base">Upgrade Now — ₦5,000/mo</Text>
+                    <Text className="text-white font-semibold text-base">Upgrade Now — {planPrice}/mo</Text>
                   </>
                 )}
               </Pressable>
+
+              {/* If it's a growth feature, also show option to go straight to Business */}
+              {isGrowthFeature && (
+                <Pressable
+                  onPress={() => handlePayWithPaystack('business')}
+                  disabled={isLoading === 'business'}
+                  className="py-3 rounded-2xl flex-row items-center justify-center gap-2 mb-2 border border-orange-500/30 active:opacity-70"
+                >
+                  {isLoading === 'business' ? (
+                    <ActivityIndicator size="small" color="#e05e1b" />
+                  ) : (
+                    <>
+                      <Sparkles size={16} color="#e05e1b" />
+                      <Text className="text-orange-500 font-medium text-sm">Or get Business — ₦5,000/mo</Text>
+                    </>
+                  )}
+                </Pressable>
+              )}
 
               {/* Dismiss */}
               <Pressable onPress={onClose} className="py-3 items-center active:opacity-70">
@@ -148,7 +188,7 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
                 }}
                 className="py-2 items-center active:opacity-70"
               >
-                <Text className="text-orange-500 text-sm font-medium">Have a code?</Text>
+                <Text style={{ color: accentColor }} className="text-sm font-medium">Have a code?</Text>
               </Pressable>
             </View>
           </Animated.View>
