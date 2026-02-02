@@ -232,14 +232,14 @@ export const expenseCategories = [
 
 // Default categories for Nigerian retail
 const defaultCategories: Category[] = [
-  { id: '1', name: 'Beverages', color: '#E67E22', icon: 'coffee' },
-  { id: '2', name: 'Provisions', color: '#27AE60', icon: 'package' },
-  { id: '3', name: 'Dairy', color: '#3498DB', icon: 'droplet' },
-  { id: '4', name: 'Grains & Cereals', color: '#F39C12', icon: 'wheat' },
-  { id: '5', name: 'Toiletries', color: '#9B59B6', icon: 'sparkles' },
-  { id: '6', name: 'Frozen Foods', color: '#1ABC9C', icon: 'snowflake' },
-  { id: '7', name: 'Snacks', color: '#E74C3C', icon: 'cookie' },
-  { id: '8', name: 'Household', color: '#34495E', icon: 'home' },
+  { id: '1', name: 'Beverages', color: '#E67E22', icon: '☕' },
+  { id: '2', name: 'Provisions', color: '#27AE60', icon: '📦' },
+  { id: '3', name: 'Dairy', color: '#3498DB', icon: '🥛' },
+  { id: '4', name: 'Grains & Cereals', color: '#F39C12', icon: '🌾' },
+  { id: '5', name: 'Toiletries', color: '#9B59B6', icon: '🧴' },
+  { id: '6', name: 'Frozen Foods', color: '#1ABC9C', icon: '❄️' },
+  { id: '7', name: 'Snacks', color: '#E74C3C', icon: '🍪' },
+  { id: '8', name: 'Household', color: '#34495E', icon: '🏠' },
 ];
 
 // ── Demo Data (auto-populates on first load) ────────────────────────────
@@ -917,6 +917,23 @@ export const useRetailStore = create<RetailState>()(
       onRehydrateStorage: () => (state) => {
         if (state && !state.demoLoaded) {
           state.loadDemoData();
+        }
+        // Migrate Lucide icon names → emoji for existing users
+        if (state) {
+          const iconMap: Record<string, string> = {
+            coffee: '☕', package: '📦', droplet: '🥛', wheat: '🌾',
+            sparkles: '🧴', snowflake: '❄️', cookie: '🍪', home: '🏠',
+          };
+          let migrated = false;
+          for (const cat of state.categories) {
+            if (iconMap[cat.icon]) {
+              cat.icon = iconMap[cat.icon];
+              migrated = true;
+            }
+          }
+          if (migrated) {
+            useRetailStore.setState({ categories: [...state.categories] });
+          }
         }
       },
     }
