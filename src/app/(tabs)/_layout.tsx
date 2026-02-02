@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings } from 'lucide-react-native';
@@ -18,15 +18,38 @@ function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<
   );
 }
 
+function useIsMobileWeb() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const check = () => setIsMobile(window.innerWidth <= 768);
+      check();
+      window.addEventListener('resize', check);
+      // Add viewport-fit=cover for Safari safe areas
+      const meta = document.querySelector('meta[name="viewport"]');
+      if (meta && !meta.getAttribute('content')?.includes('viewport-fit')) {
+        meta.setAttribute('content', meta.getAttribute('content') + ', viewport-fit=cover');
+      }
+      return () => window.removeEventListener('resize', check);
+    }
+  }, []);
+  return isMobile;
+}
+
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const isMobileWeb = useIsMobileWeb();
 
   const handleTabPress = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
+
+  // Mobile web needs extra bottom padding for Safari toolbar
+  const tabBarHeight = Platform.OS === 'web' ? (isMobileWeb ? 80 : 64) : 96;
+  const tabBarPaddingBottom = Platform.OS === 'web' ? (isMobileWeb ? 20 : 8) : 28;
 
   return (
     <Tabs
@@ -38,9 +61,9 @@ export default function TabLayout() {
           backgroundColor: isDark ? '#1c1917' : '#ffffff',
           borderTopColor: isDark ? '#292524' : '#e7e5e4',
           borderTopWidth: 1,
-          height: Platform.OS === 'web' ? 64 : 96,
+          height: tabBarHeight,
           paddingTop: Platform.OS === 'web' ? 8 : 12,
-          paddingBottom: Platform.OS === 'web' ? 8 : 28,
+          paddingBottom: tabBarPaddingBottom,
         },
         tabBarLabelStyle: {
           fontSize: 11,
