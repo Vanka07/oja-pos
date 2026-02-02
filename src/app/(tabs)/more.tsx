@@ -552,8 +552,8 @@ export default function MoreScreen() {
           </View>
         </Animated.View>
 
-        {/* Activity Log Preview */}
-        {canViewActivity && recentActivities.length > 0 && (
+        {/* Activity Log Preview — only show when staff is set up */}
+        {canViewActivity && hasStaff && recentActivities.length > 0 && (
           <Animated.View
             entering={FadeInDown.delay(550).duration(600)}
             className="mx-5 mt-4"
