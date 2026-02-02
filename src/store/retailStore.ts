@@ -53,6 +53,8 @@ export interface Customer {
   phone: string;
   creditLimit: number;
   currentCredit: number;
+  creditFrozen?: boolean;
+  lastReminderSent?: string;
   transactions: CreditTransaction[];
   createdAt: string;
 }
@@ -144,6 +146,8 @@ interface RetailState {
   // Categories
   categories: Category[];
   addCategory: (category: Omit<Category, 'id'>) => void;
+  updateCategory: (id: string, updates: Partial<Omit<Category, 'id'>>) => void;
+  deleteCategory: (id: string) => void;
 
   // Cart
   cart: CartItem[];
@@ -168,6 +172,8 @@ interface RetailState {
   recordCreditPayment: (customerId: string, amount: number, note?: string) => void;
   getCustomerById: (id: string) => Customer | undefined;
   getTotalOutstandingCredit: () => number;
+  freezeCustomerCredit: (id: string, frozen: boolean) => void;
+  setLastReminderSent: (id: string) => void;
 
   // Expenses
   expenses: Expense[];
@@ -462,20 +468,38 @@ export const useRetailStore = create<RetailState>()(
         set((state) => ({ categories: [...state.categories, newCategory] }));
       },
 
+      updateCategory: (id, updates) => {
+        set((state) => ({
+          categories: state.categories.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        }));
+      },
+
+      deleteCategory: (id) => {
+        set((state) => ({
+          categories: state.categories.filter((c) => c.id !== id),
+        }));
+      },
+
       // Cart actions
       addToCart: (product, quantity = 1) => {
         set((state) => {
+          const currentProduct = state.products.find((p) => p.id === product.id);
+          const maxStock = currentProduct?.quantity ?? product.quantity;
           const existingItem = state.cart.find((item) => item.product.id === product.id);
           if (existingItem) {
+            const newQty = Math.min(existingItem.quantity + quantity, maxStock);
+            if (newQty === existingItem.quantity) return state; // Already at max
             return {
               cart: state.cart.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: newQty }
                   : item
               ),
             };
           }
-          return { cart: [...state.cart, { product, quantity }] };
+          return { cart: [...state.cart, { product, quantity: Math.min(quantity, maxStock) }] };
         });
       },
 
@@ -484,9 +508,12 @@ export const useRetailStore = create<RetailState>()(
           get().removeFromCart(productId);
           return;
         }
+        const currentProduct = get().products.find((p) => p.id === productId);
+        const maxStock = currentProduct?.quantity ?? quantity;
+        const cappedQuantity = Math.min(quantity, maxStock);
         set((state) => ({
           cart: state.cart.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
+            item.product.id === productId ? { ...item, quantity: cappedQuantity } : item
           ),
         }));
       },
@@ -645,6 +672,22 @@ export const useRetailStore = create<RetailState>()(
 
       getTotalOutstandingCredit: () => {
         return get().customers.reduce((sum, c) => sum + c.currentCredit, 0);
+      },
+
+      freezeCustomerCredit: (id, frozen) => {
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            c.id === id ? { ...c, creditFrozen: frozen } : c
+          ),
+        }));
+      },
+
+      setLastReminderSent: (id) => {
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            c.id === id ? { ...c, lastReminderSent: new Date().toISOString() } : c
+          ),
+        }));
       },
 
       // Expense actions

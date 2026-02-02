@@ -16,6 +16,7 @@ import { OjaLogo } from '@/components/OjaLogo';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useState, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
@@ -39,11 +40,12 @@ export default function DashboardScreen() {
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
   const getLowStockProducts = useRetailStore((s) => s.getLowStockProducts);
   const pendingSyncCount = useRetailStore((s) => s.pendingSyncCount);
+  const isCloudAuthenticated = useCloudAuthStore((s) => s.isAuthenticated);
 
   const todayDate = new Date().toISOString().split('T')[0];
   const summary = useMemo(() => getDailySummary(todayDate), [getDailySummary, todayDate]);
   const salesToday = useMemo(() => getSalesToday(), [getSalesToday]);
-  const lowStock = useMemo(() => getLowStockProducts(), [getLowStockProducts]);
+  const lowStock = useMemo(() => getLowStockProducts(), [getLowStockProducts, products]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -52,7 +54,7 @@ export default function DashboardScreen() {
 
   const t = useT();
 
-  const isOnline = pendingSyncCount === 0;
+  const isOnline = isCloudAuthenticated && pendingSyncCount === 0;
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? t('dashboard.goodMorning') : currentHour < 17 ? t('dashboard.goodAfternoon') : t('dashboard.goodEvening');
   const displayName = shopInfo?.ownerName?.split(' ')[0] || 'there';
@@ -82,17 +84,19 @@ export default function DashboardScreen() {
             <View className="flex-row items-center justify-between mb-1">
               <OjaLogo size={38} showText textSize={26} />
               <View className="flex-row items-center gap-2">
-                {isOnline ? (
-                  <View className="flex-row items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-full">
-                    <Wifi size={12} color="#10b981" />
-                    <Text className="text-emerald-400 text-xs font-medium">{t('dashboard.synced')}</Text>
-                  </View>
-                ) : (
-                  <View className="flex-row items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-full">
-                    <WifiOff size={12} color="#f59e0b" />
-                    <Text className="text-amber-400 text-xs font-medium">{pendingSyncCount} {t('dashboard.pending')}</Text>
-                  </View>
-                )}
+                {isCloudAuthenticated ? (
+                  isOnline ? (
+                    <View className="flex-row items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-full">
+                      <Wifi size={12} color="#10b981" />
+                      <Text className="text-emerald-400 text-xs font-medium">{t('dashboard.synced')}</Text>
+                    </View>
+                  ) : (
+                    <View className="flex-row items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-full">
+                      <WifiOff size={12} color="#f59e0b" />
+                      <Text className="text-amber-400 text-xs font-medium">{pendingSyncCount} {t('dashboard.pending')}</Text>
+                    </View>
+                  )
+                ) : null}
               </View>
             </View>
             <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">

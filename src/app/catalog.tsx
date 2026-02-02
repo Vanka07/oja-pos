@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { ArrowLeft, Share2, Copy, ExternalLink, Check, ShoppingBag } from 'lucide-react-native';
+import { ArrowLeft, Share2, Copy, ExternalLink, Check, ShoppingBag, Eye } from 'lucide-react-native';
 import { useCatalogStore } from '@/store/catalogStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useRetailStore } from '@/store/retailStore';
@@ -12,6 +12,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
+import * as WebBrowser from 'expo-web-browser';
 
 export default function CatalogScreen() {
   const insets = useSafeAreaInsets();
@@ -102,6 +103,12 @@ export default function CatalogScreen() {
     setTimeout(() => setCopied(false), 2000);
   }, [catalogUrl.url]);
 
+  const handlePreview = useCallback(async () => {
+    if (!catalogUrl.url) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await WebBrowser.openBrowserAsync(catalogUrl.url);
+  }, [catalogUrl.url]);
+
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
     : ['#f5f5f4', '#fafaf9', '#ffffff'];
@@ -185,7 +192,7 @@ export default function CatalogScreen() {
               <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
                 {/* Shop Slug */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop URL Slug</Text>
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Link Name</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
                     placeholder="e.g. mama-nkechi-supermarket"
@@ -229,37 +236,56 @@ export default function CatalogScreen() {
               </View>
             </Animated.View>
 
-            {/* Catalog URL Preview */}
+            {/* Catalog Link Ready */}
             {catalogUrl.url ? (
               <Animated.View entering={FadeInDown.delay(350).duration(600)} className="mx-5 mt-4">
-                <Text className="text-stone-500 text-xs font-semibold tracking-wide mb-3">Catalog Link</Text>
+                <Text className="text-stone-500 text-xs font-semibold tracking-wide mb-3">Your Catalog</Text>
                 <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
-                  <View className="bg-stone-100 dark:bg-stone-800 rounded-lg p-3 mb-3">
-                    <Text className="text-stone-600 dark:text-stone-400 text-xs" numberOfLines={2}>
-                      {catalogUrl.url.substring(0, 80)}...
-                    </Text>
+                  <View className="flex-row items-center gap-3 mb-4">
+                    <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center">
+                      <Check size={20} color="#22c55e" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-stone-900 dark:text-white font-semibold">Your link is ready ✅</Text>
+                      <Text className="text-stone-500 text-sm">{selectedCount} product{selectedCount !== 1 ? 's' : ''} in catalog</Text>
+                    </View>
                   </View>
                   {catalogUrl.truncated && (
                     <Text className="text-amber-500 text-xs mb-3">
-                      ⚠️ URL too long — some products were excluded. Try selecting fewer products.
+                      ⚠️ Some products were excluded to fit the link. Try selecting fewer products.
                     </Text>
                   )}
+                  {/* Share on WhatsApp */}
+                  <Pressable
+                    onPress={handleShare}
+                    className="bg-green-600 rounded-xl py-3.5 flex-row items-center justify-center gap-2 mb-3"
+                  >
+                    <Share2 size={18} color="#fff" />
+                    <Text className="text-white font-semibold">Share on WhatsApp</Text>
+                  </Pressable>
+                  {/* Preview + Copy row */}
                   <View className="flex-row gap-3">
                     <Pressable
-                      onPress={handleShare}
-                      className="flex-1 bg-green-600 rounded-xl py-3 flex-row items-center justify-center gap-2"
+                      onPress={handlePreview}
+                      className="flex-1 bg-stone-100 dark:bg-stone-800 rounded-xl py-3 flex-row items-center justify-center gap-2"
                     >
-                      <Share2 size={18} color="#fff" />
-                      <Text className="text-white font-semibold">Share on WhatsApp</Text>
+                      <Eye size={18} color={isDark ? '#a8a29e' : '#57534e'} />
+                      <Text className="text-stone-700 dark:text-stone-300 font-medium">Preview</Text>
                     </Pressable>
                     <Pressable
                       onPress={handleCopyLink}
-                      className="w-12 h-12 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center"
+                      className="flex-1 bg-stone-100 dark:bg-stone-800 rounded-xl py-3 flex-row items-center justify-center gap-2"
                     >
                       {copied ? (
-                        <Check size={20} color="#22c55e" />
+                        <>
+                          <Check size={18} color="#22c55e" />
+                          <Text className="text-emerald-500 font-medium">Copied!</Text>
+                        </>
                       ) : (
-                        <Copy size={20} color={isDark ? '#a8a29e' : '#57534e'} />
+                        <>
+                          <Copy size={18} color={isDark ? '#a8a29e' : '#57534e'} />
+                          <Text className="text-stone-700 dark:text-stone-300 font-medium">Copy Link</Text>
+                        </>
                       )}
                     </Pressable>
                   </View>

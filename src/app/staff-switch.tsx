@@ -49,22 +49,25 @@ export default function StaffSwitchScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (newPin.length === 4) {
-      // Try to authenticate
-      const success = switchStaff(newPin);
-      if (success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.back();
-      } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(true);
-        triggerShake();
-        setTimeout(() => {
-          setPin('');
-          setError(false);
-        }, 1000);
+      // Validate PIN matches the selected staff member
+      if (selectedStaff && selectedStaff.pin === newPin) {
+        const success = switchStaff(newPin);
+        if (success) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          router.back();
+          return;
+        }
       }
+      // Wrong PIN for this staff member
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setError(true);
+      triggerShake();
+      setTimeout(() => {
+        setPin('');
+        setError(false);
+      }, 1000);
     }
-  }, [pin, switchStaff, router, triggerShake]);
+  }, [pin, selectedStaff, switchStaff, router, triggerShake]);
 
   const handleDelete = useCallback(() => {
     if (pin.length === 0) return;

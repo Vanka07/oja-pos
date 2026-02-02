@@ -139,12 +139,11 @@ export const useStaffStore = create<StaffState>()(
       logActivity: (action, description, amount) => {
         const state = get();
         const current = state.currentStaff;
-        if (!current) return;
 
         const activity: StaffActivity = {
           id: generateId(),
-          staffId: current.id,
-          staffName: current.name,
+          staffId: current?.id || 'owner',
+          staffName: current?.name || 'Owner',
           action,
           description,
           amount,

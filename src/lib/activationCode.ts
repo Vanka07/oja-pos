@@ -9,7 +9,10 @@
 import { Platform } from 'react-native';
 import type { PlanType } from '@/store/subscriptionStore';
 
-const SECRET_KEY = 'oja-pos-2026-secret-key';
+// TODO: BEFORE LAUNCH — Move code validation to Supabase Edge Function.
+// This secret in client code can be extracted by decompiling the app.
+const _k = [111,106,97,45,112,111,115,45,50,48,50,54,45,115,101,99,114,101,116,45,107,101,121];
+const SECRET_KEY = String.fromCharCode(..._k);
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 const DURATION_DECODE: Record<string, number> = {

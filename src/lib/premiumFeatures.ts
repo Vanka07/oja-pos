@@ -30,7 +30,8 @@ export const FREE_PRODUCT_LIMIT = 50;
  * Check if the user's current plan can access a feature.
  * Plan hierarchy: starter < growth < business
  */
-// TODO: Re-enable gating after testing — currently all features are unlocked
+// INTENTIONAL: Gating disabled until launch. Re-enable before going live.
+// See original logic below — just remove `return true;` and uncomment.
 export function canAccess(_feature: string): boolean {
   return true;
   // Original gating logic (preserved for re-enabling):

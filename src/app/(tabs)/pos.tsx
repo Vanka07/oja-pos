@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -18,7 +18,7 @@ import {
   Printer,
 } from 'lucide-react-native';
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
-import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
+import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale, type Customer } from '@/store/retailStore';
 import { checkSoldProductsLowStock, checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import BarcodeProductModal from '@/components/BarcodeProductModal';
 import { useOnboardingStore } from '@/store/onboardingStore';
@@ -46,6 +46,7 @@ export default function POSScreen() {
   const [lowStockAlert, setLowStockAlert] = useState<{ name: string; quantity: number }[] | null>(null);
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
+  const [showCreditCustomerPicker, setShowCreditCustomerPicker] = useState(false);
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
   const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
@@ -58,6 +59,7 @@ export default function POSScreen() {
   const categories = useRetailStore((s) => s.categories);
   const cart = useRetailStore((s) => s.cart);
   const cartDiscount = useRetailStore((s) => s.cartDiscount);
+  const customers = useRetailStore((s) => s.customers);
   const addToCart = useRetailStore((s) => s.addToCart);
   const updateCartQuantity = useRetailStore((s) => s.updateCartQuantity);
   const removeFromCart = useRetailStore((s) => s.removeFromCart);
@@ -143,13 +145,25 @@ export default function POSScreen() {
     }
   }, [cart, updateCartQuantity, removeFromCart]);
 
-  const handleCompleteSale = useCallback((method: PaymentMethod) => {
+  const handleCompleteSale = useCallback((method: PaymentMethod, customerId?: string) => {
+    if (method === 'credit' && !customerId) {
+      // Show customer picker for credit sales
+      if (customers.length === 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('No Customers', 'Add a customer in the Credit Book first before making a credit sale.');
+        return;
+      }
+      setShowCreditCustomerPicker(true);
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const soldProductIds = cart.map((item) => item.product.id);
-    const sale = completeSale(method, undefined, undefined, currentStaff?.id, currentStaff?.name);
+    const sale = completeSale(method, customerId, undefined, currentStaff?.id, currentStaff?.name);
     if (sale) {
       setLastSale(sale);
       setShowPaymentModal(false);
+      setShowCreditCustomerPicker(false);
       setShowSuccessModal(true);
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
       logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
@@ -162,7 +176,7 @@ export default function POSScreen() {
         }
       }
     }
-  }, [completeSale, currentStaff, logActivity, cart, whatsAppAlertsEnabled]);
+  }, [completeSale, currentStaff, logActivity, cart, whatsAppAlertsEnabled, customers]);
 
   const handlePrintReceipt = useCallback(async () => {
     if (!lastSale || !shopInfo) return;
@@ -556,6 +570,71 @@ export default function POSScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Credit Sale — Customer Picker Modal */}
+      <Modal
+        visible={showCreditCustomerPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCreditCustomerPicker(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 16 }}>
+            <View className="p-5 border-b border-stone-200 dark:border-stone-800">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-stone-900 dark:text-white font-semibold text-lg">Select Customer</Text>
+                <Pressable onPress={() => setShowCreditCustomerPicker(false)}>
+                  <X size={24} color={isDark ? '#a8a29e' : '#57534e'} />
+                </Pressable>
+              </View>
+              <Text className="text-stone-500 text-sm mt-1">Choose which customer to assign this credit sale to</Text>
+            </View>
+            <ScrollView className="p-5">
+              {customers.map((customer) => {
+                const isFrozen = customer.creditFrozen;
+                const overLimit = customer.creditLimit > 0 && customer.currentCredit >= customer.creditLimit;
+                const blocked = isFrozen || overLimit;
+
+                return (
+                  <Pressable
+                    key={customer.id}
+                    onPress={() => {
+                      if (blocked) return;
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      handleCompleteSale('credit', customer.id);
+                    }}
+                    className={`flex-row items-center p-4 mb-3 rounded-xl ${blocked ? 'bg-stone-100/50 dark:bg-stone-800/50 opacity-50' : 'bg-stone-100 dark:bg-stone-800 active:scale-98'}`}
+                  >
+                    <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${blocked ? 'bg-red-500/20' : 'bg-amber-500/20'}`}>
+                      <Users size={20} color={blocked ? '#ef4444' : '#f59e0b'} />
+                    </View>
+                    <View className="flex-1">
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-stone-900 dark:text-white font-medium">{customer.name}</Text>
+                        {isFrozen && (
+                          <View className="bg-red-500/20 px-2 py-0.5 rounded-full">
+                            <Text className="text-red-400 text-[10px] font-bold">FROZEN</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text className="text-stone-500 text-xs">
+                        {blocked
+                          ? isFrozen ? 'Credit frozen' : 'Credit limit reached'
+                          : `Owes: ${formatNaira(customer.currentCredit)}${customer.creditLimit > 0 ? ` / Limit: ${formatNaira(customer.creditLimit)}` : ''}`}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+              {customers.length === 0 && (
+                <View className="items-center py-8">
+                  <Text className="text-stone-500 text-sm text-center">No customers yet. Add customers in the Credit Book first.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
 
       {/* Barcode Scanner Modal */}

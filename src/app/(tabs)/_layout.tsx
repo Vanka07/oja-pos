@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
+import { useRetailStore } from '@/store/retailStore';
+import { getOverdueCustomers } from '@/lib/creditIntelligence';
 
 function TabBarIcon({ icon: Icon, color, focused }: { icon: React.ComponentType<{ size: number; color: string }>; color: string; focused: boolean }) {
   const iconSize = Platform.OS === 'web' ? 22 : 28;
@@ -40,6 +42,9 @@ export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const isMobileWeb = useIsMobileWeb();
+
+  const customers = useRetailStore((s) => s.customers);
+  const overdueCount = getOverdueCustomers(customers).length;
 
   const handleTabPress = () => {
     if (Platform.OS !== 'web') {
@@ -108,6 +113,8 @@ export default function TabLayout() {
         name="customers"
         options={{
           title: 'Credit Book',
+          tabBarBadge: overdueCount > 0 ? overdueCount : undefined,
+          tabBarBadgeStyle: overdueCount > 0 ? { backgroundColor: '#ef4444', fontSize: 10, minWidth: 18, height: 18, lineHeight: 18 } : undefined,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={Users} color={color} focused={focused} />
           ),

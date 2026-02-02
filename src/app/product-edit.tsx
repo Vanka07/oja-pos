@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -86,8 +86,21 @@ export default function ProductEditScreen() {
   const handleDelete = useCallback(() => {
     if (!product) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    deleteProduct(product.id);
-    router.back();
+    Alert.alert(
+      'Delete Product',
+      `Are you sure you want to delete "${product.name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteProduct(product.id);
+            router.back();
+          },
+        },
+      ]
+    );
   }, [product, deleteProduct, router]);
 
   if (!product) {
