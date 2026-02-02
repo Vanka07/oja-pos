@@ -915,9 +915,10 @@ export const useRetailStore = create<RetailState>()(
         defaultLowStockThreshold: state.defaultLowStockThreshold,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state && !state.demoLoaded) {
-          state.loadDemoData();
-        }
+        // Demo data disabled for production — new users start with empty store
+        // if (state && !state.demoLoaded) {
+        //   state.loadDemoData();
+        // }
         // Migrate Lucide icon names → emoji for existing users
         if (state) {
           const iconMap: Record<string, string> = {
