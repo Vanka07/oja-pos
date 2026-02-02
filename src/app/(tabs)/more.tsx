@@ -34,6 +34,7 @@ import {
   Globe,
   Crown,
   ShoppingBag,
+  LayoutGrid,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -949,6 +950,21 @@ export default function MoreScreen() {
                   <Text className="text-orange-400 text-xs font-semibold">Upgrade</Text>
                 </View>
               )}
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
+
+            {/* Manage Categories */}
+            <Pressable
+              onPress={() => router.push('/categories')}
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-purple-500/20 items-center justify-center mr-3">
+                <LayoutGrid size={20} color="#a855f7" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">Manage Categories</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Add, edit, or remove categories</Text>
+              </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
 
