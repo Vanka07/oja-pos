@@ -1,0 +1,25 @@
+{
+  "name": "Oja POS",
+  "short_name": "Oja",
+  "description": "The POS Built for Every Nigerian Business",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a09",
+  "theme_color": "#e05e1b",
+  "orientation": "portrait",
+  "categories": ["business", "finance"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

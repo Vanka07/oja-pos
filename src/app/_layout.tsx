@@ -14,8 +14,10 @@ import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useThemeStore } from '@/store/themeStore';
 import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
 import { useEffect, useState } from 'react';
-import { View, Appearance } from 'react-native';
+import { View, Appearance, Platform } from 'react-native';
 import LockScreen from './lock';
+import InstallPrompt from '@/components/InstallPrompt';
+import OfflineBar from '@/components/OfflineBar';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -85,21 +87,25 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="product-edit" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="staff" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="staff-switch" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="shop-profile" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="cloud-auth" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="payroll" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="subscription" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="activate" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="language" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="pay" options={{ headerShown: false }} />
-      </Stack>
+      <View style={{ flex: 1 }}>
+        <OfflineBar />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="product-edit" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="staff" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="staff-switch" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="shop-profile" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="cloud-auth" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="payroll" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="subscription" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="activate" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="language" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="pay" options={{ headerShown: false }} />
+        </Stack>
+        {Platform.OS === 'web' && <InstallPrompt />}
+      </View>
     </ThemeProvider>
   );
 }
