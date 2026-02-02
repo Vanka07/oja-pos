@@ -48,6 +48,31 @@ function buildReceiptHtml(sale: Sale, shopName: string, shopPhone?: string): str
     </div>`
       : '';
 
+  const isCreditSale = sale.paymentMethod === 'credit';
+  const previousBalance = sale.customerPreviousBalance ?? 0;
+  const newCreditBalance = previousBalance + sale.total;
+
+  const creditBalanceSection = isCreditSale && sale.customerPreviousBalance !== undefined
+    ? `
+    <div style="border-top: 2px solid #f59e0b; margin-top: 12px; padding-top: 12px;">
+      <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+        <p style="color: #92400e; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 8px;">⚠️ CREDIT SALE</p>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: #92400e; font-size: 12px;">Previous Balance</span>
+          <span style="color: #92400e; font-size: 12px;">${formatNaira(previousBalance)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: #92400e; font-size: 12px;">This Sale</span>
+          <span style="color: #92400e; font-size: 12px;">+${formatNaira(sale.total)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #fbbf24; padding-top: 6px; margin-top: 6px;">
+          <span style="color: #92400e; font-size: 14px; font-weight: 800;">Total Balance Owed</span>
+          <span style="color: #92400e; font-size: 14px; font-weight: 800;">${formatNaira(newCreditBalance)}</span>
+        </div>
+      </div>
+    </div>`
+    : '';
+
   const cashSection =
     sale.paymentMethod === 'cash' && sale.cashReceived && sale.cashReceived > 0
       ? `
@@ -152,6 +177,7 @@ function buildReceiptHtml(sale: Sale, shopName: string, shopPhone?: string): str
         <span style="color: #e05e1b; font-size: 18px; font-weight: 800;">${formatNaira(sale.total)}</span>
       </div>
       ${cashSection}
+      ${creditBalanceSection}
     </div>
 
     <!-- Footer -->

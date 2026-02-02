@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -18,8 +18,11 @@ import {
   ShieldCheck,
   Clock,
   Filter,
+  CreditCard,
+  Smartphone,
+  CheckCircle,
 } from 'lucide-react-native';
-import { useRetailStore, formatNaira, type Customer } from '@/store/retailStore';
+import { useRetailStore, formatNaira, generatePaymentReceiptText, type Customer } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { getCreditRisk, getCreditSummary, generateReminderMessage, wasRemindedRecently, daysSinceReminder, shouldFreezeCredit, getOverdueCustomers } from '@/lib/creditIntelligence';
@@ -45,6 +48,13 @@ export default function CreditBookScreen() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentNote, setPaymentNote] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'pos'>('cash');
+  const [paymentSuccess, setPaymentSuccess] = useState<{
+    amountPaid: number;
+    previousBalance: number;
+    newBalance: number;
+    paymentMethod: string;
+  } | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -109,11 +119,19 @@ export default function CreditBookScreen() {
     const amount = parseFloat(paymentAmount) || 0;
     if (amount <= 0) return;
 
+    const previousBalance = selectedCustomer.currentCredit;
+    const newBalance = Math.max(0, previousBalance - amount);
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    recordCreditPayment(selectedCustomer.id, amount, paymentNote || undefined);
-    setPaymentAmount('');
-    setPaymentNote('');
-    setShowPaymentModal(false);
+    recordCreditPayment(selectedCustomer.id, amount, paymentNote || undefined, paymentMethod);
+
+    // Show success state
+    setPaymentSuccess({
+      amountPaid: amount,
+      previousBalance,
+      newBalance,
+      paymentMethod,
+    });
 
     // Refresh selected customer
     setTimeout(() => {
@@ -121,7 +139,38 @@ export default function CreditBookScreen() {
       const updated = freshCustomers.find((c) => c.id === selectedCustomer.id);
       if (updated) setSelectedCustomer(updated);
     }, 0);
-  }, [selectedCustomer, paymentAmount, paymentNote, recordCreditPayment]);
+  }, [selectedCustomer, paymentAmount, paymentNote, paymentMethod, recordCreditPayment]);
+
+  const handleSharePaymentReceipt = useCallback(() => {
+    if (!selectedCustomer || !paymentSuccess || !shopInfo) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const receipt = generatePaymentReceiptText(
+      selectedCustomer.name,
+      paymentSuccess.amountPaid,
+      paymentSuccess.previousBalance,
+      paymentSuccess.newBalance,
+      paymentSuccess.paymentMethod,
+      shopInfo.name,
+      shopInfo.phone
+    );
+    const encoded = encodeURIComponent(receipt);
+    if (Platform.OS === 'web') {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    } else {
+      const url = `whatsapp://send?text=${encoded}`;
+      Linking.openURL(url).catch(() => {
+        Share.share({ message: receipt });
+      });
+    }
+  }, [selectedCustomer, paymentSuccess, shopInfo]);
+
+  const handleClosePaymentModal = useCallback(() => {
+    setPaymentAmount('');
+    setPaymentNote('');
+    setPaymentMethod('cash');
+    setPaymentSuccess(null);
+    setShowPaymentModal(false);
+  }, []);
 
   const openCustomerDetail = useCallback((customer: Customer) => {
     // Refresh from store to avoid stale data
@@ -658,67 +707,160 @@ export default function CreditBookScreen() {
       </Modal>
 
       {/* Payment Modal */}
-      <Modal visible={showPaymentModal} transparent animationType="slide" onRequestClose={() => setShowPaymentModal(false)}>
+      <Modal visible={showPaymentModal} transparent animationType="slide" onRequestClose={handleClosePaymentModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-          <Pressable className="flex-1 bg-black/60" onPress={() => setShowPaymentModal(false)} />
+          <Pressable className="flex-1 bg-black/60" onPress={handleClosePaymentModal} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-stone-900 dark:text-white text-xl font-bold">Record Payment</Text>
-                <Pressable onPress={() => setShowPaymentModal(false)}>
-                  <X size={24} color="#78716c" />
-                </Pressable>
-              </View>
-              {selectedCustomer && (
-                <>
-                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
-                    <Text className="text-stone-400 text-sm mb-1">{selectedCustomer.name}</Text>
-                    <Text className="text-stone-900 dark:text-white text-lg">
-                      Outstanding: <Text className="text-red-400 font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
+              {paymentSuccess ? (
+                /* ── Success State ── */
+                <View>
+                  <View className="items-center mb-6">
+                    <View className="w-16 h-16 rounded-full bg-emerald-500/20 items-center justify-center mb-3">
+                      <CheckCircle size={36} color="#10b981" />
+                    </View>
+                    <Text className="text-stone-900 dark:text-white text-xl font-bold mb-1">Payment Recorded!</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                      {selectedCustomer?.name}
                     </Text>
                   </View>
-                  <View className="gap-4">
-                    <View>
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
-                      <TextInput
-                        className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                        placeholder="0"
-                        placeholderTextColor="#57534e"
-                        keyboardType="numeric"
-                        value={paymentAmount}
-                        onChangeText={setPaymentAmount}
-                        autoFocus
-                      />
+
+                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
+                    <View className="flex-row justify-between mb-2">
+                      <Text className="text-stone-500 dark:text-stone-400 text-sm">Amount Paid</Text>
+                      <Text className="text-emerald-400 font-bold text-lg">{formatNaira(paymentSuccess.amountPaid)}</Text>
                     </View>
-                    <View>
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
-                      <TextInput
-                        className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-                        placeholder="e.g. Partial payment"
-                        placeholderTextColor="#57534e"
-                        value={paymentNote}
-                        onChangeText={setPaymentNote}
-                      />
+                    <View className="flex-row justify-between mb-2">
+                      <Text className="text-stone-500 dark:text-stone-400 text-sm">Method</Text>
+                      <Text className="text-stone-900 dark:text-white font-medium text-sm">
+                        {paymentSuccess.paymentMethod.charAt(0).toUpperCase() + paymentSuccess.paymentMethod.slice(1)}
+                      </Text>
                     </View>
-                    {/* Quick amounts */}
-                    <View className="flex-row gap-2">
-                      {[5000, 10000, selectedCustomer.currentCredit].map((amount) => (
-                        <Pressable
-                          key={amount}
-                          onPress={() => setPaymentAmount(amount.toString())}
-                          className="flex-1 bg-stone-200 dark:bg-stone-800 py-2 rounded-lg active:opacity-70"
-                        >
-                          <Text className="text-stone-600 dark:text-stone-400 text-center text-sm">
-                            {amount === selectedCustomer.currentCredit ? 'Full' : formatNaira(amount)}
-                          </Text>
-                        </Pressable>
-                      ))}
+                    <View className="border-t border-stone-200 dark:border-stone-700 mt-2 pt-2">
+                      <View className="flex-row justify-between mb-1">
+                        <Text className="text-stone-400 text-xs">Previous Balance</Text>
+                        <Text className="text-stone-400 text-xs">{formatNaira(paymentSuccess.previousBalance)}</Text>
+                      </View>
+                      <View className="flex-row justify-between">
+                        <Text className="text-stone-900 dark:text-white font-bold text-sm">Remaining Balance</Text>
+                        <Text className={`font-bold text-sm ${paymentSuccess.newBalance <= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {paymentSuccess.newBalance <= 0 ? '✅ Cleared!' : formatNaira(paymentSuccess.newBalance)}
+                        </Text>
+                      </View>
                     </View>
-                    <Pressable onPress={handleRecordPayment} className="bg-emerald-500 py-4 rounded-xl active:opacity-90">
-                      <Text className="text-white font-semibold text-center text-lg">Confirm Payment</Text>
+                  </View>
+
+                  <View className="gap-3">
+                    <Pressable
+                      onPress={handleSharePaymentReceipt}
+                      className="flex-row items-center justify-center gap-2 py-4 rounded-xl active:opacity-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      <MessageCircle size={20} color="#ffffff" />
+                      <Text className="text-white font-semibold text-base">Share via WhatsApp</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleClosePaymentModal}
+                      className="bg-stone-200 dark:bg-stone-800 py-4 rounded-xl active:opacity-90"
+                    >
+                      <Text className="text-stone-900 dark:text-white font-semibold text-center text-base">Done</Text>
                     </Pressable>
                   </View>
-                </>
+                </View>
+              ) : (
+                /* ── Payment Form ── */
+                <View>
+                  <View className="flex-row items-center justify-between mb-6">
+                    <Text className="text-stone-900 dark:text-white text-xl font-bold">Record Payment</Text>
+                    <Pressable onPress={handleClosePaymentModal}>
+                      <X size={24} color="#78716c" />
+                    </Pressable>
+                  </View>
+                  {selectedCustomer && (
+                    <>
+                      <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
+                        <Text className="text-stone-400 text-sm mb-1">{selectedCustomer.name}</Text>
+                        <Text className="text-stone-900 dark:text-white text-lg">
+                          Outstanding: <Text className="text-red-400 font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
+                        </Text>
+                      </View>
+                      <View className="gap-4">
+                        <View>
+                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
+                          <TextInput
+                            className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
+                            placeholder="0"
+                            placeholderTextColor="#57534e"
+                            keyboardType="numeric"
+                            value={paymentAmount}
+                            onChangeText={setPaymentAmount}
+                            autoFocus
+                          />
+                        </View>
+                        <View>
+                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
+                          <TextInput
+                            className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
+                            placeholder="e.g. Partial payment"
+                            placeholderTextColor="#57534e"
+                            value={paymentNote}
+                            onChangeText={setPaymentNote}
+                          />
+                        </View>
+                        {/* Quick amounts */}
+                        <View className="flex-row gap-2">
+                          {[5000, 10000, selectedCustomer.currentCredit].map((amount) => (
+                            <Pressable
+                              key={amount}
+                              onPress={() => setPaymentAmount(amount.toString())}
+                              className="flex-1 bg-stone-200 dark:bg-stone-800 py-2 rounded-lg active:opacity-70"
+                            >
+                              <Text className="text-stone-600 dark:text-stone-400 text-center text-sm">
+                                {amount === selectedCustomer.currentCredit ? 'Full' : formatNaira(amount)}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                        {/* Payment Method */}
+                        <View>
+                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Method</Text>
+                          <View className="flex-row gap-2">
+                            {([
+                              { key: 'cash' as const, label: 'Cash', icon: Banknote, color: '#10b981' },
+                              { key: 'transfer' as const, label: 'Transfer', icon: Smartphone, color: '#3b82f6' },
+                              { key: 'pos' as const, label: 'POS', icon: CreditCard, color: '#8b5cf6' },
+                            ]).map((method) => {
+                              const isActive = paymentMethod === method.key;
+                              const IconComp = method.icon;
+                              return (
+                                <Pressable
+                                  key={method.key}
+                                  onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setPaymentMethod(method.key);
+                                  }}
+                                  className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl border ${
+                                    isActive
+                                      ? 'border-emerald-500 bg-emerald-500/10'
+                                      : 'border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-800'
+                                  }`}
+                                >
+                                  <IconComp size={16} color={isActive ? method.color : '#78716c'} />
+                                  <Text className={`text-sm font-medium ${isActive ? 'text-emerald-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                                    {method.label}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        </View>
+                        <Pressable onPress={handleRecordPayment} className="bg-emerald-500 py-4 rounded-xl active:opacity-90">
+                          <Text className="text-white font-semibold text-center text-lg">Confirm Payment</Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  )}
+                </View>
               )}
             </View>
           </View>

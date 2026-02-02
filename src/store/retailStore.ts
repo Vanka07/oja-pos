@@ -43,6 +43,7 @@ export interface Sale {
   staffName?: string;
   cashReceived?: number;
   changeGiven?: number;
+  customerPreviousBalance?: number;
   createdAt: string;
   synced: boolean;
 }
@@ -65,6 +66,7 @@ export interface CreditTransaction {
   amount: number;
   saleId?: string;
   note?: string;
+  paymentMethod?: 'cash' | 'transfer' | 'pos';
   createdAt: string;
 }
 
@@ -169,7 +171,7 @@ interface RetailState {
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'currentCredit' | 'transactions'>) => void;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
-  recordCreditPayment: (customerId: string, amount: number, note?: string) => void;
+  recordCreditPayment: (customerId: string, amount: number, note?: string, paymentMethod?: 'cash' | 'transfer' | 'pos') => void;
   getCustomerById: (id: string) => Customer | undefined;
   getTotalOutstandingCredit: () => number;
   freezeCustomerCredit: (id: string, frozen: boolean) => void;
@@ -554,6 +556,7 @@ export const useRetailStore = create<RetailState>()(
           paymentMethod,
           customerId,
           customerName: customer?.name,
+          customerPreviousBalance: paymentMethod === 'credit' && customer ? customer.currentCredit : undefined,
           staffId,
           staffName,
           cashReceived: paymentMethod === 'cash' ? cashReceived : undefined,
@@ -636,12 +639,13 @@ export const useRetailStore = create<RetailState>()(
         set((state) => ({ customers: state.customers.filter((c) => c.id !== id) }));
       },
 
-      recordCreditPayment: (customerId, amount, note) => {
+      recordCreditPayment: (customerId, amount, note, paymentMethod) => {
         const transaction: CreditTransaction = {
           id: generateId(),
           type: 'payment',
           amount,
           note,
+          paymentMethod,
           createdAt: new Date().toISOString(),
         };
 
@@ -940,12 +944,18 @@ export const formatNaira = (amount: number): string => {
 
 // Generate receipt text for WhatsApp sharing
 export const generateReceiptText = (sale: Sale, shopName: string, shopPhone?: string): string => {
+  const isCreditSale = sale.paymentMethod === 'credit';
+  const previousBalance = sale.customerPreviousBalance ?? 0;
+  const newBalance = previousBalance + sale.total;
+
   const lines = [
     `*${shopName}*`,
     shopPhone ? `Tel: ${shopPhone}` : '',
     '',
+    isCreditSale ? '⚠️ *CREDIT SALE*' : '',
     `Receipt #${sale.id.slice(-6).toUpperCase()}`,
     `Date: ${new Date(sale.createdAt).toLocaleString('en-NG')}`,
+    isCreditSale && sale.customerName ? `Customer: *${sale.customerName}*` : '',
     '',
     '━━━━━━━━━━━━━━━━',
     '',
@@ -961,8 +971,60 @@ export const generateReceiptText = (sale: Sale, shopName: string, shopPhone?: st
     `Payment: ${sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}`,
     sale.cashReceived ? `Cash Received: ${formatNaira(sale.cashReceived)}` : '',
     sale.changeGiven ? `Change: ${formatNaira(sale.changeGiven)}` : '',
+    ...(isCreditSale && sale.customerPreviousBalance !== undefined ? [
+      '',
+      '━━━━━━━━━━━━━━━━',
+      '*CREDIT BALANCE*',
+      `Previous Balance: ${formatNaira(previousBalance)}`,
+      `This Sale: +${formatNaira(sale.total)}`,
+      `*New Balance Owed: ${formatNaira(newBalance)}*`,
+    ] : []),
     '',
     'Thank you for your patronage! 🙏',
+    '',
+    '━━━━━━━━━━━━━━━━',
+    '_Powered by Oja POS_',
+    'Download Oja: https://ojapos.app',
+  ].filter(Boolean);
+
+  return lines.join('\n');
+};
+
+// Generate payment receipt text for WhatsApp sharing
+export const generatePaymentReceiptText = (
+  customerName: string,
+  amountPaid: number,
+  previousBalance: number,
+  newBalance: number,
+  paymentMethod: string,
+  shopName: string,
+  shopPhone?: string
+): string => {
+  const paymentMethodLabel = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+  const isFullyPaid = newBalance <= 0;
+
+  const lines = [
+    `*${shopName}*`,
+    shopPhone ? `Tel: ${shopPhone}` : '',
+    '',
+    '💰 *PAYMENT RECEIPT*',
+    `Date: ${new Date().toLocaleString('en-NG')}`,
+    '',
+    '━━━━━━━━━━━━━━━━',
+    '',
+    `Customer: *${customerName}*`,
+    `Amount Paid: *${formatNaira(amountPaid)}*`,
+    `Payment Method: ${paymentMethodLabel}`,
+    '',
+    '━━━━━━━━━━━━━━━━',
+    '',
+    `Previous Balance: ${formatNaira(previousBalance)}`,
+    `Amount Paid: -${formatNaira(amountPaid)}`,
+    `*New Balance: ${formatNaira(Math.max(0, newBalance))}*`,
+    '',
+    isFullyPaid ? '✅ *BALANCE CLEARED*' : '',
+    isFullyPaid ? '' : '',
+    'Thank you for your payment! 🙏',
     '',
     '━━━━━━━━━━━━━━━━',
     '_Powered by Oja POS_',

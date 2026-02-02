@@ -202,10 +202,36 @@ export default function SaleDetailScreen() {
               )}
             </View>
 
-            {sale.customerName && (
-              <View className="mt-3 bg-amber-500/10 px-3 py-2 rounded-lg">
-                <Text className="text-amber-400 text-sm font-medium">
-                  Credit Sale — {sale.customerName}
+            {sale.paymentMethod === 'credit' && sale.customerName && (
+              <View className="mt-3 bg-amber-500/10 border border-amber-500/30 px-4 py-3 rounded-xl">
+                <Text className="text-amber-400 text-sm font-bold mb-1">
+                  ⚠️ CREDIT SALE
+                </Text>
+                <Text className="text-amber-300/80 text-sm">
+                  Customer: {sale.customerName}
+                </Text>
+                {sale.customerPreviousBalance !== undefined && (
+                  <View className="mt-2 pt-2 border-t border-amber-500/20">
+                    <View className="flex-row justify-between mb-1">
+                      <Text className="text-amber-400/70 text-xs">Previous Balance</Text>
+                      <Text className="text-amber-400/70 text-xs">{formatNaira(sale.customerPreviousBalance)}</Text>
+                    </View>
+                    <View className="flex-row justify-between mb-1">
+                      <Text className="text-amber-400/70 text-xs">This Sale</Text>
+                      <Text className="text-amber-400/70 text-xs">+{formatNaira(sale.total)}</Text>
+                    </View>
+                    <View className="flex-row justify-between mt-1 pt-1 border-t border-amber-500/20">
+                      <Text className="text-amber-400 text-sm font-bold">Total Owed</Text>
+                      <Text className="text-amber-400 text-sm font-bold">{formatNaira(sale.customerPreviousBalance + sale.total)}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+            {sale.customerName && sale.paymentMethod !== 'credit' && (
+              <View className="mt-3 bg-stone-100/50 dark:bg-stone-800/50 px-3 py-2 rounded-lg">
+                <Text className="text-stone-500 dark:text-stone-400 text-sm font-medium">
+                  Customer: {sale.customerName}
                 </Text>
               </View>
             )}
