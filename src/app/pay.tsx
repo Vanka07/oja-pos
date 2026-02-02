@@ -25,7 +25,7 @@ export default function PayScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const params = useLocalSearchParams<{ url: string; reference: string; email: string }>();
+  const params = useLocalSearchParams<{ url: string; reference: string; email: string; plan: string }>();
 
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -35,6 +35,7 @@ export default function PayScreen() {
 
   const checkoutUrl = params.url ? decodeURIComponent(params.url as string) : '';
   const paymentRef = params.reference as string || '';
+  const targetPlan = (params.plan as string) === 'growth' ? 'growth' : 'business';
 
   // For web platform: open in new window
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function PayScreen() {
       const result = await verifyPayment(reference);
       if (result.success) {
         setStatus('success');
-        activate('business', 30);
+        activate(targetPlan as 'growth' | 'business', 30);
         // Auto-navigate after success
         setTimeout(() => {
           router.replace('/(tabs)');
@@ -129,7 +130,7 @@ export default function PayScreen() {
             Payment Successful! 🎉
           </Text>
           <Text className="text-stone-400 text-center mt-3">
-            Your Business plan is now active for 30 days. Enjoy all premium features!
+            Your {targetPlan === 'growth' ? 'Growth' : 'Business'} plan is now active for 30 days. Enjoy all premium features!
           </Text>
           <Pressable
             onPress={() => router.replace('/(tabs)')}

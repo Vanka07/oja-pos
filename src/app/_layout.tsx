@@ -97,6 +97,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="payroll" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="subscription" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="activate" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="language" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="pay" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

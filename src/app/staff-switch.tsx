@@ -1,9 +1,9 @@
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Lock, Delete } from 'lucide-react-native';
 import { useStaffStore, isAppRole, type StaffMember } from '@/store/staffStore';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
@@ -80,7 +80,7 @@ export default function StaffSwitchScreen() {
     setError(false);
   }, []);
 
-  const PinDots = () => (
+  const PinDots = useCallback(() => (
     <Animated.View style={shakeStyle} className="flex-row gap-4 justify-center my-8">
       {[0, 1, 2, 3].map((i) => (
         <View
@@ -95,9 +95,9 @@ export default function StaffSwitchScreen() {
         />
       ))}
     </Animated.View>
-  );
+  ), [shakeStyle, pin, error]);
 
-  const NumPad = () => (
+  const NumPad = useCallback(() => (
     <View className="gap-4 px-12">
       {[[1, 2, 3], [4, 5, 6], [7, 8, 9], ['', 0, 'del']].map((row, rowIndex) => (
         <View key={rowIndex} className="flex-row gap-4 justify-center">
@@ -129,7 +129,7 @@ export default function StaffSwitchScreen() {
         </View>
       ))}
     </View>
-  );
+  ), [handlePinDigit, handleDelete]);
 
   return (
     <View className="flex-1 bg-stone-50 dark:bg-stone-950">

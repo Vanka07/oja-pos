@@ -64,6 +64,7 @@ export default function PremiumUpsell({ visible, onClose, featureName, featureDe
           url: encodeURIComponent(checkoutUrl),
           reference,
           email: userEmail,
+          plan: targetPlan,
         },
       });
     }, 300);

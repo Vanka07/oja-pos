@@ -9,13 +9,13 @@ import {
   DollarSign,
   ShoppingCart,
   Receipt,
+  Lock,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
-import { Lock } from 'lucide-react-native';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import EmptyState from '@/components/EmptyState';
@@ -190,7 +190,7 @@ export default function ReportsScreen() {
     ].filter(p => p.amount > 0);
   }, [getDateRangeData]);
 
-  const WebBarChart = () => {
+  const WebBarChart = useCallback(() => {
     const { data, title } = chartData;
     const maxSales = Math.max(...data.map(d => d.sales), 1);
     const showLabels = data.length <= 12;
@@ -218,9 +218,9 @@ export default function ReportsScreen() {
         )}
       </View>
     );
-  };
+  }, [chartData, isDark]);
 
-  const WebPieChart = () => {
+  const WebPieChart = useCallback(() => {
     if (paymentBreakdown.length === 0) return null;
     return (
       <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 mt-4">
@@ -241,9 +241,9 @@ export default function ReportsScreen() {
         </View>
       </View>
     );
-  };
+  }, [paymentBreakdown]);
 
-  const NativeBarChart = () => {
+  const NativeBarChart = useCallback(() => {
     if (!VictoryChart || !VictoryBar || !VictoryAxis) return <WebBarChart />;
     const { data, title } = chartData;
     return (
@@ -256,9 +256,9 @@ export default function ReportsScreen() {
         </VictoryChart>
       </View>
     );
-  };
+  }, [chartData, isDark, SCREEN_WIDTH]);
 
-  const NativePieChart = () => {
+  const NativePieChart = useCallback(() => {
     if (!VictoryPie || paymentBreakdown.length === 0) return <WebPieChart />;
     const pieData = paymentBreakdown.map((item) => ({ x: item.method, y: item.amount }));
     return (
@@ -277,7 +277,7 @@ export default function ReportsScreen() {
         </View>
       </View>
     );
-  };
+  }, [paymentBreakdown, getDateRangeData, isDark, SCREEN_WIDTH]);
 
   const gradientColors: [string, string, string] = isDark ? ['#292524', '#1c1917', '#0c0a09'] : ['#f5f5f4', '#fafaf9', '#ffffff'];
 
@@ -286,7 +286,7 @@ export default function ReportsScreen() {
       <View className="flex-1 bg-stone-50 dark:bg-stone-950">
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
           <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
@@ -306,7 +306,7 @@ export default function ReportsScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
             <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
           </Animated.View>
         </View>
@@ -383,14 +383,14 @@ export default function ReportsScreen() {
             <View className="w-8 h-8 rounded-lg bg-blue-500/20 items-center justify-center mb-2">
               <ShoppingCart size={16} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 text-xs uppercase tracking-wide">Transactions</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Transactions</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{getDateRangeData.totalTransactions}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="w-8 h-8 rounded-lg bg-emerald-500/20 items-center justify-center mb-2">
               <DollarSign size={16} color="#10b981" />
             </View>
-            <Text className="text-stone-500 text-xs uppercase tracking-wide">Profit</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Profit</Text>
             <View className="flex-row items-center gap-2">
               <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(getDateRangeData.profit)}</Text>
               {getDateRangeData.totalSales > 0 && (
@@ -404,7 +404,7 @@ export default function ReportsScreen() {
             <View className="w-8 h-8 rounded-lg bg-orange-500/20 items-center justify-center mb-2">
               <Receipt size={16} color="#e05e1b" />
             </View>
-            <Text className="text-stone-500 text-xs uppercase tracking-wide">Avg. Sale</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Avg. Sale</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{formatNaira(getDateRangeData.totalTransactions > 0 ? Math.round(getDateRangeData.totalSales / getDateRangeData.totalTransactions) : 0)}</Text>
           </View>
         </Animated.View>

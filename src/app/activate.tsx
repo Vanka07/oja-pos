@@ -16,8 +16,6 @@ import Animated, {
   withSequence,
   withTiming,
   withSpring,
-  withDelay,
-  runOnJS,
 } from 'react-native-reanimated';
 
 export default function ActivateScreen() {

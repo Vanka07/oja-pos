@@ -12,7 +12,8 @@ import {
   Banknote,
   TrendingDown,
   TrendingUp,
-  MessageCircle
+  MessageCircle,
+  Lock,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Customer } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -21,7 +22,6 @@ import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import EmptyState from '@/components/EmptyState';
-import { Lock } from 'lucide-react-native';
 
 export default function CreditBookScreen() {
   const insets = useSafeAreaInsets();
@@ -120,7 +120,7 @@ export default function CreditBookScreen() {
       <View className="flex-1 bg-stone-50 dark:bg-stone-950">
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Text className="text-stone-500 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
           <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Credit Book</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
@@ -150,7 +150,7 @@ export default function CreditBookScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 text-sm font-semibold tracking-wide">
+              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">
                 Customers
               </Text>
               <Pressable
@@ -181,7 +181,7 @@ export default function CreditBookScreen() {
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <Users size={16} color="#3b82f6" />
-              <Text className="text-stone-500 text-xs font-semibold tracking-wide">With Credit</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">With Credit</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{customersWithDebt} / {customers.length}</Text>
           </View>
@@ -214,7 +214,7 @@ export default function CreditBookScreen() {
           entering={FadeInDown.delay(400).duration(600)}
           className="px-5 mt-4"
         >
-          <Text className="text-stone-500 text-sm mb-3">
+          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">
             {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
           </Text>
           {filteredCustomers.length === 0 && customers.length === 0 && (
@@ -271,7 +271,7 @@ export default function CreditBookScreen() {
                         })()}
                         <View className="flex-1">
                           <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
-                          <Text className="text-stone-500 text-sm">{customer.phone}</Text>
+                          <Text className="text-stone-500 dark:text-stone-400 text-sm">{customer.phone}</Text>
                         </View>
                       </View>
                       <View className="items-end">
@@ -406,13 +406,13 @@ export default function CreditBookScreen() {
                     </View>
                     <View className="flex-row justify-between">
                       <View>
-                        <Text className="text-stone-500 text-xs uppercase">Outstanding</Text>
+                        <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Outstanding</Text>
                         <Text className="text-red-400 text-2xl font-bold">
                           {formatNaira(selectedCustomer.currentCredit)}
                         </Text>
                       </View>
                       <View className="items-end">
-                        <Text className="text-stone-500 text-xs uppercase">Credit Limit</Text>
+                        <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Credit Limit</Text>
                         <Text className="text-stone-900 dark:text-white text-xl font-semibold">
                           {formatNaira(selectedCustomer.creditLimit)}
                         </Text>
@@ -469,7 +469,7 @@ export default function CreditBookScreen() {
                               <Text className="text-stone-900 dark:text-white font-medium">
                                 {tx.type === 'payment' ? 'Payment' : 'Credit'}
                               </Text>
-                              <Text className="text-stone-500 text-xs">
+                              <Text className="text-stone-500 dark:text-stone-500 text-xs">
                                 {new Date(tx.createdAt).toLocaleDateString('en-NG', {
                                   month: 'short',
                                   day: 'numeric',

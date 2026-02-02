@@ -90,6 +90,7 @@ export default function SubscriptionScreen() {
         url: encodeURIComponent(checkoutUrl),
         reference,
         email: userEmail,
+        plan: targetPlan,
       },
     });
   };

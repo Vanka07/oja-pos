@@ -2,10 +2,8 @@ import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingVi
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Settings,
   Receipt,
   Wallet,
-  Plus,
   X,
   ChevronRight,
   Store,
@@ -31,12 +29,12 @@ import {
   Moon,
   Monitor,
   Printer,
-  Bluetooth,
   CheckCircle2,
   Lock,
   Globe,
+  Crown,
 } from 'lucide-react-native';
-import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
+import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
@@ -57,7 +55,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Crown } from 'lucide-react-native';
 
 const expenseIcons: Record<string, React.ReactNode> = {
   'Rent': <Store size={18} color="#e05e1b" />,
@@ -932,7 +929,9 @@ export default function MoreScreen() {
               <View className="flex-1">
                 <Text className="text-stone-900 dark:text-white font-medium">Subscription</Text>
                 <Text className="text-stone-500 dark:text-stone-500 text-sm">
-                  {isPremium ? 'Business Plan' : 'Starter Plan (Free)'}
+                  {isPremium
+                    ? (subscriptionPlan === 'growth' ? 'Growth Plan' : 'Business Plan')
+                    : 'Starter Plan (Free)'}
                 </Text>
               </View>
               {isPremium ? (

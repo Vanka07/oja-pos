@@ -135,7 +135,7 @@ export default function InventoryScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
               {canAddProduct && (
                 <Pressable
                   onPress={() => {
@@ -160,14 +160,14 @@ export default function InventoryScreen() {
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <Package size={16} color="#3b82f6" />
-              <Text className="text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <TrendingUp size={16} color="#10b981" />
-              <Text className="text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
             </View>
             <Text className="text-orange-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
           </View>
@@ -223,7 +223,7 @@ export default function InventoryScreen() {
 
         {/* Products List */}
         <Animated.View entering={FadeInDown.delay(600).duration(600)} className="px-5 mt-4">
-          <Text className="text-stone-500 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
+          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
           {filteredProducts.length === 0 && products.length === 0 && (
             <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState icon={Package} title="Your shelf is empty" description="Add your first product to get started" buttonLabel="Add Product" onButtonPress={() => setShowAddModal(true)} />
@@ -233,7 +233,7 @@ export default function InventoryScreen() {
             {filteredProducts.map((product, index) => {
               const isLowStock = product.quantity <= product.lowStockThreshold;
               const profit = product.sellingPrice - product.costPrice;
-              const margin = ((profit / product.sellingPrice) * 100).toFixed(0);
+              const margin = product.sellingPrice > 0 ? ((profit / product.sellingPrice) * 100).toFixed(0) : '0';
               return (
                 <Animated.View key={product.id} entering={FadeIn.delay(100 + index * 30).duration(400)} layout={Layout.springify()}>
                   <Pressable
@@ -246,7 +246,7 @@ export default function InventoryScreen() {
                           <Text className="text-stone-900 dark:text-white font-medium text-base" numberOfLines={1}>{product.name}</Text>
                           {isLowStock && <View className="bg-amber-500/20 px-2 py-0.5 rounded"><Text className="text-amber-400 text-xs">Low</Text></View>}
                         </View>
-                        <Text className="text-stone-500 text-xs mb-2">{product.category}</Text>
+                        <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
                         <View className="flex-row items-center gap-4">
                           <View>
                             <Text className="text-stone-400 dark:text-stone-600 text-xs">Cost</Text>

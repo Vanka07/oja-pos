@@ -408,7 +408,7 @@ export default function POSScreen() {
                       <Text className="text-stone-900 dark:text-white font-medium" numberOfLines={1}>
                         {item.product.name}
                       </Text>
-                      <Text className="text-stone-500 text-sm">
+                      <Text className="text-stone-500 dark:text-stone-400 text-sm">
                         {formatNaira(item.product.sellingPrice)} x {item.quantity}
                       </Text>
                     </View>
@@ -465,7 +465,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Cash</Text>
-                    <Text className="text-stone-500 text-xs">Receive payment in cash</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Receive payment in cash</Text>
                   </View>
                 </Pressable>
 
@@ -478,7 +478,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Bank Transfer</Text>
-                    <Text className="text-stone-500 text-xs">Mobile banking / USSD</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Mobile banking / USSD</Text>
                   </View>
                 </Pressable>
 
@@ -491,7 +491,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">POS Terminal</Text>
-                    <Text className="text-stone-500 text-xs">Card payment via POS</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Card payment via POS</Text>
                   </View>
                 </Pressable>
 
@@ -504,7 +504,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Credit Sale</Text>
-                    <Text className="text-stone-500 text-xs">Customer pays later</Text>
+                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Customer pays later</Text>
                   </View>
                 </Pressable>
               </View>
