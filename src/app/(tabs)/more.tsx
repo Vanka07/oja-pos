@@ -35,6 +35,7 @@ import {
   Crown,
   ShoppingBag,
   LayoutGrid,
+  Trash2,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -1075,6 +1076,74 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
+          {/* Reset All Data — owner only */}
+          {canManageSub && (
+            <View className="mb-6">
+              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Danger Zone</Text>
+              <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-red-500/30 overflow-hidden">
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      'Reset All Data',
+                      'This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone.\n\nAre you sure?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Reset Everything',
+                          style: 'destructive',
+                          onPress: () => {
+                            Alert.alert(
+                              'Final Confirmation',
+                              'Last chance. All data will be erased and the app will restart from scratch.',
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                  text: 'Yes, Delete All',
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    // Clear all persisted stores
+                                    const storeKeys = [
+                                      'retail-store', 'oja-staff-storage', 'auth-store',
+                                      'catalog-store', 'onboarding-store', 'oja-payroll-storage',
+                                      'printer-store', 'subscription-store', 'cloud-auth-store',
+                                      'oja-language', 'oja-theme', 'update-store',
+                                    ];
+                                    if (typeof window !== 'undefined' && window.localStorage) {
+                                      storeKeys.forEach((key) => window.localStorage.removeItem(key));
+                                    }
+                                    // Also try AsyncStorage keys
+                                    try {
+                                      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                                      await AsyncStorage.multiRemove(storeKeys);
+                                    } catch {}
+                                    // Reload the app
+                                    if (typeof window !== 'undefined') {
+                                      window.location.href = '/';
+                                    }
+                                  },
+                                },
+                              ]
+                            );
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  className="flex-row items-center p-4 active:bg-red-500/10"
+                >
+                  <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
+                    <Trash2 size={20} color="#ef4444" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-red-500 font-medium">Reset All Data</Text>
+                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Delete everything and start fresh</Text>
+                  </View>
+                  <ChevronRight size={20} color="#ef4444" />
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">About</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <View className="flex-row items-center p-4">
