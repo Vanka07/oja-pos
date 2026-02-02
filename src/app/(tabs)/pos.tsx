@@ -20,6 +20,7 @@ import {
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale } from '@/store/retailStore';
 import { checkSoldProductsLowStock, checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
+import BarcodeProductModal from '@/components/BarcodeProductModal';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
 import { usePrinterStore } from '@/store/printerStore';
@@ -43,6 +44,8 @@ export default function POSScreen() {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [lowStockAlert, setLowStockAlert] = useState<{ name: string; quantity: number }[] | null>(null);
+  const [showBarcodeModal, setShowBarcodeModal] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState('');
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
   const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
@@ -61,6 +64,7 @@ export default function POSScreen() {
   const clearCart = useRetailStore((s) => s.clearCart);
   const completeSale = useRetailStore((s) => s.completeSale);
   const getProductByBarcode = useRetailStore((s) => s.getProductByBarcode);
+  const addProduct = useRetailStore((s) => s.addProduct);
 
   const handleBarcodeScan = useCallback((result: BarcodeScanningResult) => {
     if (scanLockRef.current) return;
@@ -70,11 +74,41 @@ export default function POSScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addToCart(product);
     } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setScannedBarcode(result.data);
+      setShowBarcodeModal(true);
     }
     setShowScanner(false);
     setTimeout(() => { scanLockRef.current = false; }, 500);
   }, [getProductByBarcode, addToCart]);
+
+  const handleBarcodeAddProduct = useCallback((product: {
+    name: string;
+    barcode: string;
+    category: string;
+    costPrice: number;
+    sellingPrice: number;
+    quantity: number;
+    unit: string;
+    lowStockThreshold: number;
+    imageUrl?: string;
+  }, addToCartAfter: boolean) => {
+    addProduct(product);
+    setShowBarcodeModal(false);
+
+    if (addToCartAfter) {
+      // Small delay to let the store update, then find and add to cart
+      setTimeout(() => {
+        const newProduct = getProductByBarcode(product.barcode);
+        if (newProduct) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          addToCart(newProduct);
+        }
+      }, 100);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, [addProduct, getProductByBarcode, addToCart]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -556,6 +590,14 @@ export default function POSScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Barcode Product Modal */}
+      <BarcodeProductModal
+        visible={showBarcodeModal}
+        barcode={scannedBarcode}
+        onClose={() => setShowBarcodeModal(false)}
+        onAddProduct={handleBarcodeAddProduct}
+      />
 
       {/* Success Modal */}
       <Modal
