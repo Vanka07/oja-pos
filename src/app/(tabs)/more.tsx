@@ -33,6 +33,7 @@ import {
   Lock,
   Globe,
   Crown,
+  ShoppingBag,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -48,6 +49,7 @@ import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
 import { useThemeStore } from '@/store/themeStore';
 import { useLanguageStore } from '@/store/languageStore';
+import { useCatalogStore } from '@/store/catalogStore';
 import { LANGUAGES } from '@/i18n';
 import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
@@ -335,6 +337,8 @@ export default function MoreScreen() {
       Alert.alert('No Low Stock', 'All products are above their low stock threshold.');
     }
   }, [alertPhoneNumber]);
+
+  const catalogEnabled = useCatalogStore((s) => s.catalogEnabled);
 
   const lastSyncTime = useRetailStore((s) => s.lastSyncTime);
   const lastSyncDisplay = lastSyncTime
@@ -945,6 +949,26 @@ export default function MoreScreen() {
                   <Text className="text-orange-400 text-xs font-semibold">Upgrade</Text>
                 </View>
               )}
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
+
+            {/* WhatsApp Catalog */}
+            <Pressable
+              onPress={() => router.push('/catalog')}
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
+                <ShoppingBag size={20} color="#22c55e" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Catalog</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">Share products online</Text>
+              </View>
+              <View className={`px-2 py-1 rounded-full mr-2 ${catalogEnabled ? 'bg-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
+                <Text className={`text-xs font-semibold ${catalogEnabled ? 'text-emerald-400' : 'text-stone-500'}`}>
+                  {catalogEnabled ? 'Enabled' : 'Disabled'}
+                </Text>
+              </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
 
