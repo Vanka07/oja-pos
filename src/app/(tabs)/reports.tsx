@@ -378,34 +378,27 @@ export default function ReportsScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.delay(400).duration(600)} className="flex-row mx-5 mt-4 gap-3">
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
-            <View className="w-8 h-8 rounded-lg bg-blue-500/20 items-center justify-center mb-2">
-              <ShoppingCart size={16} color="#3b82f6" />
+        <Animated.View entering={FadeInDown.delay(400).duration(600)} className="flex-row mx-5 mt-4 gap-2">
+          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl px-3 py-3 border border-stone-200 dark:border-stone-800">
+            <View className="w-7 h-7 rounded-lg bg-blue-500/20 items-center justify-center mb-1.5">
+              <ShoppingCart size={14} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Transactions</Text>
-            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{getDateRangeData.totalTransactions}</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Sales</Text>
+            <Text className="text-stone-900 dark:text-white text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{getDateRangeData.totalTransactions}</Text>
           </View>
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
-            <View className="w-8 h-8 rounded-lg bg-emerald-500/20 items-center justify-center mb-2">
-              <DollarSign size={16} color="#10b981" />
+          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl px-3 py-3 border border-stone-200 dark:border-stone-800">
+            <View className="w-7 h-7 rounded-lg bg-emerald-500/20 items-center justify-center mb-1.5">
+              <DollarSign size={14} color="#10b981" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Profit</Text>
-            <View className="flex-row items-center gap-2">
-              <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(getDateRangeData.profit)}</Text>
-              {getDateRangeData.totalSales > 0 && (
-                <View className="bg-emerald-500/20 rounded-full px-2 py-0.5">
-                  <Text className="text-emerald-500 text-xs font-semibold">↑ {(getDateRangeData.profit / getDateRangeData.totalSales * 100).toFixed(1)}%</Text>
-                </View>
-              )}
-            </View>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Profit</Text>
+            <Text className="text-emerald-400 text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatNaira(getDateRangeData.profit)}</Text>
           </View>
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800">
-            <View className="w-8 h-8 rounded-lg bg-orange-500/20 items-center justify-center mb-2">
-              <Receipt size={16} color="#e05e1b" />
+          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl px-3 py-3 border border-stone-200 dark:border-stone-800">
+            <View className="w-7 h-7 rounded-lg bg-orange-500/20 items-center justify-center mb-1.5">
+              <Receipt size={14} color="#e05e1b" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide">Avg. Sale</Text>
-            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{formatNaira(getDateRangeData.totalTransactions > 0 ? Math.round(getDateRangeData.totalSales / getDateRangeData.totalTransactions) : 0)}</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Avg. Sale</Text>
+            <Text className="text-stone-900 dark:text-white text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatNaira(getDateRangeData.totalTransactions > 0 ? Math.round(getDateRangeData.totalSales / getDateRangeData.totalTransactions) : 0)}</Text>
           </View>
         </Animated.View>
 
