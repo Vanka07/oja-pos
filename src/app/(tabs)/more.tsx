@@ -127,7 +127,15 @@ export default function MoreScreen() {
 
   const router = useRouter();
   const lockApp = useAuthStore((s) => s.lock);
+  const setPin = useAuthStore((s) => s.setPin);
+  const currentPin = useAuthStore((s) => s.pin);
   const hasAnyPin = useAuthStore((s) => s.hasPin)();
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinStep, setPinStep] = useState<'current' | 'new' | 'confirm'>('new');
+  const [newPinEntry, setNewPinEntry] = useState('');
+  const [confirmPinEntry, setConfirmPinEntry] = useState('');
+  const [currentPinEntry, setCurrentPinEntry] = useState('');
+  const [pinError, setPinError] = useState('');
   const cloudAuth = useCloudAuthStore();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const staffMembers = useStaffStore((s) => s.staff);
@@ -1049,6 +1057,32 @@ export default function MoreScreen() {
               </Pressable>
             )}
 
+            {!hasStaff && (
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setPinError('');
+                  setNewPinEntry('');
+                  setConfirmPinEntry('');
+                  setCurrentPinEntry('');
+                  setPinStep(currentPin ? 'current' : 'new');
+                  setShowPinModal(true);
+                }}
+                className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                  <Shield size={20} color="#e05e1b" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">{currentPin ? 'Change PIN' : 'Set PIN'}</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    {currentPin ? 'Update your 4-digit security PIN' : 'Protect your app with a 4-digit PIN'}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+
             {hasAnyPin && (
               <Pressable
                 onPress={() => {
@@ -1516,6 +1550,126 @@ export default function MoreScreen() {
         featureName={FEATURE_DESCRIPTIONS[upsellFeature]?.name || 'Premium Feature'}
         featureDescription={FEATURE_DESCRIPTIONS[upsellFeature]?.description || 'This feature requires the Business plan.'}
       />
+
+      {/* Set/Change PIN Modal */}
+      <Modal visible={showPinModal} transparent animationType="slide" onRequestClose={() => setShowPinModal(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+          <Pressable className="flex-1 bg-black/60" onPress={() => setShowPinModal(false)} />
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+            <View className="p-6">
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-stone-900 dark:text-white text-xl font-bold">
+                  {currentPin ? 'Change PIN' : 'Set PIN'}
+                </Text>
+                <Pressable onPress={() => setShowPinModal(false)}>
+                  <X size={24} color="#78716c" />
+                </Pressable>
+              </View>
+
+              {pinStep === 'current' && (
+                <View className="gap-4">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm">Enter your current PIN</Text>
+                  <TextInput
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
+                    placeholder="• • • •"
+                    placeholderTextColor="#57534e"
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
+                    value={currentPinEntry}
+                    onChangeText={setCurrentPinEntry}
+                    autoFocus
+                  />
+                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
+                  <Pressable
+                    onPress={() => {
+                      if (currentPinEntry !== currentPin) {
+                        setPinError('Wrong PIN');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        return;
+                      }
+                      setPinError('');
+                      setPinStep('new');
+                    }}
+                    className="bg-orange-500 py-4 rounded-xl active:opacity-90"
+                  >
+                    <Text className="text-white font-semibold text-center text-lg">Continue</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {pinStep === 'new' && (
+                <View className="gap-4">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                    {currentPin ? 'Enter your new 4-digit PIN' : 'Choose a 4-digit PIN to protect your app'}
+                  </Text>
+                  <TextInput
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
+                    placeholder="• • • •"
+                    placeholderTextColor="#57534e"
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
+                    value={newPinEntry}
+                    onChangeText={setNewPinEntry}
+                    autoFocus
+                  />
+                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
+                  <Pressable
+                    onPress={() => {
+                      if (newPinEntry.length !== 4) {
+                        setPinError('PIN must be 4 digits');
+                        return;
+                      }
+                      setPinError('');
+                      setPinStep('confirm');
+                    }}
+                    className="bg-orange-500 py-4 rounded-xl active:opacity-90"
+                  >
+                    <Text className="text-white font-semibold text-center text-lg">Continue</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {pinStep === 'confirm' && (
+                <View className="gap-4">
+                  <Text className="text-stone-500 dark:text-stone-400 text-sm">Confirm your PIN</Text>
+                  <TextInput
+                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
+                    placeholder="• • • •"
+                    placeholderTextColor="#57534e"
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
+                    value={confirmPinEntry}
+                    onChangeText={setConfirmPinEntry}
+                    autoFocus
+                  />
+                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
+                  <Pressable
+                    onPress={() => {
+                      if (confirmPinEntry !== newPinEntry) {
+                        setPinError('PINs don\'t match');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        return;
+                      }
+                      setPin(newPinEntry);
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      setShowPinModal(false);
+                      Alert.alert('PIN Set', 'Your app is now protected. You\'ll need this PIN every time you open Oja POS.');
+                    }}
+                    className="bg-emerald-500 py-4 rounded-xl active:opacity-90"
+                  >
+                    <Text className="text-white font-semibold text-center text-lg">
+                      {currentPin ? 'Update PIN' : 'Set PIN'}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
