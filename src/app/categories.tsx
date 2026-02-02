@@ -180,10 +180,10 @@ export default function CategoriesScreen() {
                     >
                       {/* Color indicator */}
                       <View
-                        className="w-12 h-12 rounded-xl items-center justify-center mr-3"
+                        className="w-12 h-12 rounded-xl items-center justify-center mr-3 overflow-hidden"
                         style={{ backgroundColor: category.color + '30' }}
                       >
-                        <Text className="text-xl">{category.icon}</Text>
+                        <Text className="text-xl" style={{ lineHeight: 28 }}>{category.icon}</Text>
                       </View>
 
                       {/* Name + count */}
@@ -295,10 +295,10 @@ export default function CategoriesScreen() {
               {formName.trim() && (
                 <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 flex-row items-center gap-3">
                   <View
-                    className="w-12 h-12 rounded-xl items-center justify-center"
+                    className="w-12 h-12 rounded-xl items-center justify-center overflow-hidden"
                     style={{ backgroundColor: formColor + '30' }}
                   >
-                    <Text className="text-xl">{formIcon}</Text>
+                    <Text className="text-xl" style={{ lineHeight: 28 }}>{formIcon}</Text>
                   </View>
                   <View>
                     <Text className="text-stone-900 dark:text-white font-medium">{formName.trim()}</Text>
