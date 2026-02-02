@@ -77,7 +77,7 @@ export default function DashboardScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <OjaLogo size={28} showText textSize={20} />
+              <OjaLogo size={38} showText textSize={26} />
               <View className="flex-row items-center gap-2">
                 {isOnline ? (
                   <View className="flex-row items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-full">

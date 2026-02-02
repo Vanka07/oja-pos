@@ -22,7 +22,7 @@ export function OjaLogo({ size = 32, showText = false, textSize }: OjaLogoProps)
   const resolvedTextSize = textSize ?? size * 0.75;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: size * 0.25 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: size * 0.15 }}>
       <Svg width={size} height={size} viewBox="0 0 48 48" fill="none">
         {/* Cart basket */}
         <Path
