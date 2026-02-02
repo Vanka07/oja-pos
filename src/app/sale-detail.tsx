@@ -15,11 +15,13 @@ import {
   User,
   Clock,
   Hash,
+  FileText,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, generateReceiptText, type Sale } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { usePrinterStore } from '@/store/printerStore';
 import { printReceipt } from '@/lib/printerService';
+import { generateReceiptPdf } from '@/lib/receiptPdf';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -72,6 +74,17 @@ export default function SaleDetailScreen() {
       Linking.openURL(url).catch(() => {
         Share.share({ message: receipt });
       });
+    }
+  }, [sale, shopInfo]);
+
+  const handleSharePdf = useCallback(async () => {
+    if (!sale || !shopInfo) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await generateReceiptPdf(sale, shopInfo.name, shopInfo.phone);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }, [sale, shopInfo]);
 
@@ -300,6 +313,14 @@ export default function SaleDetailScreen() {
           >
             <MessageCircle size={20} color="#ffffff" />
             <Text className="text-white font-bold text-base">Share via WhatsApp</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleSharePdf}
+            className="flex-row items-center justify-center gap-2 bg-white/80 dark:bg-stone-800 py-4 rounded-xl active:opacity-90 border border-orange-200 dark:border-orange-900/40"
+          >
+            <FileText size={18} color="#e05e1b" />
+            <Text className="text-orange-600 dark:text-orange-400 font-medium">Share as PDF</Text>
           </Pressable>
 
           <Pressable

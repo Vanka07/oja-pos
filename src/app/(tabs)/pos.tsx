@@ -16,6 +16,7 @@ import {
   Share2,
   ScanBarcode,
   Printer,
+  FileText,
 } from 'lucide-react-native';
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sale, type Customer } from '@/store/retailStore';
@@ -25,6 +26,7 @@ import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore } from '@/store/staffStore';
 import { usePrinterStore } from '@/store/printerStore';
 import { printReceipt } from '@/lib/printerService';
+import { generateReceiptPdf } from '@/lib/receiptPdf';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
@@ -769,6 +771,17 @@ export default function POSScreen() {
               <Text className="text-white font-bold text-base">Share via WhatsApp</Text>
             </Pressable>
             <View className="flex-row gap-3 w-full mb-4">
+              <Pressable
+                onPress={() => {
+                  if (lastSale && shopInfo) {
+                    generateReceiptPdf(lastSale, shopInfo.name, shopInfo.phone);
+                  }
+                }}
+                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90 border border-orange-200 dark:border-orange-900/40"
+              >
+                <FileText size={18} color="#e05e1b" />
+                <Text className="text-orange-600 dark:text-orange-400 font-medium">Save PDF</Text>
+              </Pressable>
               <Pressable
                 onPress={shareReceipt}
                 className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
