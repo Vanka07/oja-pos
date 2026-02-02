@@ -7,6 +7,7 @@ import { ArrowLeft, Share2, Copy, ExternalLink, Check, ShoppingBag, Eye } from '
 import { useCatalogStore } from '@/store/catalogStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useRetailStore } from '@/store/retailStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { generateCatalogUrl, generateShareMessage } from '@/lib/catalogGenerator';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -19,6 +20,9 @@ export default function CatalogScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManageCatalog = !currentStaff || hasPermission(currentStaff.role, 'manage_catalog');
 
   const catalogEnabled = useCatalogStore((s) => s.catalogEnabled);
   const setCatalogEnabled = useCatalogStore((s) => s.setCatalogEnabled);
@@ -123,6 +127,23 @@ export default function CatalogScreen() {
     }
     return groups;
   }, [products]);
+
+  if (!canManageCatalog) {
+    return (
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
+        <LinearGradient
+          colors={gradientColors}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        />
+        <ShoppingBag size={48} color="#78716c" />
+        <Text className="text-stone-900 dark:text-white font-semibold text-lg mt-4 mb-2 text-center">Access Restricted</Text>
+        <Text className="text-stone-500 dark:text-stone-400 text-center">Only the shop owner or manager can manage the WhatsApp Storefront.</Text>
+        <Pressable onPress={() => router.back()} className="mt-6 bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
+          <Text className="text-white font-semibold">Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-stone-50 dark:bg-stone-950">

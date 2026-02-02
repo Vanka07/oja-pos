@@ -218,9 +218,11 @@ export default function InventoryScreen() {
                 <Text className={selectedCategory === cat.name ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>{cat.name}</Text>
               </Pressable>
             ))}
-            <Pressable onPress={() => router.push('/categories')} className="mr-2 px-4 py-2 rounded-full border border-dashed border-stone-400 dark:border-stone-600">
-              <Text className="text-stone-500 dark:text-stone-400">+ Edit</Text>
-            </Pressable>
+            {canEditProduct && (
+              <Pressable onPress={() => router.push('/categories')} className="mr-2 px-4 py-2 rounded-full border border-dashed border-stone-400 dark:border-stone-600">
+                <Text className="text-stone-500 dark:text-stone-400">+ Edit</Text>
+              </Pressable>
+            )}
           </ScrollView>
         </Animated.View>
 

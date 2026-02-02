@@ -141,6 +141,9 @@ export default function MoreScreen() {
   const canManageCloud = !currentStaff || hasPermission(currentStaff.role, 'manage_cloud');
   const canManageAlerts = !currentStaff || hasPermission(currentStaff.role, 'manage_alerts');
   const canCashRegister = !currentStaff || hasPermission(currentStaff.role, 'cash_register');
+  const canManageCategories = !currentStaff || hasPermission(currentStaff.role, 'manage_categories');
+  const canManageCatalog = !currentStaff || hasPermission(currentStaff.role, 'manage_catalog');
+  const canManageSub = !currentStaff || hasPermission(currentStaff.role, 'manage_subscription');
   const hasStaff = staffMembers.length > 0;
   const recentActivities = staffActivities.slice(0, 5);
   const products = useRetailStore((s) => s.products);
@@ -923,70 +926,76 @@ export default function MoreScreen() {
         >
           <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
-            {/* Subscription Row */}
-            <Pressable
-              onPress={() => router.push('/subscription')}
-              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
-                <Crown size={20} color="#e05e1b" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">Subscription</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">
-                  {isPremium
-                    ? (subscriptionPlan === 'growth' ? 'Growth Plan' : 'Business Plan')
-                    : 'Starter Plan (Free)'}
-                </Text>
-              </View>
-              {isPremium ? (
-                <View className="bg-emerald-500/20 px-3 py-1 rounded-full mr-2">
-                  <Text className="text-emerald-400 text-xs font-semibold">
-                    Active • {daysRemaining}d
+            {/* Subscription Row — owner only */}
+            {canManageSub && (
+              <Pressable
+                onPress={() => router.push('/subscription')}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mr-3">
+                  <Crown size={20} color="#e05e1b" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Subscription</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    {isPremium
+                      ? (subscriptionPlan === 'growth' ? 'Growth Plan' : 'Business Plan')
+                      : 'Starter Plan (Free)'}
                   </Text>
                 </View>
-              ) : (
-                <View className="bg-orange-500/20 px-3 py-1 rounded-full mr-2">
-                  <Text className="text-orange-400 text-xs font-semibold">Upgrade</Text>
+                {isPremium ? (
+                  <View className="bg-emerald-500/20 px-3 py-1 rounded-full mr-2">
+                    <Text className="text-emerald-400 text-xs font-semibold">
+                      Active • {daysRemaining}d
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="bg-orange-500/20 px-3 py-1 rounded-full mr-2">
+                    <Text className="text-orange-400 text-xs font-semibold">Upgrade</Text>
+                  </View>
+                )}
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+
+            {/* Manage Categories — owner/manager only */}
+            {canManageCategories && (
+              <Pressable
+                onPress={() => router.push('/categories')}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-purple-500/20 items-center justify-center mr-3">
+                  <LayoutGrid size={20} color="#a855f7" />
                 </View>
-              )}
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Manage Categories</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Add, edit, or remove categories</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
 
-            {/* Manage Categories */}
-            <Pressable
-              onPress={() => router.push('/categories')}
-              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-purple-500/20 items-center justify-center mr-3">
-                <LayoutGrid size={20} color="#a855f7" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">Manage Categories</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Add, edit, or remove categories</Text>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
-
-            {/* WhatsApp Catalog */}
-            <Pressable
-              onPress={() => router.push('/catalog')}
-              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
-            >
-              <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
-                <ShoppingBag size={20} color="#22c55e" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Catalog</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Share products online</Text>
-              </View>
-              <View className={`px-2 py-1 rounded-full mr-2 ${catalogEnabled ? 'bg-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
-                <Text className={`text-xs font-semibold ${catalogEnabled ? 'text-emerald-400' : 'text-stone-500'}`}>
-                  {catalogEnabled ? 'Enabled' : 'Disabled'}
-                </Text>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </Pressable>
+            {/* WhatsApp Catalog — owner/manager only */}
+            {canManageCatalog && (
+              <Pressable
+                onPress={() => router.push('/catalog')}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-green-500/20 items-center justify-center mr-3">
+                  <ShoppingBag size={20} color="#22c55e" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Catalog</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Share products online</Text>
+                </View>
+                <View className={`px-2 py-1 rounded-full mr-2 ${catalogEnabled ? 'bg-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
+                  <Text className={`text-xs font-semibold ${catalogEnabled ? 'text-emerald-400' : 'text-stone-500'}`}>
+                    {catalogEnabled ? 'Enabled' : 'Disabled'}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
 
             {canManageShop && (
               <Pressable

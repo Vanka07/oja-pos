@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { buildCheckoutUrl, generateReference } from '@/lib/paystack';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const STARTER_FEATURES = [
@@ -52,6 +53,9 @@ export default function SubscriptionScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManageSub = !currentStaff || hasPermission(currentStaff.role, 'manage_subscription');
 
   const plan = useSubscriptionStore((s) => s.plan);
   const expiresAt = useSubscriptionStore((s) => s.expiresAt);
@@ -105,6 +109,23 @@ export default function SubscriptionScreen() {
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
     : ['#f5f5f4', '#fafaf9', '#ffffff'];
+
+  if (!canManageSub) {
+    return (
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
+        <LinearGradient
+          colors={gradientColors}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        />
+        <Crown size={48} color="#78716c" />
+        <Text className="text-stone-900 dark:text-white font-semibold text-lg mt-4 mb-2 text-center">Access Restricted</Text>
+        <Text className="text-stone-500 dark:text-stone-400 text-center">Only the shop owner can manage the subscription and billing.</Text>
+        <Pressable onPress={() => router.back()} className="mt-6 bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
+          <Text className="text-white font-semibold">Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-stone-50 dark:bg-stone-950">

@@ -44,6 +44,9 @@ const PERMISSIONS: Record<string, StaffRole[]> = {
   manage_cloud: ['owner'],
   manage_alerts: ['owner', 'manager'],
   cash_register: ['owner', 'manager'],
+  manage_categories: ['owner', 'manager'],
+  manage_catalog: ['owner', 'manager'],
+  manage_subscription: ['owner'],
 };
 
 // Roles that can log into the app (have PINs)

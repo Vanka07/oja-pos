@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { ArrowLeft, Plus, Pencil, Trash2, X, Check, Package } from 'lucide-react-native';
 import { useRetailStore, type Category } from '@/store/retailStore';
+import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useState, useCallback, useMemo } from 'react';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -27,6 +28,9 @@ export default function CategoriesScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const canManage = !currentStaff || hasPermission(currentStaff.role, 'manage_categories');
 
   const categories = useRetailStore((s) => s.categories);
   const products = useRetailStore((s) => s.products);
@@ -142,12 +146,14 @@ export default function CategoriesScreen() {
                 </Text>
                 <Text className="text-stone-500 text-sm">{categories.length} categories</Text>
               </View>
-              <Pressable
-                onPress={openAddModal}
-                className="bg-orange-500 w-10 h-10 rounded-xl items-center justify-center active:scale-95"
-              >
-                <Plus size={20} color="white" />
-              </Pressable>
+              {canManage && (
+                <Pressable
+                  onPress={openAddModal}
+                  className="bg-orange-500 w-10 h-10 rounded-xl items-center justify-center active:scale-95"
+                >
+                  <Plus size={20} color="white" />
+                </Pressable>
+              )}
             </View>
           </Animated.View>
         </View>
@@ -200,19 +206,23 @@ export default function CategoriesScreen() {
                         style={{ backgroundColor: category.color }}
                       />
 
-                      {/* Actions */}
-                      <Pressable
-                        onPress={() => openEditModal(category)}
-                        className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 items-center justify-center mr-2 active:opacity-70"
-                      >
-                        <Pencil size={16} color={isDark ? '#a8a29e' : '#57534e'} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDelete(category)}
-                        className="w-9 h-9 rounded-lg bg-red-500/10 items-center justify-center active:opacity-70"
-                      >
-                        <Trash2 size={16} color="#ef4444" />
-                      </Pressable>
+                      {/* Actions — owner/manager only */}
+                      {canManage && (
+                        <>
+                          <Pressable
+                            onPress={() => openEditModal(category)}
+                            className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 items-center justify-center mr-2 active:opacity-70"
+                          >
+                            <Pencil size={16} color={isDark ? '#a8a29e' : '#57534e'} />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleDelete(category)}
+                            className="w-9 h-9 rounded-lg bg-red-500/10 items-center justify-center active:opacity-70"
+                          >
+                            <Trash2 size={16} color="#ef4444" />
+                          </Pressable>
+                        </>
+                      )}
                     </View>
                   </Animated.View>
                 );
