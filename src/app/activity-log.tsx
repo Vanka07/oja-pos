@@ -18,7 +18,7 @@ import {
   Filter,
 } from 'lucide-react-native';
 import { useStaffStore, hasPermission, type StaffActivity } from '@/store/staffStore';
-import { formatNaira } from '@/store/retailStore';
+import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -62,6 +62,17 @@ export default function ActivityLogScreen() {
   const canView = !currentStaff || hasPermission(currentStaff.role, 'view_activity');
   const activities = useStaffStore((s) => s.activities);
   const staff = useStaffStore((s) => s.staff);
+  const sales = useRetailStore((s) => s.sales);
+
+  // Find matching sale for activities that don't have saleId (legacy)
+  const findSaleId = useCallback((activity: StaffActivity): string | undefined => {
+    if (activity.saleId) return activity.saleId;
+    if (activity.action !== 'sale' || !activity.amount) return undefined;
+    // Match by amount + close timestamp (within 5 seconds)
+    const actTime = new Date(activity.createdAt).getTime();
+    const match = sales.find((s) => s.total === activity.amount && Math.abs(new Date(s.createdAt).getTime() - actTime) < 5000);
+    return match?.id;
+  }, [sales]);
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -299,16 +310,11 @@ export default function ActivityLogScreen() {
                 {group.items.map((activity, index) => {
                   const config = ACTION_ICON_MAP[activity.action];
                   const IconComponent = config.icon;
+                  const saleId = activity.action === 'sale' ? findSaleId(activity) : undefined;
+                  const isTappable = !!saleId;
 
-                  return (
-                    <View
-                      key={activity.id}
-                      className={`flex-row items-center p-3.5 ${
-                        index < group.items.length - 1
-                          ? 'border-b border-stone-200 dark:border-stone-800'
-                          : ''
-                      }`}
-                    >
+                  const rowContent = (
+                    <>
                       <View
                         className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${config.bg}`}
                       >
@@ -327,6 +333,7 @@ export default function ActivityLogScreen() {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
+                          {isTappable && ' • Tap for details'}
                         </Text>
                       </View>
                       {activity.amount !== undefined && (
@@ -334,6 +341,29 @@ export default function ActivityLogScreen() {
                           {formatNaira(activity.amount)}
                         </Text>
                       )}
+                    </>
+                  );
+
+                  const rowClass = `flex-row items-center p-3.5 ${
+                    index < group.items.length - 1
+                      ? 'border-b border-stone-200 dark:border-stone-800'
+                      : ''
+                  }`;
+
+                  return isTappable ? (
+                    <Pressable
+                      key={activity.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.push(`/sale-detail?id=${saleId}`);
+                      }}
+                      className={`${rowClass} active:bg-stone-200/50 dark:active:bg-stone-800/50`}
+                    >
+                      {rowContent}
+                    </Pressable>
+                  ) : (
+                    <View key={activity.id} className={rowClass}>
+                      {rowContent}
                     </View>
                   );
                 })}

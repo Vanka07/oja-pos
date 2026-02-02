@@ -168,7 +168,7 @@ export default function POSScreen() {
       setShowCreditCustomerPicker(false);
       setShowSuccessModal(true);
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-      logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total);
+      logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total, sale.id);
 
       // Check for low stock after sale
       if (whatsAppAlertsEnabled) {

@@ -22,6 +22,7 @@ export interface StaffActivity {
   action: 'sale' | 'restock' | 'price_change' | 'expense' | 'credit_payment' | 'login' | 'product_add' | 'product_delete';
   description: string;
   amount?: number;
+  saleId?: string;
   createdAt: string;
 }
 
@@ -70,7 +71,7 @@ interface StaffState {
   updateStaff: (id: string, updates: Partial<StaffMember>) => void;
   removeStaff: (id: string) => void;
   switchStaff: (pin: string) => boolean;
-  logActivity: (action: StaffActivity['action'], description: string, amount?: number) => void;
+  logActivity: (action: StaffActivity['action'], description: string, amount?: number, saleId?: string) => void;
   getActivitiesToday: () => StaffActivity[];
   getActivitiesByStaff: (staffId: string) => StaffActivity[];
   logout: () => void;
@@ -139,7 +140,7 @@ export const useStaffStore = create<StaffState>()(
         return true;
       },
 
-      logActivity: (action, description, amount) => {
+      logActivity: (action, description, amount, saleId) => {
         const state = get();
         const current = state.currentStaff;
 
@@ -150,6 +151,7 @@ export const useStaffStore = create<StaffState>()(
           action,
           description,
           amount,
+          saleId,
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ activities: [activity, ...state.activities] }));
