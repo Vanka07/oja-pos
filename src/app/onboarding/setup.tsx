@@ -19,7 +19,6 @@ export default function OnboardingSetup() {
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
   const businessType = useOnboardingStore((s) => s.businessType);
-  const addProduct = useRetailStore((s) => s.addProduct);
   const addCategory = useRetailStore((s) => s.addCategory);
 
   const [formData, setFormData] = useState({
@@ -68,11 +67,10 @@ export default function OnboardingSetup() {
 
     completeOnboarding();
 
-    // Load business template products and categories
+    // Load business-type categories (no sample products — users add their own)
     if (businessType && businessTemplates[businessType]) {
       const template = businessTemplates[businessType];
       template.categories.forEach((cat) => addCategory(cat));
-      template.products.forEach((prod) => addProduct(prod));
     }
 
     router.replace('/(tabs)');

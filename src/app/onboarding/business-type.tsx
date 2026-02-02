@@ -65,7 +65,7 @@ export default function BusinessTypeScreen() {
               What kind of business{'\n'}do you run?
             </Text>
             <Text className="text-stone-500 dark:text-stone-400 text-base leading-6 mb-8">
-              We'll set up sample products for you
+              We'll set up categories for your business
             </Text>
           </Animated.View>
 

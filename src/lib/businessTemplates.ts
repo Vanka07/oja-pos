@@ -161,7 +161,11 @@ export const businessTemplates: Record<string, BusinessTemplate> = {
   },
 
   other: {
-    categories: [],
+    categories: [
+      { name: 'General', color: '#E67E22', icon: '📦' },
+      { name: 'Services', color: '#3498DB', icon: '✨' },
+      { name: 'Other', color: '#9B59B6', icon: '🏷️' },
+    ],
     products: [],
   },
 };

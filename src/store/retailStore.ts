@@ -231,11 +231,8 @@ export const expenseCategories = [
 ];
 
 // Default categories for Nigerian retail
-const defaultCategories: Category[] = [
-  { id: '1', name: 'General', color: '#E67E22', icon: '📦' },
-  { id: '2', name: 'Services', color: '#3498DB', icon: '✨' },
-  { id: '3', name: 'Other', color: '#9B59B6', icon: '🏷️' },
-];
+// Default categories are empty — business-type templates populate them during onboarding
+const defaultCategories: Category[] = [];
 
 // ── Demo Data (auto-populates on first load) ────────────────────────────
 
