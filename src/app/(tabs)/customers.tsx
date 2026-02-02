@@ -21,8 +21,10 @@ import {
   CreditCard,
   Smartphone,
   CheckCircle,
+  FileText,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, generatePaymentReceiptText, type Customer } from '@/store/retailStore';
+import { generatePaymentReceiptPdf } from '@/lib/receiptPdf';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -164,6 +166,25 @@ export default function CreditBookScreen() {
       Linking.openURL(url).catch(() => {
         Share.share({ message: receipt });
       });
+    }
+  }, [selectedCustomer, paymentSuccess, shopInfo]);
+
+  const handleSharePaymentPdf = useCallback(async () => {
+    if (!selectedCustomer || !paymentSuccess || !shopInfo) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await generatePaymentReceiptPdf({
+        customerName: selectedCustomer.name,
+        amountPaid: paymentSuccess.amountPaid,
+        previousBalance: paymentSuccess.previousBalance,
+        newBalance: paymentSuccess.newBalance,
+        paymentMethod: paymentSuccess.paymentMethod,
+        shopName: shopInfo.name,
+        shopPhone: shopInfo.phone,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }, [selectedCustomer, paymentSuccess, shopInfo]);
 
@@ -761,6 +782,13 @@ export default function CreditBookScreen() {
                     >
                       <MessageCircle size={20} color="#ffffff" />
                       <Text className="text-white font-semibold text-base">Share via WhatsApp</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleSharePaymentPdf}
+                      className="flex-row items-center justify-center gap-2 bg-white/80 dark:bg-stone-800 py-4 rounded-xl active:opacity-90 border border-orange-200 dark:border-orange-900/40"
+                    >
+                      <FileText size={18} color="#e05e1b" />
+                      <Text className="text-orange-600 dark:text-orange-400 font-medium">Share as PDF</Text>
                     </Pressable>
                     <Pressable
                       onPress={handleClosePaymentModal}
