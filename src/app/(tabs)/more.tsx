@@ -34,6 +34,7 @@ import {
   Bluetooth,
   CheckCircle2,
   Lock,
+  Globe,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories, type Expense } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -48,6 +49,8 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
 import { useThemeStore } from '@/store/themeStore';
+import { useLanguageStore } from '@/store/languageStore';
+import { LANGUAGES } from '@/i18n';
 import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
@@ -103,6 +106,10 @@ export default function MoreScreen() {
   // Theme
   const themePreference = useThemeStore((s) => s.preference);
   const setThemePreference = useThemeStore((s) => s.setPreference);
+
+  // Language
+  const currentLanguage = useLanguageStore((s) => s.language);
+  const currentLanguageName = LANGUAGES.find((l) => l.code === currentLanguage)?.nativeName || 'English';
 
   // Calculator state
   const [costPrice, setCostPrice] = useState('');
@@ -957,6 +964,20 @@ export default function MoreScreen() {
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
             )}
+
+            <Pressable
+              onPress={() => router.push('/language')}
+              className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+            >
+              <View className="w-10 h-10 rounded-xl bg-violet-500/20 items-center justify-center mr-3">
+                <Globe size={20} color="#8b5cf6" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-stone-900 dark:text-white font-medium">Language</Text>
+                <Text className="text-stone-500 dark:text-stone-500 text-sm">{currentLanguageName}</Text>
+              </View>
+              <ChevronRight size={20} color="#57534e" />
+            </Pressable>
 
             {canExportData && (
               <Pressable
