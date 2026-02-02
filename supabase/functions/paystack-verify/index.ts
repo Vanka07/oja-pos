@@ -51,6 +51,8 @@ Deno.serve(async (req) => {
     }
 
     const txData = paystackData.data;
+    let upsertData: any = null;
+    let upsertError: any = null;
 
     // Save to Supabase if service role key is available
     if (SUPABASE_SERVICE_ROLE_KEY) {
@@ -60,7 +62,7 @@ Deno.serve(async (req) => {
       const periodEnd = new Date(now);
       periodEnd.setDate(periodEnd.getDate() + 30);
 
-      await supabase.from('subscriptions').upsert(
+      const result = await supabase.from('subscriptions').upsert(
         {
           email: txData.customer?.email || '',
           shop_id: txData.metadata?.shop_id || '',
@@ -74,7 +76,10 @@ Deno.serve(async (req) => {
           currency: txData.currency || 'NGN',
         },
         { onConflict: 'paystack_reference' }
-      );
+      ).select();
+
+      upsertData = result.data;
+      upsertError = result.error;
     }
 
     return new Response(
