@@ -42,6 +42,14 @@ if (Platform.OS !== 'web') {
 
 type DateRange = 'today' | 'week' | 'month' | 'year';
 
+// Helper to get local date string (YYYY-MM-DD) instead of UTC
+const getLocalDateStr = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
@@ -60,13 +68,13 @@ export default function ReportsScreen() {
 
   const getDateRangeData = useMemo(() => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = getLocalDateStr(today);
     if (dateRange === 'today') return getDailySummary(todayStr);
     const startDate = new Date();
     if (dateRange === 'week') startDate.setDate(today.getDate() - 7);
     else if (dateRange === 'month') startDate.setDate(today.getDate() - 30);
     else startDate.setDate(today.getDate() - 365);
-    const rangeSales = getSalesByDateRange(startDate.toISOString().split('T')[0], todayStr);
+    const rangeSales = getSalesByDateRange(getLocalDateStr(startDate), todayStr);
     return {
       date: `${startDate.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}`,
       totalSales: rangeSales.reduce((sum, s) => sum + s.total, 0),
@@ -86,7 +94,7 @@ export default function ReportsScreen() {
 
   const recentSales = useMemo(() => {
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = getLocalDateStr(now);
     let cutoff: Date;
     if (dateRange === 'today') {
       cutoff = new Date(todayStr);
@@ -113,7 +121,7 @@ export default function ReportsScreen() {
     for (let i = 0; i < periodDays; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateStr(d);
       const summary = getDailySummary(dateStr);
       if (summary.totalSales > 0) {
         dailyMap[dateStr] = { total: summary.totalSales, count: summary.totalTransactions };
@@ -135,7 +143,7 @@ export default function ReportsScreen() {
       const data = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date(); date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getLocalDateStr(date);
         const summary = getDailySummary(dateStr);
         data.push({ day: date.toLocaleDateString('en-NG', { weekday: 'short' }), sales: summary.totalSales, label: dateStr });
       }
@@ -145,7 +153,7 @@ export default function ReportsScreen() {
       const data = [];
       for (let i = 29; i >= 0; i--) {
         const date = new Date(); date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getLocalDateStr(date);
         const summary = getDailySummary(dateStr);
         data.push({ day: date.toLocaleDateString('en-NG', { day: 'numeric' }), sales: summary.totalSales, label: dateStr });
       }
@@ -156,8 +164,8 @@ export default function ReportsScreen() {
     for (let i = 11; i >= 0; i--) {
       const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
-      const monthSales = getSalesByDateRange(monthStart.toISOString().split('T')[0], monthEnd.toISOString().split('T')[0]);
-      data.push({ day: monthStart.toLocaleDateString('en-NG', { month: 'short' }), sales: monthSales.reduce((sum, s) => sum + s.total, 0), label: monthStart.toISOString().split('T')[0] });
+      const monthSales = getSalesByDateRange(getLocalDateStr(monthStart), getLocalDateStr(monthEnd));
+      data.push({ day: monthStart.toLocaleDateString('en-NG', { month: 'short' }), sales: monthSales.reduce((sum, s) => sum + s.total, 0), label: getLocalDateStr(monthStart) });
     }
     return { data, title: 'Monthly Sales (Last 12 Months)' };
   }, [dateRange, getDailySummary, getSalesByDateRange]);
@@ -166,7 +174,7 @@ export default function ReportsScreen() {
     const today = new Date();
     if (dateRange === 'today') {
       const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-      const yesterdaySummary = getDailySummary(yesterday.toISOString().split('T')[0]);
+      const yesterdaySummary = getDailySummary(getLocalDateStr(yesterday));
       if (yesterdaySummary.totalSales === 0) return null;
       return { change: ((getDateRangeData.totalSales - yesterdaySummary.totalSales) / yesterdaySummary.totalSales) * 100, label: 'vs yesterday' };
     }
@@ -174,7 +182,7 @@ export default function ReportsScreen() {
     const currentStart = new Date(today); currentStart.setDate(today.getDate() - periodDays);
     const previousEnd = new Date(currentStart); previousEnd.setDate(previousEnd.getDate() - 1);
     const previousStart = new Date(previousEnd); previousStart.setDate(previousEnd.getDate() - periodDays);
-    const previousSales = getSalesByDateRange(previousStart.toISOString().split('T')[0], previousEnd.toISOString().split('T')[0]);
+    const previousSales = getSalesByDateRange(getLocalDateStr(previousStart), getLocalDateStr(previousEnd));
     const previousTotal = previousSales.reduce((sum, s) => sum + s.total, 0);
     if (previousTotal === 0) return null;
     const label = dateRange === 'week' ? 'vs last week' : dateRange === 'month' ? 'vs last month' : 'vs last year';
