@@ -23,6 +23,11 @@ import { useState, useMemo, useCallback } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
+// Helper to get local date string (YYYY-MM-DD) instead of UTC
+const getLocalDateStr = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const FILTER_TABS = [
   { key: 'all', label: 'All' },
   { key: 'sale', label: 'Sales' },
@@ -101,15 +106,15 @@ export default function ActivityLogScreen() {
     const dateMap = new Map<string, StaffActivity[]>();
 
     for (const activity of filteredActivities) {
-      const dateKey = new Date(activity.createdAt).toISOString().split('T')[0];
+      const dateKey = getLocalDateStr(new Date(activity.createdAt));
       if (!dateMap.has(dateKey)) {
         dateMap.set(dateKey, []);
       }
       dateMap.get(dateKey)!.push(activity);
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const today = getLocalDateStr(new Date());
+    const yesterday = getLocalDateStr(new Date(Date.now() - 86400000));
 
     for (const [date, items] of dateMap) {
       const label =
