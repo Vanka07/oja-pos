@@ -24,6 +24,14 @@ import { useRouter, Href } from 'expo-router';
 import EmptyState from '@/components/EmptyState';
 import { useT } from '@/store/languageStore';
 
+// Helper to get local date string (YYYY-MM-DD) instead of UTC
+const getLocalDateStr = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -42,7 +50,7 @@ export default function DashboardScreen() {
   const pendingSyncCount = useRetailStore((s) => s.pendingSyncCount);
   const isCloudAuthenticated = useCloudAuthStore((s) => s.isAuthenticated);
 
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = getLocalDateStr(new Date());
   const summary = useMemo(() => getDailySummary(todayDate), [getDailySummary, todayDate]);
   const salesToday = useMemo(() => getSalesToday(), [getSalesToday]);
   const lowStock = useMemo(() => getLowStockProducts(), [getLowStockProducts, products]);

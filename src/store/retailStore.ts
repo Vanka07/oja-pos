@@ -238,7 +238,10 @@ const defaultCategories: Category[] = [];
 
 // ── Demo Data (auto-populates on first load) ────────────────────────────
 
-const today = () => new Date().toISOString().split('T')[0];
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const todayAt = (h: number, m: number) => {
   const d = new Date();
   d.setHours(h, m, 0, 0);
@@ -604,8 +607,9 @@ export const useRetailStore = create<RetailState>()(
       },
 
       getSalesToday: () => {
-        const today = new Date().toISOString().split('T')[0];
-        return get().sales.filter((s) => s.createdAt.startsWith(today));
+        const d = new Date();
+        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return get().sales.filter((s) => s.createdAt.startsWith(todayStr));
       },
 
       getSalesByDateRange: (startDate, endDate) => {
@@ -701,8 +705,9 @@ export const useRetailStore = create<RetailState>()(
       },
 
       getExpensesToday: () => {
-        const today = new Date().toISOString().split('T')[0];
-        return get().expenses.filter((e) => e.createdAt.startsWith(today));
+        const d = new Date();
+        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return get().expenses.filter((e) => e.createdAt.startsWith(todayStr));
       },
 
       getExpensesByDateRange: (startDate, endDate) => {
