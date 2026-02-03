@@ -6,6 +6,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="business-type" />
       <Stack.Screen name="setup" />
+      <Stack.Screen name="pin-setup" />
     </Stack>
   );
 }

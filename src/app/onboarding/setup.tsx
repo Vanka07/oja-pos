@@ -18,7 +18,6 @@ export default function OnboardingSetup() {
   const isDark = colorScheme === 'dark';
   const router = useRouter();
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
-  const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
   const businessType = useOnboardingStore((s) => s.businessType);
   const addCategory = useRetailStore((s) => s.addCategory);
   const placeholders = getPlaceholders(businessType);
@@ -67,15 +66,14 @@ export default function OnboardingSetup() {
       currency: 'NGN',
     });
 
-    completeOnboarding();
-
     // Load business-type categories (no sample products — users add their own)
     if (businessType && businessTemplates[businessType]) {
       const template = businessTemplates[businessType];
       template.categories.forEach((cat) => addCategory(cat));
     }
 
-    router.replace('/(tabs)');
+    // Navigate to PIN setup — completeOnboarding() will happen there
+    router.push('/onboarding/pin-setup');
   };
 
   return (

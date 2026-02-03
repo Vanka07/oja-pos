@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -31,6 +31,7 @@ import {
   Printer,
   CheckCircle2,
   Lock,
+  KeyRound,
   Globe,
   Crown,
   ShoppingBag,
@@ -130,6 +131,10 @@ export default function MoreScreen() {
   const setPin = useAuthStore((s) => s.setPin);
   const currentPin = useAuthStore((s) => s.pin);
   const hasAnyPin = useAuthStore((s) => s.hasPin)();
+  const recoveryCode = useAuthStore((s) => s.recoveryCode);
+  const generateRecoveryCode = useAuthStore((s) => s.generateRecoveryCode);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [displayRecoveryCode, setDisplayRecoveryCode] = useState<string | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinStep, setPinStep] = useState<'current' | 'new' | 'confirm'>('new');
   const [newPinEntry, setNewPinEntry] = useState('');
@@ -1083,6 +1088,28 @@ export default function MoreScreen() {
               </Pressable>
             )}
 
+            {/* Recovery Code option — shown when user has a PIN */}
+            {currentPin && !hasStaff && (
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  const code = recoveryCode || generateRecoveryCode();
+                  setDisplayRecoveryCode(code);
+                  setShowRecoveryModal(true);
+                }}
+                className="flex-row items-center p-4 border-b border-stone-200 dark:border-stone-800 active:bg-stone-200/50 dark:active:bg-stone-800/50"
+              >
+                <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mr-3">
+                  <KeyRound size={20} color="#3b82f6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-stone-900 dark:text-white font-medium">Recovery Code</Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm">View or resend your PIN recovery code</Text>
+                </View>
+                <ChevronRight size={20} color="#57534e" />
+              </Pressable>
+            )}
+
             {hasAnyPin && (
               <Pressable
                 onPress={() => {
@@ -1550,6 +1577,56 @@ export default function MoreScreen() {
         featureName={FEATURE_DESCRIPTIONS[upsellFeature]?.name || 'Premium Feature'}
         featureDescription={FEATURE_DESCRIPTIONS[upsellFeature]?.description || 'This feature requires the Business plan.'}
       />
+
+      {/* Recovery Code Modal */}
+      <Modal visible={showRecoveryModal} transparent animationType="slide" onRequestClose={() => setShowRecoveryModal(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+          <Pressable className="flex-1 bg-black/60" onPress={() => setShowRecoveryModal(false)} />
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+            <View className="p-6">
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-stone-900 dark:text-white text-xl font-bold">Recovery Code</Text>
+                <Pressable onPress={() => setShowRecoveryModal(false)}>
+                  <X size={24} color="#78716c" />
+                </Pressable>
+              </View>
+
+              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-4">
+                Use this code to reset your PIN if you forget it. Keep it safe!
+              </Text>
+
+              {/* Code Display */}
+              <View className="bg-stone-100 dark:bg-stone-800 border-2 border-dashed border-orange-500/50 rounded-2xl py-6 px-10 mb-6">
+                <Text className="text-orange-500 text-3xl font-bold tracking-[8px] text-center">
+                  {displayRecoveryCode}
+                </Text>
+              </View>
+
+              {/* Save to WhatsApp */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  const message = `🔐 Oja POS Recovery Code: ${displayRecoveryCode}\n\nKeep this message safe! You'll need this code if you forget your PIN.\n\nDo NOT share this code with anyone.`;
+                  const encoded = encodeURIComponent(message);
+                  Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
+                    Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
+                  });
+                }}
+                className="bg-emerald-500 py-4 rounded-xl active:opacity-90 mb-3"
+              >
+                <Text className="text-white font-semibold text-center text-lg">Send to WhatsApp</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowRecoveryModal(false)}
+                className="py-3"
+              >
+                <Text className="text-stone-500 text-center font-medium">Done</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Set/Change PIN Modal */}
       <Modal visible={showPinModal} transparent animationType="slide" onRequestClose={() => setShowPinModal(false)}>

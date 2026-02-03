@@ -7,11 +7,14 @@ interface AuthState {
   // Legacy single PIN — kept for backward compat / first-time setup
   pin: string | null;
   isLocked: boolean;
+  recoveryCode: string | null;
 
   setPin: (pin: string) => void;
   unlock: (pin: string) => boolean;
   lock: () => void;
   hasPin: () => boolean;
+  generateRecoveryCode: () => string;
+  resetWithRecovery: (code: string, newPin: string) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,6 +22,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       pin: null,
       isLocked: true,
+      recoveryCode: null,
 
       setPin: (pin: string) => {
         set({ pin, isLocked: false });
@@ -58,6 +62,21 @@ export const useAuthStore = create<AuthState>()(
         // Has PIN if either legacy pin is set OR staff members exist
         return get().pin !== null || staffStore.staff.length > 0;
       },
+
+      generateRecoveryCode: () => {
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        set({ recoveryCode: code });
+        return code;
+      },
+
+      resetWithRecovery: (code: string, newPin: string) => {
+        const stored = get().recoveryCode;
+        if (stored && stored === code) {
+          set({ pin: newPin, isLocked: false });
+          return true;
+        }
+        return false;
+      },
     }),
     {
       name: 'auth-store',
@@ -65,6 +84,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         pin: state.pin,
         isLocked: state.isLocked,
+        recoveryCode: state.recoveryCode,
       }),
     }
   )
