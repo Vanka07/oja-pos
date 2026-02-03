@@ -4,8 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChevronLeft, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react-native';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
-import { verifyPayment, extractReference, PAYSTACK_CONFIG } from '@/lib/paystack';
-import { useColorScheme } from 'nativewind';
+import { verifyPayment, extractReference } from '@/lib/paystack';
+import { track } from '@/lib/analytics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Conditionally import WebView for native platforms only
@@ -23,8 +23,6 @@ type PaymentStatus = 'loading' | 'paying' | 'verifying' | 'success' | 'failed';
 export default function PayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const params = useLocalSearchParams<{ url: string; reference: string; email: string; plan: string }>();
 
   const [status, setStatus] = useState<PaymentStatus>('loading');
@@ -36,6 +34,31 @@ export default function PayScreen() {
   const checkoutUrl = params.url ? decodeURIComponent(params.url as string) : '';
   const paymentRef = params.reference as string || '';
   const targetPlan = (params.plan as string) === 'growth' ? 'growth' : 'business';
+
+  const handleVerify = useCallback(async (reference: string) => {
+    if (hasVerified.current || !reference) return;
+    hasVerified.current = true;
+    setStatus('verifying');
+
+    try {
+      const result = await verifyPayment(reference);
+      if (result.success) {
+        setStatus('success');
+        activate(targetPlan as 'growth' | 'business', 30);
+        track('subscription_started', undefined, { plan: targetPlan });
+        // Auto-navigate after success
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 2000);
+      } else {
+        setStatus('failed');
+        setErrorMessage(result.message || 'Payment could not be verified.');
+      }
+    } catch {
+      setStatus('failed');
+      setErrorMessage('Network error. Please check your connection.');
+    }
+  }, [activate, router, targetPlan]);
 
   // For web platform: open in new window
   useEffect(() => {
@@ -54,31 +77,7 @@ export default function PayScreen() {
 
       return () => clearInterval(interval);
     }
-  }, [checkoutUrl]);
-
-  const handleVerify = useCallback(async (reference: string) => {
-    if (hasVerified.current || !reference) return;
-    hasVerified.current = true;
-    setStatus('verifying');
-
-    try {
-      const result = await verifyPayment(reference);
-      if (result.success) {
-        setStatus('success');
-        activate(targetPlan as 'growth' | 'business', 30);
-        // Auto-navigate after success
-        setTimeout(() => {
-          router.replace('/(tabs)');
-        }, 2000);
-      } else {
-        setStatus('failed');
-        setErrorMessage(result.message || 'Payment could not be verified.');
-      }
-    } catch {
-      setStatus('failed');
-      setErrorMessage('Network error. Please check your connection.');
-    }
-  }, [activate, router]);
+  }, [checkoutUrl, handleVerify, paymentRef]);
 
   const handleRetry = () => {
     hasVerified.current = false;

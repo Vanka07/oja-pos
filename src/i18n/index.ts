@@ -4,7 +4,7 @@ import pcm from './pcm';
 import ig from './ig';
 import ha from './ha';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const translations: Record<string, any> = { en, yo, pcm, ig, ha };
 
 export const LANGUAGES = [

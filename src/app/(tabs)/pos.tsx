@@ -23,6 +23,7 @@ import { useRetailStore, formatNaira, generateReceiptText, type Product, type Sa
 import { checkSoldProductsLowStock, checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import BarcodeProductModal from '@/components/BarcodeProductModal';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { track } from '@/lib/analytics';
 import { useStaffStore } from '@/store/staffStore';
 import { usePrinterStore } from '@/store/printerStore';
 import { printReceipt } from '@/lib/printerService';
@@ -62,6 +63,7 @@ export default function POSScreen() {
   const cart = useRetailStore((s) => s.cart);
   const cartDiscount = useRetailStore((s) => s.cartDiscount);
   const customers = useRetailStore((s) => s.customers);
+  const sales = useRetailStore((s) => s.sales);
   const addToCart = useRetailStore((s) => s.addToCart);
   const updateCartQuantity = useRetailStore((s) => s.updateCartQuantity);
   const removeFromCart = useRetailStore((s) => s.removeFromCart);
@@ -169,6 +171,12 @@ export default function POSScreen() {
       setShowSuccessModal(true);
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
       logActivity('sale', `Sold ${itemCount} item${itemCount > 1 ? 's' : ''} for ${formatNaira(sale.total)}`, sale.total, sale.id);
+      
+      // Track sale for analytics
+      track('sale_completed', undefined, { total: sale.total, items: itemCount, method });
+      if (sales.length === 0) {
+        track('first_sale', undefined, { total: sale.total });
+      }
 
       // Check for low stock after sale
       if (whatsAppAlertsEnabled) {

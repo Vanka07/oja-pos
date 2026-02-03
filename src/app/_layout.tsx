@@ -13,8 +13,9 @@ import { useStaffStore } from '@/store/staffStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useThemeStore } from '@/store/themeStore';
 import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
+import { track, trackDailyActive } from '@/lib/analytics';
 import { useEffect, useState } from 'react';
-import { View, Appearance, Platform } from 'react-native';
+import { View, Appearance, Platform, AppState, AppStateStatus } from 'react-native';
 import LockScreen from './lock';
 import InstallPrompt from '@/components/InstallPrompt';
 import OfflineBar from '@/components/OfflineBar';
@@ -34,6 +35,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding);
   const pin = useAuthStore((s) => s.pin);
   const isLocked = useAuthStore((s) => s.isLocked);
+  const lock = useAuthStore((s) => s.lock);
   const staffCount = useStaffStore((s) => s.staff.length);
   const hasAnyPin = pin !== null || staffCount > 0;
   const [isReady, setIsReady] = useState(false);
@@ -50,10 +52,15 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
   // Initialize cloud auth and auto-sync
   useEffect(() => {
+    // Track app open
+    track('app_open');
+    
     const cloudAuth = useCloudAuthStore.getState();
     cloudAuth.initialize().then(() => {
       const { shopId, isAuthenticated } = useCloudAuthStore.getState();
       if (isAuthenticated && shopId) {
+        // Track daily active user
+        trackDailyActive(shopId);
         syncAll(shopId).catch(() => {});
         startAutoSync(shopId);
       }
@@ -63,6 +70,18 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       stopAutoSync();
     };
   }, []);
+
+  // Lock app when going to background (only if PIN is set)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background' && hasAnyPin) {
+        lock();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [hasAnyPin, lock]);
 
   useEffect(() => {
     if (!isReady) return;

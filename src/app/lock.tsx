@@ -6,14 +6,11 @@ import { useState, useCallback, useEffect } from 'react';
 import { Lock, Delete, KeyRound } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
-import { useColorScheme } from 'nativewind';
 
 type RecoveryStep = 'code' | 'newPin' | 'confirmPin';
 
 export default function LockScreen() {
   const insets = useSafeAreaInsets();
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
   const [welcomeName, setWelcomeName] = useState<string | null>(null);
@@ -21,7 +18,6 @@ export default function LockScreen() {
   const resetWithRecovery = useAuthStore((s) => s.resetWithRecovery);
   const recoveryCode = useAuthStore((s) => s.recoveryCode);
   const staff = useStaffStore((s) => s.staff);
-  const currentStaff = useStaffStore((s) => s.currentStaff);
   const hasStaff = staff.length > 0;
   const shakeX = useSharedValue(0);
 
@@ -92,6 +88,13 @@ export default function LockScreen() {
   // Recovery handlers
   const maxDigits = recoveryStep === 'code' ? 6 : 4;
 
+  const resetRecoveryState = useCallback(() => {
+    setRecoveryStep('code');
+    setRecoveryEntered('');
+    setRecoveryFirstPin('');
+    setRecoveryError('');
+  }, []);
+
   const handleRecoveryPress = useCallback((digit: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRecoveryError('');
@@ -135,18 +138,11 @@ export default function LockScreen() {
         }
       }
     }
-  }, [recoveryEntered, recoveryStep, recoveryCode, recoveryFirstPin, maxDigits, resetWithRecovery, triggerShake, recoveryShakeX]);
+  }, [recoveryEntered, recoveryStep, recoveryCode, recoveryFirstPin, maxDigits, resetWithRecovery, triggerShake, recoveryShakeX, resetRecoveryState]);
 
   const handleRecoveryDelete = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRecoveryEntered((prev) => prev.slice(0, -1));
-    setRecoveryError('');
-  }, []);
-
-  const resetRecoveryState = useCallback(() => {
-    setRecoveryStep('code');
-    setRecoveryEntered('');
-    setRecoveryFirstPin('');
     setRecoveryError('');
   }, []);
 

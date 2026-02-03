@@ -23,6 +23,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { track } from '@/lib/analytics';
 
 const ROLE_COLORS: Record<StaffRole, { bg: string; text: string; border: string }> = {
   owner: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/40' },
@@ -99,6 +100,7 @@ export default function StaffScreen() {
       role: formRole,
       active: true,
     });
+    track('staff_added', undefined, { role: formRole });
     resetForm();
     setShowAddModal(false);
   }, [formName, formPhone, formPin, formRole, staff, addStaff, resetForm]);

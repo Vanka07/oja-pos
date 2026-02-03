@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 
 type Step = 'enter' | 'confirm' | 'recovery';
 
@@ -96,6 +97,7 @@ export default function PinSetupScreen() {
 
   const handleContinue = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    track('shop_created');
     completeOnboarding();
     router.replace('/(tabs)');
   }, [completeOnboarding, router]);

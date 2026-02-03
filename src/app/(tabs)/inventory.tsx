@@ -22,6 +22,7 @@ import EmptyState from '@/components/EmptyState';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
+import { track } from '@/lib/analytics';
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
@@ -61,7 +62,6 @@ const [showUpsell, setShowUpsell] = useState(false);
   const products = useRetailStore((s) => s.products);
   const categories = useRetailStore((s) => s.categories);
   const addProduct = useRetailStore((s) => s.addProduct);
-  const updateProduct = useRetailStore((s) => s.updateProduct);
   const deleteProduct = useRetailStore((s) => s.deleteProduct);
   const adjustStock = useRetailStore((s) => s.adjustStock);
   const getLowStockProducts = useRetailStore((s) => s.getLowStockProducts);
@@ -99,9 +99,10 @@ const [showUpsell, setShowUpsell] = useState(false);
       unit: formData.unit,
       lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
     });
+    track('product_added', undefined, { category: formData.category });
     setFormData({ name: '', barcode: '', category: 'Provisions', costPrice: '', sellingPrice: '', quantity: '', unit: 'pcs', lowStockThreshold: '10' });
     setShowAddModal(false);
-  }, [formData, addProduct]);
+  }, [formData, addProduct, products.length]);
 
   const handleStockAdjust = useCallback((type: 'add' | 'remove') => {
     if (!selectedProduct || !stockAdjustment) return;

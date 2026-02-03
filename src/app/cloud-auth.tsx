@@ -11,6 +11,7 @@ import { syncAll } from '@/lib/syncService';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
+import { track } from '@/lib/analytics';
 
 export default function CloudAuthScreen() {
   const insets = useSafeAreaInsets();
@@ -49,6 +50,7 @@ export default function CloudAuthScreen() {
 
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      track('cloud_sync_enabled', undefined, { mode });
 
       // Trigger initial sync
       const shopId = useCloudAuthStore.getState().shopId;
