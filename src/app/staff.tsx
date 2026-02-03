@@ -275,7 +275,8 @@ export default function StaffScreen() {
 
   const formatActivityTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const actDate = dateStr.split('T')[0];
     const time = date.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
     if (actDate === today) return time;

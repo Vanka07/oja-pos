@@ -41,6 +41,7 @@ export default function ProductEditScreen() {
   const updateProduct = useRetailStore((s) => s.updateProduct);
   const deleteProduct = useRetailStore((s) => s.deleteProduct);
   const adjustStock = useRetailStore((s) => s.adjustStock);
+  const logActivity = useStaffStore((s) => s.logActivity);
 
   const product = useMemo(
     () => products.find((p) => p.id === params.productId),
@@ -83,9 +84,12 @@ export default function ProductEditScreen() {
       const amount = parseInt(stockAdjustment) || 0;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       adjustStock(product.id, type === 'add' ? amount : -amount);
+      if (type === 'add') {
+        logActivity('restock', `Restocked ${product.name} (+${amount})`);
+      }
       setStockAdjustment('');
     },
-    [product, stockAdjustment, adjustStock]
+    [product, stockAdjustment, adjustStock, logActivity]
   );
 
   const handleDelete = useCallback(() => {
