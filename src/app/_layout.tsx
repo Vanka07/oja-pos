@@ -43,6 +43,10 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   useEffect(() => {
     // Small delay to ensure store is hydrated
     const timer = setTimeout(() => {
+      // Always lock on app startup if PIN exists
+      if (hasAnyPin) {
+        lock();
+      }
       setIsReady(true);
       SplashScreen.hideAsync();
     }, 100);
