@@ -43,8 +43,8 @@ export default function OnboardingSetup() {
     }
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^[0-9]{11}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Enter a valid 11-digit phone number';
+    } else if (!/^[0-9]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+      newErrors.phone = 'Enter a valid phone number (10-15 digits)';
     }
 
     setErrors(newErrors);
