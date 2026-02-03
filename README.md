@@ -6,8 +6,11 @@ The most complete offline-first point-of-sale and business management system bui
 
 ### Onboarding
 - Beautiful welcome screens explaining app features
+- Business type selection (Supermarket, Salon, Pharmacy, Fashion, Restaurant, Electronics)
 - Shop setup wizard (name, owner, phone, address)
-- Personalized experience with shop branding
+- PIN setup with 4-digit code
+- Recovery code generation with WhatsApp save option
+- Business-type-aware sample data and placeholders
 
 ### Dashboard (Home)
 - Personalized greeting with owner's name and shop name
@@ -41,10 +44,29 @@ The most complete offline-first point-of-sale and business management system bui
 ### Credit Book (Customers)
 - Full customer database with credit limits
 - Outstanding debt tracking per customer
-- Payment recording with history
+- Payment recording with method selection (Cash/Transfer/POS)
+- Payment receipt generation (text, PDF, WhatsApp-shareable)
 - WhatsApp reminder sending for debts
 - Total outstanding credit overview
 - Transaction history per customer
+- Credit sale receipts show "CREDIT SALE" label with balance breakdown
+
+### Security & Access
+- **PIN Lock Screen**
+  - 4-digit PIN protection for app access
+  - Set up during onboarding or in Settings
+  - Change PIN anytime from More tab
+  
+- **Recovery Code System**
+  - 6-digit recovery code generated after PIN setup
+  - "Save to WhatsApp" — sends code to your own WhatsApp for safekeeping
+  - "Forgot PIN?" on lock screen accepts recovery code to reset
+  - View/regenerate recovery code in More tab
+
+- **Staff Activity Log**
+  - Track actions when multiple staff use the app
+  - Only shows when staff accounts are set up
+  - Solo owners see a cleaner More tab
 
 ### More (Settings & Tools)
 - **Cash Register Management**
@@ -63,6 +85,11 @@ The most complete offline-first point-of-sale and business management system bui
   - Suggested selling price based on target margin
   - Quick pricing decisions
 
+- **Multi-Language Support**
+  - 5 languages: English, Yorùbá, Pidgin, Igbo, Hausa
+  - Language selector in More tab
+  - Full UI translation
+
 - **Shop Profile**
 - **Data Export/Backup**
 
@@ -75,6 +102,9 @@ The most complete offline-first point-of-sale and business management system bui
 - **Nigerian Expense Categories** - NEPA, Generator Fuel, Levy, etc.
 - **WhatsApp Integration** - Most popular messaging app in Nigeria
 - **Offline-First** - Works without internet (critical for Nigeria)
+- **Multi-Language** - English, Yorùbá, Pidgin, Igbo, Hausa
+- **Business Types** - Supermarket, Salon, Pharmacy, Fashion, Restaurant, Electronics
+- **Ethnically Diverse Names** - Placeholder data includes Igbo, Yoruba, Hausa names
 
 ## Tech Stack
 
@@ -119,24 +149,33 @@ Sample customers:
 src/
 ├── app/
 │   ├── onboarding/
-│   │   ├── _layout.tsx    # Onboarding navigation
-│   │   ├── index.tsx      # Welcome slides
-│   │   └── setup.tsx      # Shop setup form
+│   │   ├── _layout.tsx      # Onboarding navigation
+│   │   ├── index.tsx        # Welcome slides
+│   │   ├── business-type.tsx # Business type selection
+│   │   ├── setup.tsx        # Shop setup form
+│   │   ├── pin-setup.tsx    # PIN creation
+│   │   └── recovery-code.tsx # Recovery code display
 │   ├── (tabs)/
-│   │   ├── _layout.tsx    # Tab navigation (5 tabs)
-│   │   ├── index.tsx      # Dashboard/Home
-│   │   ├── pos.tsx        # Point of Sale
-│   │   ├── inventory.tsx  # Stock Management
-│   │   ├── customers.tsx  # Credit Book
-│   │   ├── more.tsx       # Settings & Tools
-│   │   └── reports.tsx    # Analytics (accessible from Home)
-│   └── _layout.tsx        # Root layout with auth redirect
+│   │   ├── _layout.tsx      # Tab navigation (5 tabs)
+│   │   ├── index.tsx        # Dashboard/Home
+│   │   ├── pos.tsx          # Point of Sale
+│   │   ├── inventory.tsx    # Stock Management
+│   │   ├── customers.tsx    # Credit Book
+│   │   ├── more.tsx         # Settings & Tools
+│   │   └── reports.tsx      # Analytics (accessible from Home)
+│   ├── lock.tsx             # PIN lock screen
+│   └── _layout.tsx          # Root layout with auth redirect
 ├── store/
-│   ├── retailStore.ts     # Main business logic store
-│   ├── onboardingStore.ts # Onboarding state
-│   └── updateStore.ts     # Version management
+│   ├── retailStore.ts       # Main business logic store
+│   ├── onboardingStore.ts   # Onboarding state
+│   ├── languageStore.ts     # i18n language selection
+│   └── updateStore.ts       # Version management
 ├── components/
-└── lib/
+├── lib/
+│   ├── i18n.ts              # Translation strings (5 languages)
+│   ├── placeholderConfig.ts # Business-type-aware placeholders
+│   └── receiptPdf.ts        # PDF generation for receipts
+└── translations/            # Language files
 ```
 
 ## Installation
