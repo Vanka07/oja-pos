@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => zustandStorage),
       partialize: (state) => ({
         pin: state.pin,
-        isLocked: state.isLocked,
+        // Don't persist isLocked — always start locked if PIN exists
         recoveryCode: state.recoveryCode,
       }),
     }
