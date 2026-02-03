@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Dimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Dimensions, Platform, Linking, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   Receipt,
   Lock,
+  Share2,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -190,6 +191,42 @@ export default function ReportsScreen() {
     ].filter(p => p.amount > 0);
   }, [getDateRangeData]);
 
+  const summaryText = useMemo(() => {
+    const rangeLabel = dateRange === 'today' ? 'Today' : dateRange === 'week' ? 'Last 7 Days' : dateRange === 'month' ? 'Last 30 Days' : 'Last Year';
+    const lines = [
+      `*Oja POS — ${rangeLabel} Summary*`,
+      `Date: ${new Date().toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`,
+      '',
+      `💰 Revenue: ${formatNaira(getDateRangeData.totalSales)}`,
+      `📈 Profit: ${formatNaira(getDateRangeData.profit)}`,
+      `🛒 Sales: ${getDateRangeData.totalTransactions}`,
+      '',
+      '*Payment Breakdown:*',
+      `• Cash: ${formatNaira(getDateRangeData.cashSales)}`,
+      `• Transfer: ${formatNaira(getDateRangeData.transferSales)}`,
+      `• POS: ${formatNaira(getDateRangeData.posSales)}`,
+      `• Credit: ${formatNaira(getDateRangeData.creditSales)}`,
+    ];
+    if (topProducts.length > 0) {
+      lines.push('', '*Top Products:*');
+      topProducts.slice(0, 5).forEach((item, i) => {
+        lines.push(`${i + 1}. ${item.product.name} — ${item.totalSold} sold`);
+      });
+    }
+    return lines.join('\n');
+  }, [dateRange, getDateRangeData, topProducts]);
+
+  const handleShareWhatsApp = useCallback(() => {
+    const encoded = encodeURIComponent(summaryText);
+    if (Platform.OS === 'web') {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+      return;
+    }
+    Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {
+      Share.share({ message: summaryText });
+    });
+  }, [summaryText]);
+
   const WebBarChart = useCallback(() => {
     const { data, title } = chartData;
     const maxSales = Math.max(...data.map(d => d.sales), 1);
@@ -363,6 +400,19 @@ export default function ReportsScreen() {
                 {bestDay.dateStr} — {formatNaira(bestDay.total)} ({bestDay.count} sale{bestDay.count !== 1 ? 's' : ''})
               </Text>
             </View>
+          </Animated.View>
+        )}
+
+        {getDateRangeData.totalTransactions > 0 && (
+          <Animated.View entering={FadeInDown.delay(345).duration(600)} className="mx-5 mt-3">
+            <Pressable
+              onPress={handleShareWhatsApp}
+              className="bg-green-600 rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Share2 size={18} color="#ffffff" />
+              <Text className="text-white font-semibold ml-2">Share Summary to WhatsApp</Text>
+            </Pressable>
           </Animated.View>
         )}
 
