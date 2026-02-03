@@ -74,13 +74,31 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   // Lock app when going to background (only if PIN is set)
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'background' && hasAnyPin) {
+      // 'background' or 'inactive' on native
+      if ((nextAppState === 'background' || nextAppState === 'inactive') && hasAnyPin) {
         lock();
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
+    
+    // Web-specific: listen for visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && hasAnyPin) {
+        lock();
+      }
+    };
+    
+    if (Platform.OS === 'web') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+    
+    return () => {
+      subscription.remove();
+      if (Platform.OS === 'web') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
   }, [hasAnyPin, lock]);
 
   useEffect(() => {
