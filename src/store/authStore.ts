@@ -87,10 +87,17 @@ export const useAuthStore = create<AuthState>()(
         recoveryCode: state.recoveryCode,
       }),
       onRehydrateStorage: () => (state) => {
-        // After hydration, lock if PIN exists
-        if (state?.pin) {
-          useAuthStore.setState({ isLocked: true });
-        }
+        // After hydration, ALWAYS lock if PIN exists
+        // Use setTimeout to ensure this runs after all stores hydrate
+        setTimeout(() => {
+          const authState = useAuthStore.getState();
+          const staffState = useStaffStore.getState();
+          const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+          
+          if (hasPinOrStaff) {
+            useAuthStore.setState({ isLocked: true });
+          }
+        }, 50);
       },
     }
   )

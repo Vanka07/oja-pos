@@ -93,8 +93,16 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     
     // Web-specific: listen for visibility change
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && hasAnyPin) {
-        lock();
+      const authState = useAuthStore.getState();
+      const staffState = useStaffStore.getState();
+      const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+      
+      // Lock when hidden, and also verify lock when visible
+      if (document.visibilityState === 'hidden' && hasPinOrStaff) {
+        authState.lock();
+      } else if (document.visibilityState === 'visible' && hasPinOrStaff && !authState.isLocked) {
+        // If coming back and should be locked but isn't, lock it
+        authState.lock();
       }
     };
     
@@ -108,7 +116,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
-  }, [hasAnyPin, lock]);
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;
