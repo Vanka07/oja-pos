@@ -20,6 +20,7 @@ export default function OnboardingSetup() {
   const setShopInfo = useOnboardingStore((s) => s.setShopInfo);
   const businessType = useOnboardingStore((s) => s.businessType);
   const addCategory = useRetailStore((s) => s.addCategory);
+  const existingCategories = useRetailStore((s) => s.categories);
   const placeholders = getPlaceholders(businessType);
 
   const [formData, setFormData] = useState({
@@ -67,9 +68,15 @@ export default function OnboardingSetup() {
     });
 
     // Load business-type categories (no sample products — users add their own)
+    // Only add categories that don't already exist (prevents duplicates on re-render/double-tap)
     if (businessType && businessTemplates[businessType]) {
       const template = businessTemplates[businessType];
-      template.categories.forEach((cat) => addCategory(cat));
+      const existingNames = new Set(existingCategories.map((c) => c.name));
+      template.categories.forEach((cat) => {
+        if (!existingNames.has(cat.name)) {
+          addCategory(cat);
+        }
+      });
     }
 
     // Navigate to PIN setup — completeOnboarding() will happen there
