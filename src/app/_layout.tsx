@@ -41,15 +41,20 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Small delay to ensure store is hydrated
+    // Longer delay to ensure stores are fully hydrated from storage
     const timer = setTimeout(() => {
-      // Always lock on app startup if PIN exists
-      if (hasAnyPin) {
-        lock();
+      // Check directly from store state (not hooks) to ensure we have hydrated values
+      const authState = useAuthStore.getState();
+      const staffState = useStaffStore.getState();
+      const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+      
+      // Always lock on app startup if PIN/staff exists
+      if (hasPinOrStaff) {
+        authState.lock();
       }
       setIsReady(true);
       SplashScreen.hideAsync();
-    }, 100);
+    }, 300); // Increased delay for store hydration
 
     return () => clearTimeout(timer);
   }, []);

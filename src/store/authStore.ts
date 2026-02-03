@@ -86,6 +86,12 @@ export const useAuthStore = create<AuthState>()(
         // Don't persist isLocked — always start locked if PIN exists
         recoveryCode: state.recoveryCode,
       }),
+      onRehydrateStorage: () => (state) => {
+        // After hydration, lock if PIN exists
+        if (state?.pin) {
+          useAuthStore.setState({ isLocked: true });
+        }
+      },
     }
   )
 );
