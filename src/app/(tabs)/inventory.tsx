@@ -8,11 +8,9 @@ import {
   AlertTriangle,
   X,
   TrendingUp,
-  TrendingDown,
-  History,
-  ChevronRight
+  TrendingDown
 } from 'lucide-react-native';
-import { useRetailStore, formatNaira, type Product, type StockMovement } from '@/store/retailStore';
+import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { canAccess, FREE_PRODUCT_LIMIT, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
@@ -36,7 +34,6 @@ export default function InventoryScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
 const [showUpsell, setShowUpsell] = useState(false);
-  const [showActivityModal, setShowActivityModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState('');
 
@@ -68,22 +65,8 @@ const [showUpsell, setShowUpsell] = useState(false);
   const deleteProduct = useRetailStore((s) => s.deleteProduct);
   const adjustStock = useRetailStore((s) => s.adjustStock);
   const getLowStockProducts = useRetailStore((s) => s.getLowStockProducts);
-  const stockMovements = useRetailStore((s) => s.stockMovements);
 
-  const lowStockProducts = useMemo(() => getLowStockProducts(), [getLowStockProducts, products]);
-
-  // Get recent stock movements (restocks only - type 'purchase')
-  const recentRestocks = useMemo(() => {
-    return stockMovements
-      .filter((m) => m.type === 'purchase')
-      .slice(0, 10);
-  }, [stockMovements]);
-
-  // Helper to get product name by ID
-  const getProductName = useCallback((productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    return product?.name || 'Unknown Product';
-  }, [products]);
+  const lowStockProducts = useMemo(() => getLowStockProducts(), [getLowStockProducts]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -219,30 +202,6 @@ const [showUpsell, setShowUpsell] = useState(false);
             </Pressable>
           </Animated.View>
         )}
-
-        {/* Activity Log Card */}
-        <Animated.View
-          entering={FadeInDown.delay(350).duration(600)}
-          className="mx-5 mt-4"
-        >
-          <Pressable
-            onPress={() => setShowActivityModal(true)}
-            className="bg-stone-900/80 rounded-xl p-4 border border-stone-800 active:opacity-90"
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-3">
-                <View className="w-8 h-8 rounded-lg bg-blue-500/20 items-center justify-center">
-                  <History size={16} color="#3b82f6" />
-                </View>
-                <View>
-                  <Text className="text-white font-medium">Activity Log</Text>
-                  <Text className="text-stone-500 text-xs">{stockMovements.length} stock movements</Text>
-                </View>
-              </View>
-              <ChevronRight size={20} color="#57534e" />
-            </View>
-          </Pressable>
-        </Animated.View>
 
         {/* Search */}
         <Animated.View entering={FadeInDown.delay(400).duration(600)} className="px-5 mt-4">
@@ -441,89 +400,6 @@ const [showUpsell, setShowUpsell] = useState(false);
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Activity Log Modal */}
-      <Modal
-        visible={showActivityModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowActivityModal(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60"
-          onPress={() => setShowActivityModal(false)}
-        />
-        <View className="bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 20 }}>
-          <View className="p-6">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-white text-xl font-bold">Activity Log</Text>
-              <Pressable onPress={() => setShowActivityModal(false)}>
-                <X size={24} color="#78716c" />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {stockMovements.length === 0 ? (
-                <View className="py-8 items-center">
-                  <History size={40} color="#57534e" />
-                  <Text className="text-stone-500 mt-3">No stock movements yet</Text>
-                </View>
-              ) : (
-                <View className="gap-2">
-                  {stockMovements.slice(0, 50).map((movement) => {
-                    const isRestock = movement.type === 'purchase';
-                    const isSale = movement.type === 'sale';
-                    const isAdjustment = movement.type === 'adjustment';
-
-                    return (
-                      <View
-                        key={movement.id}
-                        className="bg-stone-800/50 rounded-xl p-4 flex-row items-center"
-                      >
-                        <View className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
-                          isRestock ? 'bg-emerald-500/20' :
-                          isSale ? 'bg-blue-500/20' : 'bg-amber-500/20'
-                        }`}>
-                          {isRestock ? (
-                            <TrendingUp size={18} color="#10b981" />
-                          ) : isSale ? (
-                            <Package size={18} color="#3b82f6" />
-                          ) : (
-                            <Edit3 size={18} color="#f59e0b" />
-                          )}
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-white font-medium" numberOfLines={1}>
-                            {getProductName(movement.productId)}
-                          </Text>
-                          <Text className="text-stone-500 text-xs">
-                            {isRestock ? 'Restocked' : isSale ? 'Sold' : 'Adjusted'} • {new Date(movement.createdAt).toLocaleDateString('en-NG', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className={`font-bold ${
-                            isRestock ? 'text-emerald-400' :
-                            isSale ? 'text-blue-400' : 'text-amber-400'
-                          }`}>
-                            {isRestock ? '+' : '-'}{movement.quantity}
-                          </Text>
-                          <Text className="text-stone-600 text-xs">
-                            {movement.previousQuantity} → {movement.newQuantity}
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
