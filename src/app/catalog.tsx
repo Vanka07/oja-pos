@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, Linking, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -99,7 +99,11 @@ export default function CatalogScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const message = generateShareMessage();
     const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    await Linking.openURL(waUrl);
+    if (Platform.OS === 'web') {
+      window.open(waUrl, '_blank');
+    } else {
+      await Linking.openURL(waUrl).catch(() => {});
+    }
   }, [catalogUrl.url]);
 
   const handleCopyLink = useCallback(async () => {

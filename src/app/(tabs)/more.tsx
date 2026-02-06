@@ -1588,9 +1588,13 @@ export default function MoreScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   const message = `🔐 Oja POS Recovery Code: ${displayRecoveryCode}\n\nKeep this message safe! You'll need this code if you forget your PIN.\n\nDo NOT share this code with anyone.`;
                   const encoded = encodeURIComponent(message);
-                  Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
-                    Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
-                  });
+                  if (Platform.OS === 'web') {
+                    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+                  } else {
+                    Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
+                      Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
+                    });
+                  }
                 }}
                 accessibilityRole="button"
                 className="bg-emerald-500 py-4 rounded-xl active:opacity-90 mb-3"

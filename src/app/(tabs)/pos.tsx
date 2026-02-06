@@ -276,12 +276,16 @@ export default function POSScreen() {
                   </Pressable>
                 )}
               </View>
-              <Pressable
-                onPress={() => setShowScanner(true)}
-                className="bg-orange-500/20 border border-orange-500/40 rounded-xl p-3 active:opacity-80"
-              >
-                <ScanBarcode size={22} color="#e05e1b" />
-              </Pressable>
+              {Platform.OS !== 'web' && (
+                <Pressable
+                  onPress={() => setShowScanner(true)}
+                  accessibilityLabel="Scan barcode"
+                  accessibilityRole="button"
+                  className="bg-orange-500/20 border border-orange-500/40 rounded-xl p-3 active:opacity-80"
+                >
+                  <ScanBarcode size={22} color="#e05e1b" />
+                </Pressable>
+              )}
             </View>
           </Animated.View>
 
@@ -662,7 +666,8 @@ export default function POSScreen() {
         </View>
       </Modal>
 
-      {/* Barcode Scanner Modal */}
+      {/* Barcode Scanner Modal (native only) */}
+      {Platform.OS !== 'web' && (
       <Modal
         visible={showScanner}
         transparent
@@ -694,6 +699,7 @@ export default function POSScreen() {
           </View>
         </View>
       </Modal>
+      )}
 
       {/* Barcode Product Modal */}
       <BarcodeProductModal

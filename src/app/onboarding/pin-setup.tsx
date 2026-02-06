@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Linking } from 'react-native';
+import { View, Text, Pressable, Linking, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Lock, Delete, Shield, MessageCircle, ArrowRight } from 'lucide-react-native';
@@ -89,10 +89,14 @@ export default function PinSetupScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const message = `🔐 Oja POS Recovery Code: ${recoveryCode}\n\nKeep this message safe! You'll need this code if you forget your PIN.\n\nDo NOT share this code with anyone.`;
     const encoded = encodeURIComponent(message);
-    Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
-      // Fallback if WhatsApp isn't installed
-      Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
-    });
+    if (Platform.OS === 'web') {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    } else {
+      Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
+        // Fallback if WhatsApp isn't installed
+        Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
+      });
+    }
   }, [recoveryCode]);
 
   const handleContinue = useCallback(() => {
