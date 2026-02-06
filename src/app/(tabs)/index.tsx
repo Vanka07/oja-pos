@@ -22,6 +22,7 @@ import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter, Href } from 'expo-router';
 import EmptyState from '@/components/EmptyState';
+import { syncAll } from '@/lib/syncService';
 import { useT } from '@/store/languageStore';
 
 // Helper to get local date string (YYYY-MM-DD) instead of UTC
@@ -44,21 +45,28 @@ export default function DashboardScreen() {
   const currentStaff = useStaffStore((s) => s.currentStaff);
   const canViewReports = !currentStaff || hasPermission(currentStaff.role, 'view_reports');
   const products = useRetailStore((s) => s.products);
+  const sales = useRetailStore((s) => s.sales);
+  const expenses = useRetailStore((s) => s.expenses);
   const getSalesToday = useRetailStore((s) => s.getSalesToday);
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
   const getLowStockProducts = useRetailStore((s) => s.getLowStockProducts);
   const pendingSyncCount = useRetailStore((s) => s.pendingSyncCount);
   const isCloudAuthenticated = useCloudAuthStore((s) => s.isAuthenticated);
+  const shopId = useCloudAuthStore((s) => s.shopId);
 
   const todayDate = getLocalDateStr(new Date());
-  const summary = useMemo(() => getDailySummary(todayDate), [getDailySummary, todayDate]);
-  const salesToday = useMemo(() => getSalesToday(), [getSalesToday]);
+  const summary = useMemo(() => getDailySummary(todayDate), [getDailySummary, todayDate, sales, expenses]);
+  const salesToday = useMemo(() => getSalesToday(), [getSalesToday, sales]);
   const lowStock = useMemo(() => getLowStockProducts(), [getLowStockProducts, products]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    if (isCloudAuthenticated && shopId) {
+      syncAll(shopId).finally(() => setRefreshing(false));
+    } else {
+      setTimeout(() => setRefreshing(false), 500);
+    }
+  }, [isCloudAuthenticated, shopId]);
 
   const t = useT();
 
