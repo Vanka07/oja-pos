@@ -83,22 +83,9 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => zustandStorage),
       partialize: (state) => ({
         pin: state.pin,
-        // Don't persist isLocked — always start locked if PIN exists
+        isLocked: state.isLocked,
         recoveryCode: state.recoveryCode,
       }),
-      onRehydrateStorage: () => (state) => {
-        // After hydration, ALWAYS lock if PIN exists
-        // Use setTimeout to ensure this runs after all stores hydrate
-        setTimeout(() => {
-          const authState = useAuthStore.getState();
-          const staffState = useStaffStore.getState();
-          const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
-          
-          if (hasPinOrStaff) {
-            useAuthStore.setState({ isLocked: true });
-          }
-        }, 50);
-      },
     }
   )
 );
