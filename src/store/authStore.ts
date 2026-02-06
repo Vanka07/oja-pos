@@ -99,15 +99,22 @@ export const useAuthStore = create<AuthState>()(
         recoveryCode: state.recoveryCode,
       }),
       onRehydrateStorage: () => (state) => {
-        // After hydration, ALWAYS lock if PIN exists
+        // After hydration, lock if PIN exists UNLESS already authenticated this session (web)
         // Use setTimeout to ensure this runs after all stores hydrate
         setTimeout(() => {
           const authState = useAuthStore.getState();
           const staffState = useStaffStore.getState();
           const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
           
-          if (hasPinOrStaff) {
+          // Check if user already authenticated in this browser session
+          const sessionAuthenticated = typeof window !== 'undefined' && 
+            typeof sessionStorage !== 'undefined' && 
+            sessionStorage.getItem('oja_authenticated') === 'true';
+          
+          if (hasPinOrStaff && !sessionAuthenticated) {
             useAuthStore.setState({ isLocked: true });
+          } else if (hasPinOrStaff && sessionAuthenticated) {
+            useAuthStore.setState({ isLocked: false });
           }
         }, 50);
       },
