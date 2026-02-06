@@ -534,16 +534,19 @@ export const useRetailStore = create<RetailState>()(
         const state = get();
         if (state.cart.length === 0) return null;
 
-        // Validate stock availability
-        for (const item of state.cart) {
+        // Validate and cap stock availability
+        const adjustedCart = state.cart.map((item) => {
           const currentProduct = state.products.find((p) => p.id === item.product.id);
           if (currentProduct && item.quantity > currentProduct.quantity) {
-            // Silently cap quantity to available stock
             if (currentProduct.quantity <= 0) return null;
+            return { ...item, quantity: currentProduct.quantity };
           }
-        }
+          return item;
+        }).filter((item): item is CartItem => item !== null);
 
-        const subtotal = state.cart.reduce(
+        if (adjustedCart.length === 0) return null;
+
+        const subtotal = adjustedCart.reduce(
           (sum, item) => sum + item.product.sellingPrice * item.quantity,
           0
         );
@@ -552,7 +555,7 @@ export const useRetailStore = create<RetailState>()(
 
         const sale: Sale = {
           id: generateId(),
-          items: [...state.cart],
+          items: [...adjustedCart],
           subtotal,
           discount: state.cartDiscount,
           total,
@@ -569,7 +572,7 @@ export const useRetailStore = create<RetailState>()(
         };
 
         // Update stock for each item
-        state.cart.forEach((item) => {
+        adjustedCart.forEach((item) => {
           state.adjustStock(item.product.id, -item.quantity, 'sale');
         });
 
@@ -766,7 +769,7 @@ export const useRetailStore = create<RetailState>()(
 
         const creditPayments = state.customers
           .flatMap((c) => c.transactions)
-          .filter((t) => t.type === 'payment' && t.createdAt >= sessionStart)
+          .filter((t) => t.type === 'payment' && t.createdAt >= sessionStart && (!t.paymentMethod || t.paymentMethod === 'cash'))
           .reduce((sum, t) => sum + t.amount, 0);
 
         return state.currentCashSession.openingCash + cashSales + creditPayments - cashExpenses;

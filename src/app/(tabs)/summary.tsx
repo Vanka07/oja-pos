@@ -65,6 +65,7 @@ export default function ReportsScreen() {
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
   const getTopSellingProducts = useRetailStore((s) => s.getTopSellingProducts);
   const getSalesByDateRange = useRetailStore((s) => s.getSalesByDateRange);
+  const getExpensesByDateRange = useRetailStore((s) => s.getExpensesByDateRange);
 
   const getDateRangeData = useMemo(() => {
     const today = new Date();
@@ -74,7 +75,11 @@ export default function ReportsScreen() {
     if (dateRange === 'week') startDate.setDate(today.getDate() - 7);
     else if (dateRange === 'month') startDate.setDate(today.getDate() - 30);
     else startDate.setDate(today.getDate() - 365);
-    const rangeSales = getSalesByDateRange(getLocalDateStr(startDate), todayStr);
+    const startDateStr = getLocalDateStr(startDate);
+    const rangeSales = getSalesByDateRange(startDateStr, todayStr);
+    const rangeExpenses = getExpensesByDateRange(startDateStr, todayStr);
+    const totalExpenses = rangeExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const grossProfit = rangeSales.reduce((sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + (item.product.sellingPrice - item.product.costPrice) * item.quantity, 0), 0);
     return {
       date: `${startDate.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}`,
       totalSales: rangeSales.reduce((sum, s) => sum + s.total, 0),
@@ -83,9 +88,9 @@ export default function ReportsScreen() {
       transferSales: rangeSales.filter((s) => s.paymentMethod === 'transfer').reduce((sum, s) => sum + s.total, 0),
       posSales: rangeSales.filter((s) => s.paymentMethod === 'pos').reduce((sum, s) => sum + s.total, 0),
       creditSales: rangeSales.filter((s) => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0),
-      profit: rangeSales.reduce((sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + (item.product.sellingPrice - item.product.costPrice) * item.quantity, 0), 0),
+      profit: grossProfit - totalExpenses,
     };
-  }, [dateRange, getDailySummary, getSalesByDateRange]);
+  }, [dateRange, getDailySummary, getSalesByDateRange, getExpensesByDateRange]);
 
   const topProducts = useMemo(() => {
     const days = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;

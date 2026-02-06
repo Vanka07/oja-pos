@@ -133,7 +133,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(200).duration(600)}
           className="mx-5 mt-6"
         >
-          <Pressable onPress={() => canViewReports ? router.push('/(tabs)/reports') : null} className="active:opacity-90">
+          <Pressable onPress={() => canViewReports ? router.push('/(tabs)/summary') : null} className="active:opacity-90">
           <LinearGradient
             colors={['#e05e1b', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
@@ -194,7 +194,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(300).duration(600)}
           className="mx-5 mt-4"
         >
-          <Pressable onPress={() => router.push('/(tabs)/reports')} className="active:opacity-80">
+          <Pressable onPress={() => router.push('/(tabs)/summary')} className="active:opacity-80">
             <View className="flex-row gap-3">
               <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
                 <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.cash')}</Text>
@@ -231,7 +231,7 @@ export default function DashboardScreen() {
 
           <Pressable
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
-            onPress={() => canViewReports ? router.push('/(tabs)/reports') : null}
+            onPress={() => canViewReports ? router.push('/(tabs)/summary') : null}
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />

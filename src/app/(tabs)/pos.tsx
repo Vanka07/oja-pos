@@ -63,7 +63,6 @@ export default function POSScreen() {
   const cart = useRetailStore((s) => s.cart);
   const cartDiscount = useRetailStore((s) => s.cartDiscount);
   const customers = useRetailStore((s) => s.customers);
-  const sales = useRetailStore((s) => s.sales);
   const addToCart = useRetailStore((s) => s.addToCart);
   const updateCartQuantity = useRetailStore((s) => s.updateCartQuantity);
   const removeFromCart = useRetailStore((s) => s.removeFromCart);
@@ -174,7 +173,9 @@ export default function POSScreen() {
       
       // Track sale for analytics
       track('sale_completed', undefined, { total: sale.total, items: itemCount, method });
-      if (sales.length === 0) {
+      // Read fresh sales count from store to avoid stale closure
+      const currentSalesCount = useRetailStore.getState().sales.length;
+      if (currentSalesCount === 1) {
         track('first_sale', undefined, { total: sale.total });
       }
 
