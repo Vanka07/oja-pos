@@ -1,7 +1,6 @@
-import { View, Text, Pressable, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { formatNaira } from '@/store/retailStore';
 import { useState, useMemo } from 'react';
 

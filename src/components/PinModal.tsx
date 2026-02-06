@@ -1,7 +1,6 @@
-import { View, Text, Pressable, Modal, TextInput } from 'react-native';
+import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useAuthStore } from '@/store/authStore';
 import { useState, useEffect, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';

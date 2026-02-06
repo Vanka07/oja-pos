@@ -1,10 +1,9 @@
-import { View, Text, Pressable, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import {
   X, Store, Zap, Fuel, Users as UsersIcon, Truck, Receipt,
   Wrench, Smartphone, FileText, HelpCircle,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useRetailStore, expenseCategories } from '@/store/retailStore';
 import { useState, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
