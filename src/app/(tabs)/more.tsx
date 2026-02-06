@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, ActivityIndicator, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -37,6 +37,7 @@ import {
   ShoppingBag,
   LayoutGrid,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -50,6 +51,7 @@ import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
+import EmptyState from '@/components/EmptyState';
 import { useThemeStore } from '@/store/themeStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useCatalogStore } from '@/store/catalogStore';
@@ -90,6 +92,16 @@ export default function MoreScreen() {
   const [isPrintingTest, setIsPrintingTest] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [upsellFeature, setUpsellFeature] = useState<string>('cloud_sync');
+
+  // Custom alert/confirm modals (replacing Alert.alert)
+  const [infoModal, setInfoModal] = useState<{
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning';
+  } | null>(null);
+  const [showCloudSignOutConfirm, setShowCloudSignOutConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showResetFinal, setShowResetFinal] = useState(false);
 
   // Subscription
   const subscriptionPlan = useSubscriptionStore((s) => s.plan);
@@ -215,7 +227,7 @@ export default function MoreScreen() {
     } catch (error) {
       // Test print failed — Alert shown below
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Print Error', 'Could not print test receipt. Please try again.');
+      setInfoModal({ title: 'Print Error', message: 'Could not print test receipt. Please try again.', type: 'error' });
     } finally {
       setIsPrintingTest(false);
     }
@@ -307,13 +319,13 @@ export default function MoreScreen() {
             UTI: 'public.json',
           });
         } else {
-          Alert.alert('Export Complete', 'Backup file saved but sharing is not available on this device.');
+          setInfoModal({ title: 'Export Complete', message: 'Backup file saved but sharing is not available on this device.', type: 'success' });
         }
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      Alert.alert('Export Failed', 'Could not export data. Please try again.');
+      setInfoModal({ title: 'Export Failed', message: 'Could not export data. Please try again.', type: 'error' });
       // Export failed — Alert shown above
     } finally {
       setIsExporting(false);
@@ -334,26 +346,19 @@ export default function MoreScreen() {
     }
   }, [cloudAuth.shopId, isSyncing]);
 
-  const handleCloudSignOut = useCallback(async () => {
-    Alert.alert('Sign Out', 'You will stop syncing data to the cloud. Your local data is safe.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => cloudAuth.signOut(),
-      },
-    ]);
-  }, [cloudAuth]);
+  const handleCloudSignOut = useCallback(() => {
+    setShowCloudSignOutConfirm(true);
+  }, []);
 
   const handleSendAlertNow = useCallback(async () => {
     if (!alertPhoneNumber) {
-      Alert.alert('Missing Number', 'Please enter a WhatsApp number first.');
+      setInfoModal({ title: 'Missing Number', message: 'Please enter a WhatsApp number first.', type: 'warning' });
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const sent = await checkAndSendLowStockAlerts(alertPhoneNumber);
     if (!sent) {
-      Alert.alert('No Low Stock', 'All products are above their low stock threshold.');
+      setInfoModal({ title: 'No Low Stock', message: 'All products are above their low stock threshold.', type: 'success' });
     }
   }, [alertPhoneNumber]);
 
@@ -449,6 +454,8 @@ export default function MoreScreen() {
           {canAddExpense && (
             <Pressable
               onPress={() => setShowExpenseModal(true)}
+              accessibilityLabel="Add expense"
+              accessibilityRole="button"
               className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
             >
               <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mb-3">
@@ -461,6 +468,8 @@ export default function MoreScreen() {
 
           <Pressable
             onPress={() => setShowCalculatorModal(true)}
+            accessibilityLabel="Price calculator"
+            accessibilityRole="button"
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
@@ -479,6 +488,8 @@ export default function MoreScreen() {
         >
           <Pressable
             onPress={() => setShowExpensesListModal(true)}
+            accessibilityLabel="Today's expenses"
+            accessibilityRole="button"
             className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:opacity-90"
           >
             <View className="flex-row items-center justify-between">
@@ -623,6 +634,8 @@ export default function MoreScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setThemePreference(item.key);
                   }}
+                  accessibilityLabel={`Set ${item.label.toLowerCase()} theme`}
+                  accessibilityRole="button"
                   className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-lg ${
                     themePreference === item.key
                       ? 'bg-orange-500'
@@ -1117,6 +1130,8 @@ export default function MoreScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                   lockApp();
                 }}
+                accessibilityLabel="Lock app"
+                accessibilityRole="button"
                 className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
@@ -1144,53 +1159,7 @@ export default function MoreScreen() {
               <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Danger Zone</Text>
               <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-red-500/30 overflow-hidden">
                 <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      'Reset All Data',
-                      'This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone.\n\nAre you sure?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Reset Everything',
-                          style: 'destructive',
-                          onPress: () => {
-                            Alert.alert(
-                              'Final Confirmation',
-                              'Last chance. All data will be erased and the app will restart from scratch.',
-                              [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                  text: 'Yes, Delete All',
-                                  style: 'destructive',
-                                  onPress: async () => {
-                                    // Clear all persisted stores
-                                    const storeKeys = [
-                                      'retail-store', 'oja-staff-storage', 'auth-store',
-                                      'catalog-store', 'onboarding-store', 'oja-payroll-storage',
-                                      'printer-store', 'subscription-store', 'cloud-auth-store',
-                                      'oja-language', 'oja-theme', 'update-store',
-                                    ];
-                                    if (typeof window !== 'undefined' && window.localStorage) {
-                                      storeKeys.forEach((key) => window.localStorage.removeItem(key));
-                                    }
-                                    // Also try AsyncStorage keys
-                                    try {
-                                      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-                                      await AsyncStorage.multiRemove(storeKeys);
-                                    } catch {}
-                                    // Reload the app
-                                    if (typeof window !== 'undefined') {
-                                      window.location.href = '/';
-                                    }
-                                  },
-                                },
-                              ]
-                            );
-                          },
-                        },
-                      ]
-                    );
-                  }}
+                  onPress={() => setShowResetConfirm(true)}
                   className="flex-row items-center p-4 active:bg-red-500/10"
                 >
                   <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
@@ -1318,6 +1287,7 @@ export default function MoreScreen() {
 
                   <Pressable
                     onPress={handleAddExpense}
+                    accessibilityRole="button"
                     className="bg-red-500 py-4 rounded-xl active:opacity-90 mt-2"
                   >
                     <Text className="text-white font-semibold text-center text-lg">Record Expense</Text>
@@ -1400,6 +1370,7 @@ export default function MoreScreen() {
 
                 <Pressable
                   onPress={handleCashSession}
+                  accessibilityRole="button"
                   className={`py-4 rounded-xl active:opacity-90 ${
                     currentCashSession ? 'bg-red-500' : 'bg-emerald-500'
                   }`}
@@ -1436,10 +1407,16 @@ export default function MoreScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {todayExpenses.length === 0 ? (
-                <View className="py-8 items-center">
-                  <Receipt size={40} color="#57534e" />
-                  <Text className="text-stone-500 mt-3">No expenses recorded today</Text>
-                </View>
+                <EmptyState
+                  icon={Receipt}
+                  title="No expenses today"
+                  description="Tap 'Add Expense' to record your first expense for today"
+                  buttonLabel="Add Expense"
+                  onButtonPress={() => {
+                    setShowExpensesListModal(false);
+                    setShowExpenseModal(true);
+                  }}
+                />
               ) : (
                 <View className="gap-2">
                   {todayExpenses.map((expense) => (
@@ -1615,6 +1592,7 @@ export default function MoreScreen() {
                     Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
                   });
                 }}
+                accessibilityRole="button"
                 className="bg-emerald-500 py-4 rounded-xl active:opacity-90 mb-3"
               >
                 <Text className="text-white font-semibold text-center text-lg">Send to WhatsApp</Text>
@@ -1622,6 +1600,7 @@ export default function MoreScreen() {
 
               <Pressable
                 onPress={() => setShowRecoveryModal(false)}
+                accessibilityRole="button"
                 className="py-3"
               >
                 <Text className="text-stone-500 text-center font-medium">Done</Text>
@@ -1671,6 +1650,7 @@ export default function MoreScreen() {
                       setPinError('');
                       setPinStep('new');
                     }}
+                    accessibilityRole="button"
                     className="bg-orange-500 py-4 rounded-xl active:opacity-90"
                   >
                     <Text className="text-white font-semibold text-center text-lg">Continue</Text>
@@ -1704,6 +1684,7 @@ export default function MoreScreen() {
                       setPinError('');
                       setPinStep('confirm');
                     }}
+                    accessibilityRole="button"
                     className="bg-orange-500 py-4 rounded-xl active:opacity-90"
                   >
                     <Text className="text-white font-semibold text-center text-lg">Continue</Text>
@@ -1736,8 +1717,9 @@ export default function MoreScreen() {
                       setPin(newPinEntry);
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                       setShowPinModal(false);
-                      Alert.alert('PIN Set', 'Your app is now protected. You\'ll need this PIN every time you open Oja POS.');
+                      setInfoModal({ title: 'PIN Set', message: "Your app is now protected. You'll need this PIN every time you open Oja POS.", type: 'success' });
                     }}
+                    accessibilityRole="button"
                     className="bg-emerald-500 py-4 rounded-xl active:opacity-90"
                   >
                     <Text className="text-white font-semibold text-center text-lg">
@@ -1749,6 +1731,191 @@ export default function MoreScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Info/Alert Modal (replaces Alert.alert for simple messages) */}
+      <Modal
+        visible={!!infoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInfoModal(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setInfoModal(null)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className={`w-14 h-14 rounded-full items-center justify-center mb-4 ${
+                infoModal?.type === 'success' ? 'bg-emerald-500/20' :
+                infoModal?.type === 'error' ? 'bg-red-500/20' : 'bg-amber-500/20'
+              }`}>
+                {infoModal?.type === 'success' ? (
+                  <CheckCircle2 size={28} color="#10b981" />
+                ) : infoModal?.type === 'error' ? (
+                  <AlertTriangle size={28} color="#ef4444" />
+                ) : (
+                  <AlertTriangle size={28} color="#f59e0b" />
+                )}
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">{infoModal?.title}</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">{infoModal?.message}</Text>
+              <Pressable
+                onPress={() => setInfoModal(null)}
+                accessibilityRole="button"
+                className="bg-orange-500 w-full py-3.5 rounded-xl active:opacity-90"
+              >
+                <Text className="text-white font-semibold text-center">OK</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Cloud Sign Out Confirmation Modal */}
+      <Modal
+        visible={showCloudSignOutConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCloudSignOutConfirm(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowCloudSignOutConfirm(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <LogOut size={28} color="#ef4444" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Sign Out</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                You will stop syncing data to the cloud. Your local data is safe.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowCloudSignOutConfirm(false)}
+                  accessibilityRole="button"
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    cloudAuth.signOut();
+                    setShowCloudSignOutConfirm(false);
+                  }}
+                  accessibilityRole="button"
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Sign Out</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Reset Data — Step 1 Confirmation */}
+      <Modal
+        visible={showResetConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowResetConfirm(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowResetConfirm(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <Trash2 size={28} color="#ef4444" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Reset All Data</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowResetConfirm(false)}
+                  accessibilityRole="button"
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setShowResetConfirm(false);
+                    setShowResetFinal(true);
+                  }}
+                  accessibilityRole="button"
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Reset Everything</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Reset Data — Step 2 Final Confirmation */}
+      <Modal
+        visible={showResetFinal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowResetFinal(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowResetFinal(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <AlertTriangle size={28} color="#ef4444" />
+              </View>
+              <Text className="text-red-500 text-lg font-bold mb-2">Final Confirmation</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Last chance. All data will be erased and the app will restart from scratch.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowResetFinal(false)}
+                  accessibilityRole="button"
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    const storeKeys = [
+                      'retail-store', 'oja-staff-storage', 'auth-store',
+                      'catalog-store', 'onboarding-store', 'oja-payroll-storage',
+                      'printer-store', 'subscription-store', 'cloud-auth-store',
+                      'oja-language', 'oja-theme', 'update-store',
+                    ];
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                      storeKeys.forEach((key) => window.localStorage.removeItem(key));
+                    }
+                    try {
+                      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                      await AsyncStorage.multiRemove(storeKeys);
+                    } catch {}
+                    if (typeof window !== 'undefined') {
+                      window.location.href = '/';
+                    }
+                  }}
+                  accessibilityRole="button"
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Yes, Delete All</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
