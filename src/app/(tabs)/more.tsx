@@ -1,10 +1,9 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Receipt,
   Wallet,
-  X,
   ChevronRight,
   Store,
   Info,
@@ -12,16 +11,8 @@ import {
   Calculator,
   Banknote,
   Zap,
-  Fuel,
-  Users as UsersIcon,
-  Truck,
-  Wrench,
-  Smartphone,
-  FileText,
-  HelpCircle,
   Shield,
   UserCircle,
-  Clock,
   Cloud,
   RefreshCw,
   LogOut,
@@ -39,7 +30,7 @@ import {
   Trash2,
   AlertTriangle,
 } from 'lucide-react-native';
-import { useRetailStore, formatNaira, expenseCategories } from '@/store/retailStore';
+import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
@@ -60,21 +51,15 @@ import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import ExpenseModal from '@/components/ExpenseModal';
+import CashSessionModal from '@/components/CashSessionModal';
+import ExpensesListModal from '@/components/ExpensesListModal';
+import PriceCalculatorModal from '@/components/PriceCalculatorModal';
+import RecoveryCodeModal from '@/components/RecoveryCodeModal';
+import PinModal from '@/components/PinModal';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-
-const expenseIcons: Record<string, React.ReactNode> = {
-  'Rent': <Store size={18} color="#e05e1b" />,
-  'Electricity (NEPA)': <Zap size={18} color="#eab308" />,
-  'Generator Fuel': <Fuel size={18} color="#ef4444" />,
-  'Staff Salary': <UsersIcon size={18} color="#3b82f6" />,
-  'Transport': <Truck size={18} color="#8b5cf6" />,
-  'Shop Supplies': <Receipt size={18} color="#10b981" />,
-  'Repairs': <Wrench size={18} color="#f59e0b" />,
-  'Phone/Data': <Smartphone size={18} color="#06b6d4" />,
-  'Taxes/Levy': <FileText size={18} color="#64748b" />,
-  'Other': <HelpCircle size={18} color="#78716c" />,
-};
 
 export default function MoreScreen() {
   const insets = useSafeAreaInsets();
@@ -86,22 +71,21 @@ export default function MoreScreen() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [cashAmount, setCashAmount] = useState('');
-  const [closingNote, setClosingNote] = useState('');
 
   const [isPrintingTest, setIsPrintingTest] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [upsellFeature, setUpsellFeature] = useState<string>('cloud_sync');
 
-  // Custom alert/confirm modals (replacing Alert.alert)
-  const [infoModal, setInfoModal] = useState<{
-    title: string;
-    message: string;
-    type: 'success' | 'error' | 'warning';
-  } | null>(null);
-  const [showCloudSignOutConfirm, setShowCloudSignOutConfirm] = useState(false);
+  // Dialog states
+  const [showPrintError, setShowPrintError] = useState(false);
+  const [showExportError, setShowExportError] = useState(false);
+  const [showExportComplete, setShowExportComplete] = useState(false);
+  const [showCloudSignOut, setShowCloudSignOut] = useState(false);
+  const [showMissingNumber, setShowMissingNumber] = useState(false);
+  const [showNoLowStock, setShowNoLowStock] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showResetFinal, setShowResetFinal] = useState(false);
+  const [showPinSuccess, setShowPinSuccess] = useState(false);
 
   // Subscription
   const subscriptionPlan = useSubscriptionStore((s) => s.plan);
@@ -126,18 +110,6 @@ export default function MoreScreen() {
   const currentLanguage = useLanguageStore((s) => s.language);
   const currentLanguageName = LANGUAGES.find((l) => l.code === currentLanguage)?.nativeName || 'English';
 
-  // Calculator state
-  const [costPrice, setCostPrice] = useState('');
-  const [sellingPrice, setSellingPrice] = useState('');
-  const [targetMargin, setTargetMargin] = useState('20');
-
-  // Expense form
-  const [expenseForm, setExpenseForm] = useState({
-    category: 'Other',
-    description: '',
-    amount: '',
-    paymentMethod: 'cash' as 'cash' | 'transfer' | 'pos',
-  });
 
   const router = useRouter();
   const lockApp = useAuthStore((s) => s.lock);
@@ -148,11 +120,6 @@ export default function MoreScreen() {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [displayRecoveryCode, setDisplayRecoveryCode] = useState<string | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [pinStep, setPinStep] = useState<'current' | 'new' | 'confirm'>('new');
-  const [newPinEntry, setNewPinEntry] = useState('');
-  const [confirmPinEntry, setConfirmPinEntry] = useState('');
-  const [currentPinEntry, setCurrentPinEntry] = useState('');
-  const [pinError, setPinError] = useState('');
   const cloudAuth = useCloudAuthStore();
   const shopInfo = useOnboardingStore((s) => s.shopInfo);
   const staffMembers = useStaffStore((s) => s.staff);
@@ -179,11 +146,8 @@ export default function MoreScreen() {
   const allCashSessions = useRetailStore((s) => s.cashSessions);
   const stockMovements = useRetailStore((s) => s.stockMovements);
   const expenses = useRetailStore((s) => s.expenses);
-  const addExpense = useRetailStore((s) => s.addExpense);
   const getExpensesToday = useRetailStore((s) => s.getExpensesToday);
   const currentCashSession = useRetailStore((s) => s.currentCashSession);
-  const openCashSession = useRetailStore((s) => s.openCashSession);
-  const closeCashSession = useRetailStore((s) => s.closeCashSession);
   const getExpectedCash = useRetailStore((s) => s.getExpectedCash);
 
   // Inventory Alerts
@@ -201,23 +165,6 @@ export default function MoreScreen() {
   );
   const expectedCash = useMemo(() => getExpectedCash(), [getExpectedCash, currentCashSession]);
 
-  // Calculator logic
-  const calculatedMargin = useMemo(() => {
-    const cost = parseFloat(costPrice) || 0;
-    const sell = parseFloat(sellingPrice) || 0;
-    if (cost === 0 || sell === 0) return null;
-    const profit = sell - cost;
-    const margin = (profit / sell) * 100;
-    return { profit, margin };
-  }, [costPrice, sellingPrice]);
-
-  const suggestedPrice = useMemo(() => {
-    const cost = parseFloat(costPrice) || 0;
-    const margin = parseFloat(targetMargin) || 20;
-    if (cost === 0) return null;
-    return cost / (1 - margin / 100);
-  }, [costPrice, targetMargin]);
-
   const handleTestPrint = useCallback(async () => {
     if (!shopInfo) return;
     setIsPrintingTest(true);
@@ -225,51 +172,12 @@ export default function MoreScreen() {
       await printTestReceipt(shopInfo, paperSize);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      // Test print failed — Alert shown below
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setInfoModal({ title: 'Print Error', message: 'Could not print test receipt. Please try again.', type: 'error' });
+      setShowPrintError(true);
     } finally {
       setIsPrintingTest(false);
     }
   }, [shopInfo, paperSize]);
-
-  const handleAddExpense = useCallback(() => {
-    if (!expenseForm.amount) return;
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    addExpense({
-      category: expenseForm.category,
-      description: expenseForm.description.trim() || expenseForm.category,
-      amount: parseFloat(expenseForm.amount) || 0,
-      paymentMethod: expenseForm.paymentMethod,
-    });
-
-    setExpenseForm({
-      category: 'Other',
-      description: '',
-      amount: '',
-      paymentMethod: 'cash',
-    });
-    setShowExpenseModal(false);
-  }, [expenseForm, addExpense]);
-
-  const handleCashSession = useCallback(() => {
-    const amount = parseFloat(cashAmount) || 0;
-
-    if (currentCashSession) {
-      // Closing
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      closeCashSession(amount, closingNote || undefined);
-    } else {
-      // Opening
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      openCashSession(amount);
-    }
-
-    setCashAmount('');
-    setClosingNote('');
-    setShowCashModal(false);
-  }, [cashAmount, closingNote, currentCashSession, openCashSession, closeCashSession]);
 
   const handleExportData = useCallback(async () => {
     try {
@@ -319,14 +227,13 @@ export default function MoreScreen() {
             UTI: 'public.json',
           });
         } else {
-          setInfoModal({ title: 'Export Complete', message: 'Backup file saved but sharing is not available on this device.', type: 'success' });
+          setShowExportComplete(true);
         }
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      setInfoModal({ title: 'Export Failed', message: 'Could not export data. Please try again.', type: 'error' });
-      // Export failed — Alert shown above
+      setShowExportError(true);
     } finally {
       setIsExporting(false);
     }
@@ -347,18 +254,22 @@ export default function MoreScreen() {
   }, [cloudAuth.shopId, isSyncing]);
 
   const handleCloudSignOut = useCallback(() => {
-    setShowCloudSignOutConfirm(true);
+    setShowCloudSignOut(true);
   }, []);
+
+  const confirmCloudSignOut = useCallback(() => {
+    cloudAuth.signOut();
+  }, [cloudAuth]);
 
   const handleSendAlertNow = useCallback(async () => {
     if (!alertPhoneNumber) {
-      setInfoModal({ title: 'Missing Number', message: 'Please enter a WhatsApp number first.', type: 'warning' });
+      setShowMissingNumber(true);
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const sent = await checkAndSendLowStockAlerts(alertPhoneNumber);
     if (!sent) {
-      setInfoModal({ title: 'No Low Stock', message: 'All products are above their low stock threshold.', type: 'success' });
+      setShowNoLowStock(true);
     }
   }, [alertPhoneNumber]);
 
@@ -1080,11 +991,6 @@ export default function MoreScreen() {
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setPinError('');
-                  setNewPinEntry('');
-                  setConfirmPinEntry('');
-                  setCurrentPinEntry('');
-                  setPinStep(currentPin ? 'current' : 'new');
                   setShowPinModal(true);
                 }}
                 className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
@@ -1190,366 +1096,10 @@ export default function MoreScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Add Expense Modal */}
-      <Modal
-        visible={showExpenseModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowExpenseModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 bg-black/60"
-            onPress={() => setShowExpenseModal(false)}
-          />
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="p-6">
-                <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Add Expense</Text>
-                  <Pressable onPress={() => setShowExpenseModal(false)}>
-                    <X size={24} color="#78716c" />
-                  </Pressable>
-                </View>
-
-                <View className="gap-4">
-                  <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
-                      {expenseCategories.map((cat) => (
-                        <Pressable
-                          key={cat}
-                          onPress={() => setExpenseForm({ ...expenseForm, category: cat })}
-                          className={`mr-2 px-3 py-2 rounded-lg border flex-row items-center gap-2 ${
-                            expenseForm.category === cat
-                              ? 'bg-orange-500/20 border-orange-500'
-                              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
-                          }`}
-                        >
-                          {expenseIcons[cat]}
-                          <Text className={expenseForm.category === cat ? 'text-orange-400 font-medium' : 'text-stone-600 dark:text-stone-400'}>
-                            {cat}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  </View>
-
-                  <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Amount (₦) *</Text>
-                    <TextInput
-                      style={{ fontFamily: 'Poppins-Bold' }}
-                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                      placeholder="₦0"
-                      placeholderTextColor="#57534e"
-                      keyboardType="numeric"
-                      value={expenseForm.amount}
-                      onChangeText={(text) => setExpenseForm({ ...expenseForm, amount: text })}
-                    />
-                  </View>
-
-                  <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Description (Optional)</Text>
-                    <TextInput
-                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-                      placeholder="e.g. Diesel for generator"
-                      placeholderTextColor="#57534e"
-                      value={expenseForm.description}
-                      onChangeText={(text) => setExpenseForm({ ...expenseForm, description: text })}
-                    />
-                  </View>
-
-                  <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Paid With</Text>
-                    <View className="flex-row gap-2">
-                      {(['cash', 'transfer', 'pos'] as const).map((method) => (
-                        <Pressable
-                          key={method}
-                          onPress={() => setExpenseForm({ ...expenseForm, paymentMethod: method })}
-                          className={`flex-1 py-3 rounded-lg border ${
-                            expenseForm.paymentMethod === method
-                              ? 'bg-orange-500/20 border-orange-500'
-                              : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'
-                          }`}
-                        >
-                          <Text className={`text-center font-medium capitalize ${
-                            expenseForm.paymentMethod === method ? 'text-orange-400' : 'text-stone-600 dark:text-stone-400'
-                          }`}>
-                            {method}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-
-                  <Pressable
-                    onPress={handleAddExpense}
-                    accessibilityRole="button"
-                    className="bg-red-500 py-4 rounded-xl active:opacity-90 mt-2"
-                  >
-                    <Text className="text-white font-semibold text-center text-lg">Record Expense</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Cash Session Modal */}
-      <Modal
-        visible={showCashModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCashModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 bg-black/60"
-            onPress={() => setShowCashModal(false)}
-          />
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
-            <View className="p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-stone-900 dark:text-white text-xl font-bold">
-                  {currentCashSession ? 'Close Cash Register' : 'Open Cash Register'}
-                </Text>
-                <Pressable onPress={() => setShowCashModal(false)}>
-                  <X size={24} color="#78716c" />
-                </Pressable>
-              </View>
-
-              {currentCashSession && (
-                <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-stone-500 dark:text-stone-400">Opening Cash</Text>
-                    <Text className="text-stone-900 dark:text-white font-medium">{formatNaira(currentCashSession.openingCash)}</Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-stone-500 dark:text-stone-400">Expected Cash</Text>
-                    <Text className="text-emerald-400 font-bold">{formatNaira(expectedCash)}</Text>
-                  </View>
-                </View>
-              )}
-
-              <View className="gap-4">
-                <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">
-                    {currentCashSession ? 'Count Your Cash (₦)' : 'Opening Cash (₦)'}
-                  </Text>
-                  <TextInput
-                    style={{ fontFamily: 'Poppins-Bold' }}
-                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                    placeholder="₦0"
-                    placeholderTextColor="#57534e"
-                    keyboardType="numeric"
-                    value={cashAmount}
-                    onChangeText={setCashAmount}
-                    autoFocus
-                  />
-                </View>
-
-                {currentCashSession && (
-                  <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
-                    <TextInput
-                      className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
-                      placeholder="e.g. Short by 500 - gave change"
-                      placeholderTextColor="#57534e"
-                      value={closingNote}
-                      onChangeText={setClosingNote}
-                    />
-                  </View>
-                )}
-
-                <Pressable
-                  onPress={handleCashSession}
-                  accessibilityRole="button"
-                  className={`py-4 rounded-xl active:opacity-90 ${
-                    currentCashSession ? 'bg-red-500' : 'bg-emerald-500'
-                  }`}
-                >
-                  <Text className="text-white font-semibold text-center text-lg">
-                    {currentCashSession ? 'Close Register' : 'Open Register'}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Expenses List Modal */}
-      <Modal
-        visible={showExpensesListModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowExpensesListModal(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60"
-          onPress={() => setShowExpensesListModal(false)}
-        />
-        <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 20 }}>
-          <View className="p-6">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-stone-900 dark:text-white text-xl font-bold">Today's Expenses</Text>
-              <Pressable onPress={() => setShowExpensesListModal(false)}>
-                <X size={24} color="#78716c" />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {todayExpenses.length === 0 ? (
-                <EmptyState
-                  icon={Receipt}
-                  title="No expenses today"
-                  description="Tap 'Add Expense' to record your first expense for today"
-                  buttonLabel="Add Expense"
-                  onButtonPress={() => {
-                    setShowExpensesListModal(false);
-                    setShowExpenseModal(true);
-                  }}
-                />
-              ) : (
-                <View className="gap-2">
-                  {todayExpenses.map((expense) => (
-                    <View
-                      key={expense.id}
-                      className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 flex-row items-center"
-                    >
-                      <View className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">
-                        {expenseIcons[expense.category] || expenseIcons['Other']}
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-stone-900 dark:text-white font-medium">{expense.description}</Text>
-                        <Text className="text-stone-500 text-xs">
-                          {expense.category} • {expense.paymentMethod}
-                        </Text>
-                      </View>
-                      <Text className="text-red-400 font-bold">{formatNaira(expense.amount)}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Price Calculator Modal */}
-      <Modal
-        visible={showCalculatorModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCalculatorModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 bg-black/60"
-            onPress={() => setShowCalculatorModal(false)}
-          />
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="p-6">
-                <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-stone-900 dark:text-white text-xl font-bold">Price Calculator</Text>
-                  <Pressable onPress={() => setShowCalculatorModal(false)}>
-                    <X size={24} color="#78716c" />
-                  </Pressable>
-                </View>
-
-                <View className="gap-4">
-                  {/* Calculate Margin */}
-                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4">
-                    <Text className="text-stone-900 dark:text-white font-medium mb-3">Calculate Profit Margin</Text>
-                    <View className="flex-row gap-3 mb-3">
-                      <View className="flex-1">
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Cost Price</Text>
-                        <TextInput
-                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
-                          placeholder="0"
-                          placeholderTextColor="#57534e"
-                          keyboardType="numeric"
-                          value={costPrice}
-                          onChangeText={setCostPrice}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Selling Price</Text>
-                        <TextInput
-                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
-                          placeholder="0"
-                          placeholderTextColor="#57534e"
-                          keyboardType="numeric"
-                          value={sellingPrice}
-                          onChangeText={setSellingPrice}
-                        />
-                      </View>
-                    </View>
-                    {calculatedMargin && (
-                      <View className="bg-stone-200 dark:bg-stone-800 rounded-lg p-3 flex-row justify-between">
-                        <View>
-                          <Text className="text-stone-500 dark:text-stone-400 text-xs">Profit</Text>
-                          <Text className="text-emerald-400 font-bold">{formatNaira(calculatedMargin.profit)}</Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className="text-stone-500 dark:text-stone-400 text-xs">Margin</Text>
-                          <Text className="text-emerald-400 font-bold">{calculatedMargin.margin.toFixed(1)}%</Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Suggest Price */}
-                  <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4">
-                    <Text className="text-stone-900 dark:text-white font-medium mb-3">Suggest Selling Price</Text>
-                    <View className="flex-row gap-3 mb-3">
-                      <View className="flex-1">
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Cost Price</Text>
-                        <TextInput
-                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
-                          placeholder="0"
-                          placeholderTextColor="#57534e"
-                          keyboardType="numeric"
-                          value={costPrice}
-                          onChangeText={setCostPrice}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs mb-1">Target Margin %</Text>
-                        <TextInput
-                          className="bg-stone-200 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
-                          placeholder="20"
-                          placeholderTextColor="#57534e"
-                          keyboardType="numeric"
-                          value={targetMargin}
-                          onChangeText={setTargetMargin}
-                        />
-                      </View>
-                    </View>
-                    {suggestedPrice && (
-                      <View className="bg-emerald-500/20 rounded-lg p-3 border border-emerald-500/30">
-                        <Text className="text-emerald-400 text-xs mb-1">Suggested Selling Price</Text>
-                        <Text className="text-emerald-400 text-2xl font-bold">{formatNaira(Math.ceil(suggestedPrice / 10) * 10)}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ExpenseModal visible={showExpenseModal} onClose={() => setShowExpenseModal(false)} />
+      <CashSessionModal visible={showCashModal} onClose={() => setShowCashModal(false)} />
+      <ExpensesListModal visible={showExpensesListModal} onClose={() => setShowExpensesListModal(false)} />
+      <PriceCalculatorModal visible={showCalculatorModal} onClose={() => setShowCalculatorModal(false)} />
 
       <PremiumUpsell
         visible={showUpsell}
@@ -1558,369 +1108,121 @@ export default function MoreScreen() {
         featureDescription={FEATURE_DESCRIPTIONS[upsellFeature]?.description || 'This feature requires the Business plan.'}
       />
 
-      {/* Recovery Code Modal */}
-      <Modal visible={showRecoveryModal} transparent animationType="slide" onRequestClose={() => setShowRecoveryModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-          <Pressable className="flex-1 bg-black/60" onPress={() => setShowRecoveryModal(false)} />
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
-            <View className="p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-stone-900 dark:text-white text-xl font-bold">Recovery Code</Text>
-                <Pressable onPress={() => setShowRecoveryModal(false)}>
-                  <X size={24} color="#78716c" />
-                </Pressable>
-              </View>
+      <RecoveryCodeModal visible={showRecoveryModal} onClose={() => setShowRecoveryModal(false)} recoveryCode={displayRecoveryCode} />
+      <PinModal visible={showPinModal} onClose={() => setShowPinModal(false)} onSuccess={() => setShowPinSuccess(true)} />
 
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-4">
-                Use this code to reset your PIN if you forget it. Keep it safe!
-              </Text>
+      {/* Print Error Dialog */}
+      <ConfirmDialog
+        visible={showPrintError}
+        onClose={() => setShowPrintError(false)}
+        title="Print Error"
+        message="Could not print test receipt. Please try again."
+        variant="warning"
+        showCancel={false}
+      />
 
-              {/* Code Display */}
-              <View className="bg-stone-100 dark:bg-stone-800 border-2 border-dashed border-orange-500/50 rounded-2xl py-6 px-10 mb-6">
-                <Text className="text-orange-500 text-3xl font-bold tracking-[8px] text-center">
-                  {displayRecoveryCode}
-                </Text>
-              </View>
+      {/* Export Complete Dialog */}
+      <ConfirmDialog
+        visible={showExportComplete}
+        onClose={() => setShowExportComplete(false)}
+        title="Export Complete"
+        message="Backup file saved but sharing is not available on this device."
+        variant="success"
+        showCancel={false}
+      />
 
-              {/* Save to WhatsApp */}
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  const message = `🔐 Oja POS Recovery Code: ${displayRecoveryCode}\n\nKeep this message safe! You'll need this code if you forget your PIN.\n\nDo NOT share this code with anyone.`;
-                  const encoded = encodeURIComponent(message);
-                  if (Platform.OS === 'web') {
-                    window.open(`https://wa.me/?text=${encoded}`, '_blank');
-                  } else {
-                    Linking.openURL(`https://wa.me/?text=${encoded}`).catch(() => {
-                      Linking.openURL(`whatsapp://send?text=${encoded}`).catch(() => {});
-                    });
-                  }
-                }}
-                accessibilityRole="button"
-                className="bg-emerald-500 py-4 rounded-xl active:opacity-90 mb-3"
-              >
-                <Text className="text-white font-semibold text-center text-lg">Send to WhatsApp</Text>
-              </Pressable>
+      {/* Export Error Dialog */}
+      <ConfirmDialog
+        visible={showExportError}
+        onClose={() => setShowExportError(false)}
+        title="Export Failed"
+        message="Could not export data. Please try again."
+        variant="warning"
+        showCancel={false}
+      />
 
-              <Pressable
-                onPress={() => setShowRecoveryModal(false)}
-                accessibilityRole="button"
-                className="py-3"
-              >
-                <Text className="text-stone-500 text-center font-medium">Done</Text>
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      {/* Cloud Sign Out Confirmation */}
+      <ConfirmDialog
+        visible={showCloudSignOut}
+        onClose={() => setShowCloudSignOut(false)}
+        title="Sign Out"
+        message="You will stop syncing data to the cloud. Your local data is safe."
+        variant="destructive"
+        confirmLabel="Sign Out"
+        onConfirm={confirmCloudSignOut}
+      />
 
-      {/* Set/Change PIN Modal */}
-      <Modal visible={showPinModal} transparent animationType="slide" onRequestClose={() => setShowPinModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-          <Pressable className="flex-1 bg-black/60" onPress={() => setShowPinModal(false)} />
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
-            <View className="p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-stone-900 dark:text-white text-xl font-bold">
-                  {currentPin ? 'Change PIN' : 'Set PIN'}
-                </Text>
-                <Pressable onPress={() => setShowPinModal(false)}>
-                  <X size={24} color="#78716c" />
-                </Pressable>
-              </View>
+      {/* Missing WhatsApp Number */}
+      <ConfirmDialog
+        visible={showMissingNumber}
+        onClose={() => setShowMissingNumber(false)}
+        title="Missing Number"
+        message="Please enter a WhatsApp number first."
+        variant="warning"
+        showCancel={false}
+      />
 
-              {pinStep === 'current' && (
-                <View className="gap-4">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm">Enter your current PIN</Text>
-                  <TextInput
-                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
-                    placeholder="• • • •"
-                    placeholderTextColor="#57534e"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
-                    value={currentPinEntry}
-                    onChangeText={setCurrentPinEntry}
-                    autoFocus
-                  />
-                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
-                  <Pressable
-                    onPress={() => {
-                      if (currentPinEntry !== currentPin) {
-                        setPinError('Wrong PIN');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                        return;
-                      }
-                      setPinError('');
-                      setPinStep('new');
-                    }}
-                    accessibilityRole="button"
-                    className="bg-orange-500 py-4 rounded-xl active:opacity-90"
-                  >
-                    <Text className="text-white font-semibold text-center text-lg">Continue</Text>
-                  </Pressable>
-                </View>
-              )}
+      {/* No Low Stock */}
+      <ConfirmDialog
+        visible={showNoLowStock}
+        onClose={() => setShowNoLowStock(false)}
+        title="No Low Stock"
+        message="All products are above their low stock threshold."
+        variant="success"
+        showCancel={false}
+      />
 
-              {pinStep === 'new' && (
-                <View className="gap-4">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm">
-                    {currentPin ? 'Enter your new 4-digit PIN' : 'Choose a 4-digit PIN to protect your app'}
-                  </Text>
-                  <TextInput
-                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
-                    placeholder="• • • •"
-                    placeholderTextColor="#57534e"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
-                    value={newPinEntry}
-                    onChangeText={setNewPinEntry}
-                    autoFocus
-                  />
-                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
-                  <Pressable
-                    onPress={() => {
-                      if (newPinEntry.length !== 4) {
-                        setPinError('PIN must be 4 digits');
-                        return;
-                      }
-                      setPinError('');
-                      setPinStep('confirm');
-                    }}
-                    accessibilityRole="button"
-                    className="bg-orange-500 py-4 rounded-xl active:opacity-90"
-                  >
-                    <Text className="text-white font-semibold text-center text-lg">Continue</Text>
-                  </Pressable>
-                </View>
-              )}
-
-              {pinStep === 'confirm' && (
-                <View className="gap-4">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm">Confirm your PIN</Text>
-                  <TextInput
-                    className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold tracking-[12px]"
-                    placeholder="• • • •"
-                    placeholderTextColor="#57534e"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
-                    value={confirmPinEntry}
-                    onChangeText={setConfirmPinEntry}
-                    autoFocus
-                  />
-                  {pinError ? <Text className="text-red-400 text-sm text-center">{pinError}</Text> : null}
-                  <Pressable
-                    onPress={() => {
-                      if (confirmPinEntry !== newPinEntry) {
-                        setPinError('PINs don\'t match');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                        return;
-                      }
-                      setPin(newPinEntry);
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      setShowPinModal(false);
-                      setInfoModal({ title: 'PIN Set', message: "Your app is now protected. You'll need this PIN every time you open Oja POS.", type: 'success' });
-                    }}
-                    accessibilityRole="button"
-                    className="bg-emerald-500 py-4 rounded-xl active:opacity-90"
-                  >
-                    <Text className="text-white font-semibold text-center text-lg">
-                      {currentPin ? 'Update PIN' : 'Set PIN'}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Info/Alert Modal (replaces Alert.alert for simple messages) */}
-      <Modal
-        visible={!!infoModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setInfoModal(null)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60 items-center justify-center px-8"
-          onPress={() => setInfoModal(null)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
-              <View className={`w-14 h-14 rounded-full items-center justify-center mb-4 ${
-                infoModal?.type === 'success' ? 'bg-emerald-500/20' :
-                infoModal?.type === 'error' ? 'bg-red-500/20' : 'bg-amber-500/20'
-              }`}>
-                {infoModal?.type === 'success' ? (
-                  <CheckCircle2 size={28} color="#10b981" />
-                ) : infoModal?.type === 'error' ? (
-                  <AlertTriangle size={28} color="#ef4444" />
-                ) : (
-                  <AlertTriangle size={28} color="#f59e0b" />
-                )}
-              </View>
-              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">{infoModal?.title}</Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">{infoModal?.message}</Text>
-              <Pressable
-                onPress={() => setInfoModal(null)}
-                accessibilityRole="button"
-                className="bg-orange-500 w-full py-3.5 rounded-xl active:opacity-90"
-              >
-                <Text className="text-white font-semibold text-center">OK</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Cloud Sign Out Confirmation Modal */}
-      <Modal
-        visible={showCloudSignOutConfirm}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCloudSignOutConfirm(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60 items-center justify-center px-8"
-          onPress={() => setShowCloudSignOutConfirm(false)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
-              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
-                <LogOut size={28} color="#ef4444" />
-              </View>
-              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Sign Out</Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
-                You will stop syncing data to the cloud. Your local data is safe.
-              </Text>
-              <View className="flex-row gap-3 w-full">
-                <Pressable
-                  onPress={() => setShowCloudSignOutConfirm(false)}
-                  accessibilityRole="button"
-                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    cloudAuth.signOut();
-                    setShowCloudSignOutConfirm(false);
-                  }}
-                  accessibilityRole="button"
-                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-white font-semibold text-center">Sign Out</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Reset Data — Step 1 Confirmation */}
-      <Modal
+      {/* Reset All Data - Step 1 */}
+      <ConfirmDialog
         visible={showResetConfirm}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowResetConfirm(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60 items-center justify-center px-8"
-          onPress={() => setShowResetConfirm(false)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
-              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
-                <Trash2 size={28} color="#ef4444" />
-              </View>
-              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Reset All Data</Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
-                This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone.
-              </Text>
-              <View className="flex-row gap-3 w-full">
-                <Pressable
-                  onPress={() => setShowResetConfirm(false)}
-                  accessibilityRole="button"
-                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setShowResetConfirm(false);
-                    setShowResetFinal(true);
-                  }}
-                  accessibilityRole="button"
-                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-white font-semibold text-center">Reset Everything</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setShowResetConfirm(false)}
+        title="Reset All Data"
+        message="This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone."
+        variant="destructive"
+        confirmLabel="Reset Everything"
+        onConfirm={() => {
+          setShowResetConfirm(false);
+          setTimeout(() => setShowResetFinal(true), 300);
+        }}
+      />
 
-      {/* Reset Data — Step 2 Final Confirmation */}
-      <Modal
+      {/* Reset All Data - Step 2 (Final) */}
+      <ConfirmDialog
         visible={showResetFinal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowResetFinal(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60 items-center justify-center px-8"
-          onPress={() => setShowResetFinal(false)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
-              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
-                <AlertTriangle size={28} color="#ef4444" />
-              </View>
-              <Text className="text-red-500 text-lg font-bold mb-2">Final Confirmation</Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
-                Last chance. All data will be erased and the app will restart from scratch.
-              </Text>
-              <View className="flex-row gap-3 w-full">
-                <Pressable
-                  onPress={() => setShowResetFinal(false)}
-                  accessibilityRole="button"
-                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
-                </Pressable>
-                <Pressable
-                  onPress={async () => {
-                    const storeKeys = [
-                      'retail-store', 'oja-staff-storage', 'auth-store',
-                      'catalog-store', 'onboarding-store', 'oja-payroll-storage',
-                      'printer-store', 'subscription-store', 'cloud-auth-store',
-                      'oja-language', 'oja-theme', 'update-store',
-                    ];
-                    if (typeof window !== 'undefined' && window.localStorage) {
-                      storeKeys.forEach((key) => window.localStorage.removeItem(key));
-                    }
-                    try {
-                      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-                      await AsyncStorage.multiRemove(storeKeys);
-                    } catch {}
-                    if (typeof window !== 'undefined') {
-                      window.location.href = '/';
-                    }
-                  }}
-                  accessibilityRole="button"
-                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-white font-semibold text-center">Yes, Delete All</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setShowResetFinal(false)}
+        title="Final Confirmation"
+        message="Last chance. All data will be erased and the app will restart from scratch."
+        variant="destructive"
+        confirmLabel="Yes, Delete All"
+        onConfirm={async () => {
+          const storeKeys = [
+            'retail-store', 'oja-staff-storage', 'auth-store',
+            'catalog-store', 'onboarding-store', 'oja-payroll-storage',
+            'printer-store', 'subscription-store', 'cloud-auth-store',
+            'oja-language', 'oja-theme', 'update-store',
+          ];
+          if (typeof window !== 'undefined' && window.localStorage) {
+            storeKeys.forEach((key) => window.localStorage.removeItem(key));
+          }
+          try {
+            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+            await AsyncStorage.multiRemove(storeKeys);
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+        }}
+      />
+
+      {/* PIN Set Success */}
+      <ConfirmDialog
+        visible={showPinSuccess}
+        onClose={() => setShowPinSuccess(false)}
+        title="PIN Set"
+        message="Your app is now protected. You'll need this PIN every time you open Oja POS."
+        variant="success"
+        showCancel={false}
+      />
     </View>
   );
 }

@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 
@@ -95,14 +97,13 @@ export default function ProductEditScreen() {
 
   const handleDelete = useCallback(() => {
     if (!product) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setShowDeleteConfirm(true);
   }, [product]);
 
   const confirmDelete = useCallback(() => {
     if (!product) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     deleteProduct(product.id);
-    setShowDeleteConfirm(false);
     router.back();
   }, [product, deleteProduct, router]);
 
@@ -125,10 +126,7 @@ export default function ProductEditScreen() {
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }}>
         {/* Header */}
         <View
           style={{ paddingTop: insets.top + 8 }}
@@ -360,44 +358,16 @@ export default function ProductEditScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
+      {/* Delete Product Confirmation */}
+      <ConfirmDialog
         visible={showDeleteConfirm}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDeleteConfirm(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/60 items-center justify-center px-8"
-          onPress={() => setShowDeleteConfirm(false)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
-              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
-                <Trash2 size={28} color="#ef4444" />
-              </View>
-              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Delete Product?</Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
-                Are you sure you want to delete "{product?.name}"? This cannot be undone.
-              </Text>
-              <View className="flex-row gap-3 w-full">
-                <Pressable
-                  onPress={() => setShowDeleteConfirm(false)}
-                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
-                </Pressable>
-                <Pressable
-                  onPress={confirmDelete}
-                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
-                >
-                  <Text className="text-white font-semibold text-center">Delete</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Product"
+        message={product ? `Are you sure you want to delete "${product.name}"? This cannot be undone.` : ''}
+        variant="destructive"
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+      />
     </View>
   );
 }

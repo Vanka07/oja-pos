@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -21,6 +22,7 @@ import PremiumUpsell from '@/components/PremiumUpsell';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics';
@@ -54,6 +56,8 @@ export default function StaffScreen() {
   const [formPhone, setFormPhone] = useState('');
   const [formPin, setFormPin] = useState('');
   const [formRole, setFormRole] = useState<StaffRole>('cashier');
+  const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
+  const [pinErrorDialog, setPinErrorDialog] = useState(false);
 
   const staff = useStaffStore((s) => s.staff);
   const currentStaff = useStaffStore((s) => s.currentStaff);
@@ -87,7 +91,7 @@ export default function StaffScreen() {
     if (needsPin) {
       const pinExists = staff.some((s) => s.pin === formPin && s.pin !== '');
       if (pinExists) {
-        Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN. Choose a different one.');
+        setPinErrorDialog(true);
         return;
       }
     }
@@ -113,7 +117,7 @@ export default function StaffScreen() {
     if (needsPin && formPin.length === 4) {
       const pinExists = staff.some((s) => s.pin === formPin && s.pin !== '' && s.id !== editingStaff.id);
       if (pinExists) {
-        Alert.alert('Duplicate PIN', 'Another staff member already uses this PIN.');
+        setPinErrorDialog(true);
         return;
       }
     }
@@ -145,22 +149,15 @@ export default function StaffScreen() {
   }, []);
 
   const handleDeleteStaff = useCallback((member: StaffMember) => {
-    Alert.alert(
-      'Remove Staff',
-      `Are you sure you want to remove ${member.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            removeStaff(member.id);
-          },
-        },
-      ]
-    );
-  }, [removeStaff]);
+    setDeletingStaff(member);
+  }, []);
+
+  const confirmDeleteStaff = useCallback(() => {
+    if (!deletingStaff) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    removeStaff(deletingStaff.id);
+    setDeletingStaff(null);
+  }, [deletingStaff, removeStaff]);
 
   const toggleActive = useCallback((member: StaffMember) => {
     updateStaff(member.id, { active: !member.active });
@@ -506,10 +503,7 @@ export default function StaffScreen() {
         animationType="slide"
         onRequestClose={() => setShowAddModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -548,10 +542,7 @@ export default function StaffScreen() {
         animationType="slide"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowEditModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -568,6 +559,27 @@ export default function StaffScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Delete Staff Confirmation */}
+      <ConfirmDialog
+        visible={!!deletingStaff}
+        onClose={() => setDeletingStaff(null)}
+        title="Remove Staff"
+        message={deletingStaff ? `Are you sure you want to remove ${deletingStaff.name}?` : ''}
+        variant="destructive"
+        confirmLabel="Remove"
+        onConfirm={confirmDeleteStaff}
+      />
+
+      {/* Duplicate PIN Error */}
+      <ConfirmDialog
+        visible={pinErrorDialog}
+        onClose={() => setPinErrorDialog(false)}
+        title="Duplicate PIN"
+        message="Another staff member already uses this PIN. Choose a different one."
+        variant="warning"
+        showCancel={false}
+      />
     </View>
   );
 }

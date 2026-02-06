@@ -1,4 +1,6 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, RefreshControl, FlatList } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform, Linking, Share } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,6 +32,7 @@ import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { getCreditRisk, getCreditSummary, generateReminderMessage, wasRemindedRecently, daysSinceReminder, shouldFreezeCredit, getOverdueCustomers } from '@/lib/creditIntelligence';
 import { useState, useMemo, useCallback } from 'react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
@@ -58,6 +61,9 @@ export default function CreditBookScreen() {
     newBalance: number;
     paymentMethod: string;
   } | null>(null);
+  const [freezeTarget, setFreezeTarget] = useState<Customer | null>(null);
+  const [showReminderCooldown, setShowReminderCooldown] = useState(false);
+  const [reminderCooldownDays, setReminderCooldownDays] = useState(0);
 
   const [refreshing, setRefreshing] = useState(false);
   const [showFreezeConfirm, setShowFreezeConfirm] = useState(false);
@@ -238,9 +244,8 @@ export default function CreditBookScreen() {
   const handleToggleFreeze = useCallback((customer: Customer) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    if (!customer.creditFrozen) {
+    if (newFrozen) {
       setFreezeTarget(customer);
-      setShowFreezeConfirm(true);
     } else {
       freezeCustomerCredit(customer.id, false);
       const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
@@ -253,7 +258,6 @@ export default function CreditBookScreen() {
     freezeCustomerCredit(freezeTarget.id, true);
     const fresh = useRetailStore.getState().customers.find((c) => c.id === freezeTarget.id);
     if (fresh) setSelectedCustomer(fresh);
-    setShowFreezeConfirm(false);
     setFreezeTarget(null);
   }, [freezeTarget, freezeCustomerCredit]);
 
@@ -463,12 +467,13 @@ export default function CreditBookScreen() {
           const hasDebt = customer.currentCredit > 0;
           const isFrozen = customer.creditFrozen;
 
-          return (
-            <View className="px-5 mb-3">
-              <Animated.View
-                entering={FadeIn.delay(Math.min(index * 30, 300)).duration(400)}
-                layout={Layout.springify()}
-              >
+          <View className="gap-3">
+            {filteredCustomers.map((customer, index) => {
+              const risk = getCreditRisk(customer);
+              const hasDebt = customer.currentCredit > 0;
+              const isFrozen = customer.creditFrozen;
+
+              const card = (
                 <Pressable
                   onPress={() => openCustomerDetail(customer)}
                   className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border-l-4 border ${risk.borderColor} active:scale-[0.99]`}
@@ -476,6 +481,7 @@ export default function CreditBookScreen() {
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-3 flex-1">
+                      {/* Avatar */}
                       {(() => {
                         const letter = customer.name.charAt(0).toUpperCase();
                         return (
@@ -503,7 +509,7 @@ export default function CreditBookScreen() {
                     <View className="items-end">
                       {hasDebt ? (
                         <>
-                          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
+                          <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
                           <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
                         </>
                       ) : (
@@ -515,15 +521,64 @@ export default function CreditBookScreen() {
                     <ChevronRight size={20} color="#57534e" className="ml-2" />
                   </View>
                 </Pressable>
-              </Animated.View>
-            </View>
-          );
-        }}
-      />
+              );
+
+              return (
+                <Animated.View
+                  key={customer.id}
+                  entering={FadeIn.delay(100 + index * 30).duration(400)}
+                  layout={Layout.springify()}
+                >
+                  {hasDebt ? (
+                    <ReanimatedSwipeable
+                      friction={2}
+                      overshootRight={false}
+                      containerStyle={{ overflow: 'hidden', borderRadius: 12 }}
+                      renderRightActions={() => (
+                        <View style={{ flexDirection: 'row' }}>
+                          <Pressable
+                            onPress={() => {
+                              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
+                              setSelectedCustomer(fresh || customer);
+                              setShowPaymentModal(true);
+                            }}
+                            style={{ backgroundColor: '#10b981', width: 80, alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Banknote size={22} color="white" />
+                            <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Pay</Text>
+                          </Pressable>
+                          {customer.phone ? (
+                            <Pressable
+                              onPress={() => {
+                                if (wasRemindedRecently(customer)) {
+                                  setReminderCooldownDays(daysSinceReminder(customer) ?? 0);
+                                  setShowReminderCooldown(true);
+                                  return;
+                                }
+                                sendWhatsAppReminder(customer);
+                              }}
+                              style={{ backgroundColor: '#25D366', width: 80, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <MessageCircle size={22} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Remind</Text>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      )}
+                    >
+                      {card}
+                    </ReanimatedSwipeable>
+                  ) : card}
+                </Animated.View>
+              );
+            })}
+          </View>
+        </Animated.View>
+      </ScrollView>
 
       {/* Add Customer Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
@@ -577,7 +632,7 @@ export default function CreditBookScreen() {
 
       {/* Customer Detail Modal */}
       <Modal visible={showCustomerModal} transparent animationType="slide" onRequestClose={() => setShowCustomerModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowCustomerModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[85%]" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -679,8 +734,8 @@ export default function CreditBookScreen() {
                         <Pressable
                           onPress={() => {
                             if (recentlyReminded) {
-                              setReminderInfoDays(reminderDays ?? 0);
-                              setShowReminderInfo(true);
+                              setReminderCooldownDays(reminderDays ?? 0);
+                              setShowReminderCooldown(true);
                               return;
                             }
                             sendWhatsAppReminder(selectedCustomer);
@@ -748,9 +803,30 @@ export default function CreditBookScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Freeze Credit Confirmation */}
+      <ConfirmDialog
+        visible={!!freezeTarget}
+        onClose={() => setFreezeTarget(null)}
+        title="Freeze Credit"
+        message={freezeTarget ? `Stop credit sales to ${freezeTarget.name}? They won't be able to buy on credit until you unfreeze.` : ''}
+        variant="destructive"
+        confirmLabel="Freeze"
+        onConfirm={confirmFreeze}
+      />
+
+      {/* Reminder Cooldown */}
+      <ConfirmDialog
+        visible={showReminderCooldown}
+        onClose={() => setShowReminderCooldown(false)}
+        title="Reminded Recently"
+        message={`Last reminder was ${reminderCooldownDays} day${reminderCooldownDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.`}
+        variant="info"
+        showCancel={false}
+      />
+
       {/* Payment Modal */}
       <Modal visible={showPaymentModal} transparent animationType="slide" onRequestClose={handleClosePaymentModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={handleClosePaymentModal} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">

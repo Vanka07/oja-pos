@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useState, useCallback, useMemo } from 'react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -45,6 +46,7 @@ export default function CategoriesScreen() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
   const [formName, setFormName] = useState('');
   const [formColor, setFormColor] = useState(PRESET_COLORS[0]);
   const [formIcon, setFormIcon] = useState(PRESET_ICONS[0]);
@@ -98,26 +100,15 @@ export default function CategoriesScreen() {
   }, [formName, formColor, formIcon, editingCategory, addCategory, updateCategory]);
 
   const handleDelete = useCallback((category: Category) => {
-    const count = productCounts[category.name] || 0;
+    setDeletingCategory(category);
+  }, []);
 
-    Alert.alert(
-      'Delete Category',
-      count > 0
-        ? `"${category.name}" has ${count} product${count > 1 ? 's' : ''}. Products will keep their category name but it won't appear as a filter. Delete anyway?`
-        : `Delete "${category.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            deleteCategory(category.id);
-          },
-        },
-      ]
-    );
-  }, [deleteCategory, productCounts]);
+  const confirmDelete = useCallback(() => {
+    if (!deletingCategory) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    deleteCategory(deletingCategory.id);
+    setDeletingCategory(null);
+  }, [deletingCategory, deleteCategory]);
 
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
@@ -337,6 +328,23 @@ export default function CategoriesScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        visible={!!deletingCategory}
+        onClose={() => setDeletingCategory(null)}
+        title="Delete Category"
+        message={
+          deletingCategory
+            ? (productCounts[deletingCategory.name] || 0) > 0
+              ? `"${deletingCategory.name}" has ${productCounts[deletingCategory.name]} product${(productCounts[deletingCategory.name] || 0) > 1 ? 's' : ''}. Products will keep their category name but it won't appear as a filter. Delete anyway?`
+              : `Delete "${deletingCategory.name}"?`
+            : ''
+        }
+        variant="destructive"
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+      />
     </View>
   );
 }

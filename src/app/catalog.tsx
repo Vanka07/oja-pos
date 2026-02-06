@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, Linking, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Switch, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { generateCatalogUrl, generateShareMessage } from '@/lib/catalogGenerator';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -43,6 +44,7 @@ export default function CatalogScreen() {
   const products = useRetailStore((s) => s.products);
 
   const [copied, setCopied] = useState(false);
+  const [showEnableFirst, setShowEnableFirst] = useState(false);
 
   // Auto-generate slug from shop name if not set
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function CatalogScreen() {
 
   const handleShare = useCallback(async () => {
     if (!catalogUrl.url) {
-      Alert.alert('Enable Catalog', 'Please enable your online catalog first.');
+      setShowEnableFirst(true);
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -384,6 +386,16 @@ export default function CatalogScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Enable Catalog First */}
+      <ConfirmDialog
+        visible={showEnableFirst}
+        onClose={() => setShowEnableFirst(false)}
+        title="Enable Catalog"
+        message="Please enable your online catalog first."
+        variant="info"
+        showCancel={false}
+      />
     </View>
   );
 }

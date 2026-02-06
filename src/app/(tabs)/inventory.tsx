@@ -1,4 +1,6 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, RefreshControl, FlatList } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -8,7 +10,8 @@ import {
   AlertTriangle,
   X,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Pencil,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -269,15 +272,15 @@ const [showUpsell, setShowUpsell] = useState(false);
             <View className="mx-5 bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState icon={Package} title="Your shelf is empty" description="Add your first product to get started" buttonLabel="Add Product" onButtonPress={() => setShowAddModal(true)} />
             </View>
-          ) : null
-        }
-        renderItem={({ item: product, index }) => {
-          const isLowStock = product.quantity <= product.lowStockThreshold;
-          const profit = product.sellingPrice - product.costPrice;
-          const margin = product.sellingPrice > 0 ? ((profit / product.sellingPrice) * 100).toFixed(0) : '0';
-          return (
-            <View className="px-5 mb-3">
-              <Animated.View entering={FadeIn.delay(Math.min(index * 30, 300)).duration(400)} layout={Layout.springify()}>
+          )}
+          <View className="gap-3">
+            {filteredProducts.map((product, index) => {
+              const isLowStock = product.quantity <= product.lowStockThreshold;
+              const profit = product.sellingPrice - product.costPrice;
+              const margin = product.sellingPrice > 0 ? ((profit / product.sellingPrice) * 100).toFixed(0) : '0';
+              const hasSwipeActions = canEditProduct || canRestock;
+
+              const card = (
                 <Pressable
                   onPress={() => canEditProduct ? openProductEdit(product) : canRestock ? openStockModal(product) : undefined}
                   className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border ${isLowStock ? 'border-amber-500/50' : 'border-stone-200 dark:border-stone-800'} active:scale-[0.99]`}
@@ -312,11 +315,47 @@ const [showUpsell, setShowUpsell] = useState(false);
                     </View>
                   </View>
                 </Pressable>
-              </Animated.View>
-            </View>
-          );
-        }}
-      />
+              );
+
+              return (
+                <Animated.View key={product.id} entering={FadeIn.delay(100 + index * 30).duration(400)} layout={Layout.springify()}>
+                  {hasSwipeActions ? (
+                    <ReanimatedSwipeable
+                      friction={2}
+                      overshootRight={false}
+                      containerStyle={{ overflow: 'hidden', borderRadius: 12 }}
+                      renderRightActions={() => (
+                        <View style={{ flexDirection: 'row' }}>
+                          {canEditProduct && (
+                            <Pressable
+                              onPress={() => openProductEdit(product)}
+                              style={{ backgroundColor: '#e05e1b', width: 72, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Pencil size={20} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Edit</Text>
+                            </Pressable>
+                          )}
+                          {canRestock && (
+                            <Pressable
+                              onPress={() => openStockModal(product)}
+                              style={{ backgroundColor: '#10b981', width: 72, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Package size={20} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Restock</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    >
+                      {card}
+                    </ReanimatedSwipeable>
+                  ) : card}
+                </Animated.View>
+              );
+            })}
+          </View>
+        </Animated.View>
+      </ScrollView>
 
       <PremiumUpsell
         visible={showUpsell}
@@ -327,7 +366,7 @@ const [showUpsell, setShowUpsell] = useState(false);
 
       {/* Add Product Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView className="max-h-[500px]" showsVerticalScrollIndicator={false}>
@@ -387,7 +426,7 @@ const [showUpsell, setShowUpsell] = useState(false);
 
       {/* Stock Adjustment Modal */}
       <Modal visible={showStockModal} transparent animationType="slide" onRequestClose={() => setShowStockModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowStockModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
