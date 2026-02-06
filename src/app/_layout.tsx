@@ -50,9 +50,17 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       const staffState = useStaffStore.getState();
       const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
       
-      // Always lock on app startup if PIN/staff exists
-      if (hasPinOrStaff) {
+      // On web, check if user already authenticated in this browser session
+      // This prevents re-locking on every page refresh
+      const isWeb = Platform.OS === 'web';
+      const sessionAuthenticated = isWeb && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oja_authenticated') === 'true';
+      
+      // Lock on app startup if PIN/staff exists, unless already authenticated this session
+      if (hasPinOrStaff && !sessionAuthenticated) {
         authState.lock();
+      } else if (hasPinOrStaff && sessionAuthenticated) {
+        // User already authenticated this session, keep unlocked
+        authState.unlock();
       }
       setIsReady(true);
       SplashScreen.hideAsync();

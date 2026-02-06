@@ -37,6 +37,10 @@ export const useAuthStore = create<AuthState>()(
           const success = staffStore.switchStaff(pin);
           if (success) {
             set({ isLocked: false });
+            // Mark session as authenticated on web to prevent re-lock on refresh
+            if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('oja_authenticated', 'true');
+            }
             return true;
           }
           return false;
@@ -46,6 +50,10 @@ export const useAuthStore = create<AuthState>()(
         const stored = get().pin;
         if (stored === pin) {
           set({ isLocked: false });
+          // Mark session as authenticated on web to prevent re-lock on refresh
+          if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('oja_authenticated', 'true');
+          }
           return true;
         }
         return false;
@@ -54,6 +62,10 @@ export const useAuthStore = create<AuthState>()(
       lock: () => {
         // Also clear current staff on lock
         useStaffStore.getState().logout();
+        // Clear session authentication on web so next refresh will require PIN
+        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('oja_authenticated');
+        }
         set({ isLocked: true });
       },
 
