@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,7 @@ import { Store, X, RotateCcw } from 'lucide-react-native';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
@@ -33,10 +34,12 @@ export default function ShopProfileScreen() {
   const [ownerName, setOwnerName] = useState(shopInfo?.ownerName || '');
   const [phone, setPhone] = useState(shopInfo?.phone || '');
   const [address, setAddress] = useState(shopInfo?.address || '');
+  const [showRequiredError, setShowRequiredError] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSave = () => {
     if (!name.trim()) {
-      Alert.alert('Required', 'Please enter a shop name');
+      setShowRequiredError(true);
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -51,21 +54,12 @@ export default function ShopProfileScreen() {
   };
 
   const handleReset = () => {
-    Alert.alert(
-      'Reset App',
-      'This will erase all your shop settings and take you back to the setup screen. Your sales and inventory data will remain until you set up again.\n\nAre you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            resetOnboarding();
-          },
-        },
-      ]
-    );
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    resetOnboarding();
   };
 
   return (
@@ -186,6 +180,27 @@ export default function ShopProfileScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Required Field Error */}
+      <ConfirmDialog
+        visible={showRequiredError}
+        onClose={() => setShowRequiredError(false)}
+        title="Required"
+        message="Please enter a shop name."
+        variant="warning"
+        showCancel={false}
+      />
+
+      {/* Reset App Confirmation */}
+      <ConfirmDialog
+        visible={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        title="Reset App"
+        message="This will erase all your shop settings and take you back to the setup screen. Your sales and inventory data will remain until you set up again."
+        variant="destructive"
+        confirmLabel="Reset"
+        onConfirm={confirmReset}
+      />
     </View>
   );
 }

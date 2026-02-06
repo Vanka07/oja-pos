@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,6 +30,7 @@ import { getPlaceholders } from '@/lib/placeholderConfig';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { getCreditRisk, getCreditSummary, generateReminderMessage, wasRemindedRecently, daysSinceReminder, shouldFreezeCredit, getOverdueCustomers } from '@/lib/creditIntelligence';
 import { useState, useMemo, useCallback } from 'react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
@@ -58,6 +59,9 @@ export default function CreditBookScreen() {
     newBalance: number;
     paymentMethod: string;
   } | null>(null);
+  const [freezeTarget, setFreezeTarget] = useState<Customer | null>(null);
+  const [showReminderCooldown, setShowReminderCooldown] = useState(false);
+  const [reminderCooldownDays, setReminderCooldownDays] = useState(0);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -234,28 +238,21 @@ export default function CreditBookScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (newFrozen) {
-      Alert.alert(
-        'Freeze Credit',
-        `Stop credit sales to ${customer.name}? They won't be able to buy on credit until you unfreeze.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Freeze',
-            style: 'destructive',
-            onPress: () => {
-              freezeCustomerCredit(customer.id, true);
-              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
-              if (fresh) setSelectedCustomer(fresh);
-            },
-          },
-        ]
-      );
+      setFreezeTarget(customer);
     } else {
       freezeCustomerCredit(customer.id, false);
       const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
       if (fresh) setSelectedCustomer(fresh);
     }
   }, [freezeCustomerCredit]);
+
+  const confirmFreeze = useCallback(() => {
+    if (!freezeTarget) return;
+    freezeCustomerCredit(freezeTarget.id, true);
+    const fresh = useRetailStore.getState().customers.find((c) => c.id === freezeTarget.id);
+    if (fresh) setSelectedCustomer(fresh);
+    setFreezeTarget(null);
+  }, [freezeTarget, freezeCustomerCredit]);
 
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
@@ -662,7 +659,8 @@ export default function CreditBookScreen() {
                         <Pressable
                           onPress={() => {
                             if (recentlyReminded) {
-                              Alert.alert('Reminded Recently', `Last reminder was ${reminderDays} day${reminderDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.`);
+                              setReminderCooldownDays(reminderDays ?? 0);
+                              setShowReminderCooldown(true);
                               return;
                             }
                             sendWhatsAppReminder(selectedCustomer);
@@ -729,6 +727,27 @@ export default function CreditBookScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Freeze Credit Confirmation */}
+      <ConfirmDialog
+        visible={!!freezeTarget}
+        onClose={() => setFreezeTarget(null)}
+        title="Freeze Credit"
+        message={freezeTarget ? `Stop credit sales to ${freezeTarget.name}? They won't be able to buy on credit until you unfreeze.` : ''}
+        variant="destructive"
+        confirmLabel="Freeze"
+        onConfirm={confirmFreeze}
+      />
+
+      {/* Reminder Cooldown */}
+      <ConfirmDialog
+        visible={showReminderCooldown}
+        onClose={() => setShowReminderCooldown(false)}
+        title="Reminded Recently"
+        message={`Last reminder was ${reminderCooldownDays} day${reminderCooldownDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.`}
+        variant="info"
+        showCancel={false}
+      />
 
       {/* Payment Modal */}
       <Modal visible={showPaymentModal} transparent animationType="slide" onRequestClose={handleClosePaymentModal}>

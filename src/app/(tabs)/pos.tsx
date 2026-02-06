@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,6 +30,7 @@ import { printReceipt } from '@/lib/printerService';
 import { generateReceiptPdf } from '@/lib/receiptPdf';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useColorScheme } from 'nativewind';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight, Layout } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -50,6 +51,7 @@ export default function POSScreen() {
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
   const [showCreditCustomerPicker, setShowCreditCustomerPicker] = useState(false);
+  const [showNoCustomersDialog, setShowNoCustomersDialog] = useState(false);
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
   const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
@@ -154,7 +156,7 @@ export default function POSScreen() {
       // Show customer picker for credit sales
       if (customers.length === 0) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('No Customers', 'Add a customer in the Credit Book first before making a credit sale.');
+        setShowNoCustomersDialog(true);
         return;
       }
       setShowCreditCustomerPicker(true);
@@ -686,6 +688,16 @@ export default function POSScreen() {
         barcode={scannedBarcode}
         onClose={() => setShowBarcodeModal(false)}
         onAddProduct={handleBarcodeAddProduct}
+      />
+
+      {/* No Customers Dialog */}
+      <ConfirmDialog
+        visible={showNoCustomersDialog}
+        onClose={() => setShowNoCustomersDialog(false)}
+        title="No Customers"
+        message="Add a customer in the Credit Book first before making a credit sale."
+        variant="warning"
+        showCancel={false}
       />
 
       {/* Success Modal */}

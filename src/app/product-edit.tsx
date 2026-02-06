@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 
@@ -59,6 +60,7 @@ export default function ProductEditScreen() {
   });
 
   const [stockAdjustment, setStockAdjustment] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const unitOptions = ['pcs', 'pack', 'tin', 'bottle', 'bar', 'bag', 'carton', 'kg', 'litre'];
 
@@ -94,22 +96,14 @@ export default function ProductEditScreen() {
 
   const handleDelete = useCallback(() => {
     if (!product) return;
+    setShowDeleteConfirm(true);
+  }, [product]);
+
+  const confirmDelete = useCallback(() => {
+    if (!product) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteProduct(product.id);
-            router.back();
-          },
-        },
-      ]
-    );
+    deleteProduct(product.id);
+    router.back();
   }, [product, deleteProduct, router]);
 
   if (!product) {
@@ -365,6 +359,17 @@ export default function ProductEditScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Delete Product Confirmation */}
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Product"
+        message={product ? `Are you sure you want to delete "${product.name}"? This cannot be undone.` : ''}
+        variant="destructive"
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+      />
     </View>
   );
 }

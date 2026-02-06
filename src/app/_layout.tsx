@@ -19,6 +19,7 @@ import { View, Appearance, Platform, AppState, AppStateStatus } from 'react-nati
 import LockScreen from './lock';
 import InstallPrompt from '@/components/InstallPrompt';
 import OfflineBar from '@/components/OfflineBar';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -169,7 +170,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   }, [hasCompletedOnboarding, segments, isReady, router]);
 
   if (!isReady) {
-    return <View className="flex-1 bg-stone-50 dark:bg-stone-950" />;
+    return <SkeletonLoader />;
   }
 
   // Show lock screen if any PIN exists (legacy or staff) and app is locked

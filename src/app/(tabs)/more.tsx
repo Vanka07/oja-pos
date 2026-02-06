@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, ActivityIndicator, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -58,6 +58,7 @@ import { syncAll } from '@/lib/syncService';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -90,6 +91,17 @@ export default function MoreScreen() {
   const [isPrintingTest, setIsPrintingTest] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [upsellFeature, setUpsellFeature] = useState<string>('cloud_sync');
+
+  // Dialog states
+  const [showPrintError, setShowPrintError] = useState(false);
+  const [showExportError, setShowExportError] = useState(false);
+  const [showExportComplete, setShowExportComplete] = useState(false);
+  const [showCloudSignOut, setShowCloudSignOut] = useState(false);
+  const [showMissingNumber, setShowMissingNumber] = useState(false);
+  const [showNoLowStock, setShowNoLowStock] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showResetFinal, setShowResetFinal] = useState(false);
+  const [showPinSuccess, setShowPinSuccess] = useState(false);
 
   // Subscription
   const isPremium = useSubscriptionStore((s) => s.isPremium)();
@@ -212,9 +224,8 @@ export default function MoreScreen() {
       await printTestReceipt(shopInfo, paperSize);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      // Test print failed — Alert shown below
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Print Error', 'Could not print test receipt. Please try again.');
+      setShowPrintError(true);
     } finally {
       setIsPrintingTest(false);
     }
@@ -306,14 +317,13 @@ export default function MoreScreen() {
             UTI: 'public.json',
           });
         } else {
-          Alert.alert('Export Complete', 'Backup file saved but sharing is not available on this device.');
+          setShowExportComplete(true);
         }
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      Alert.alert('Export Failed', 'Could not export data. Please try again.');
-      // Export failed — Alert shown above
+      setShowExportError(true);
     } finally {
       setIsExporting(false);
     }
@@ -333,26 +343,23 @@ export default function MoreScreen() {
     }
   }, [cloudAuth.shopId, isSyncing]);
 
-  const handleCloudSignOut = useCallback(async () => {
-    Alert.alert('Sign Out', 'You will stop syncing data to the cloud. Your local data is safe.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => cloudAuth.signOut(),
-      },
-    ]);
+  const handleCloudSignOut = useCallback(() => {
+    setShowCloudSignOut(true);
+  }, []);
+
+  const confirmCloudSignOut = useCallback(() => {
+    cloudAuth.signOut();
   }, [cloudAuth]);
 
   const handleSendAlertNow = useCallback(async () => {
     if (!alertPhoneNumber) {
-      Alert.alert('Missing Number', 'Please enter a WhatsApp number first.');
+      setShowMissingNumber(true);
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const sent = await checkAndSendLowStockAlerts(alertPhoneNumber);
     if (!sent) {
-      Alert.alert('No Low Stock', 'All products are above their low stock threshold.');
+      setShowNoLowStock(true);
     }
   }, [alertPhoneNumber]);
 
@@ -1143,53 +1150,7 @@ export default function MoreScreen() {
               <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Danger Zone</Text>
               <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-red-500/30 overflow-hidden">
                 <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      'Reset All Data',
-                      'This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone.\n\nAre you sure?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Reset Everything',
-                          style: 'destructive',
-                          onPress: () => {
-                            Alert.alert(
-                              'Final Confirmation',
-                              'Last chance. All data will be erased and the app will restart from scratch.',
-                              [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                  text: 'Yes, Delete All',
-                                  style: 'destructive',
-                                  onPress: async () => {
-                                    // Clear all persisted stores
-                                    const storeKeys = [
-                                      'retail-store', 'oja-staff-storage', 'auth-store',
-                                      'catalog-store', 'onboarding-store', 'oja-payroll-storage',
-                                      'printer-store', 'subscription-store', 'cloud-auth-store',
-                                      'oja-language', 'oja-theme', 'update-store',
-                                    ];
-                                    if (typeof window !== 'undefined' && window.localStorage) {
-                                      storeKeys.forEach((key) => window.localStorage.removeItem(key));
-                                    }
-                                    // Also try AsyncStorage keys
-                                    try {
-                                      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-                                      await AsyncStorage.multiRemove(storeKeys);
-                                    } catch {}
-                                    // Reload the app
-                                    if (typeof window !== 'undefined') {
-                                      window.location.href = '/';
-                                    }
-                                  },
-                                },
-                              ]
-                            );
-                          },
-                        },
-                      ]
-                    );
-                  }}
+                  onPress={() => setShowResetConfirm(true)}
                   className="flex-row items-center p-4 active:bg-red-500/10"
                 >
                   <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">
@@ -1733,7 +1694,7 @@ export default function MoreScreen() {
                       setPin(newPinEntry);
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                       setShowPinModal(false);
-                      Alert.alert('PIN Set', 'Your app is now protected. You\'ll need this PIN every time you open Oja POS.');
+                      setShowPinSuccess(true);
                     }}
                     className="bg-emerald-500 py-4 rounded-xl active:opacity-90"
                   >
@@ -1747,6 +1708,119 @@ export default function MoreScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Print Error Dialog */}
+      <ConfirmDialog
+        visible={showPrintError}
+        onClose={() => setShowPrintError(false)}
+        title="Print Error"
+        message="Could not print test receipt. Please try again."
+        variant="warning"
+        showCancel={false}
+      />
+
+      {/* Export Complete Dialog */}
+      <ConfirmDialog
+        visible={showExportComplete}
+        onClose={() => setShowExportComplete(false)}
+        title="Export Complete"
+        message="Backup file saved but sharing is not available on this device."
+        variant="success"
+        showCancel={false}
+      />
+
+      {/* Export Error Dialog */}
+      <ConfirmDialog
+        visible={showExportError}
+        onClose={() => setShowExportError(false)}
+        title="Export Failed"
+        message="Could not export data. Please try again."
+        variant="warning"
+        showCancel={false}
+      />
+
+      {/* Cloud Sign Out Confirmation */}
+      <ConfirmDialog
+        visible={showCloudSignOut}
+        onClose={() => setShowCloudSignOut(false)}
+        title="Sign Out"
+        message="You will stop syncing data to the cloud. Your local data is safe."
+        variant="destructive"
+        confirmLabel="Sign Out"
+        onConfirm={confirmCloudSignOut}
+      />
+
+      {/* Missing WhatsApp Number */}
+      <ConfirmDialog
+        visible={showMissingNumber}
+        onClose={() => setShowMissingNumber(false)}
+        title="Missing Number"
+        message="Please enter a WhatsApp number first."
+        variant="warning"
+        showCancel={false}
+      />
+
+      {/* No Low Stock */}
+      <ConfirmDialog
+        visible={showNoLowStock}
+        onClose={() => setShowNoLowStock(false)}
+        title="No Low Stock"
+        message="All products are above their low stock threshold."
+        variant="success"
+        showCancel={false}
+      />
+
+      {/* Reset All Data - Step 1 */}
+      <ConfirmDialog
+        visible={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        title="Reset All Data"
+        message="This will permanently delete ALL your data — products, sales, customers, staff, everything. This cannot be undone."
+        variant="destructive"
+        confirmLabel="Reset Everything"
+        onConfirm={() => {
+          setShowResetConfirm(false);
+          setTimeout(() => setShowResetFinal(true), 300);
+        }}
+      />
+
+      {/* Reset All Data - Step 2 (Final) */}
+      <ConfirmDialog
+        visible={showResetFinal}
+        onClose={() => setShowResetFinal(false)}
+        title="Final Confirmation"
+        message="Last chance. All data will be erased and the app will restart from scratch."
+        variant="destructive"
+        confirmLabel="Yes, Delete All"
+        onConfirm={async () => {
+          const storeKeys = [
+            'retail-store', 'oja-staff-storage', 'auth-store',
+            'catalog-store', 'onboarding-store', 'oja-payroll-storage',
+            'printer-store', 'subscription-store', 'cloud-auth-store',
+            'oja-language', 'oja-theme', 'update-store',
+          ];
+          if (typeof window !== 'undefined' && window.localStorage) {
+            storeKeys.forEach((key) => window.localStorage.removeItem(key));
+          }
+          try {
+            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+            await AsyncStorage.multiRemove(storeKeys);
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+        }}
+      />
+
+      {/* PIN Set Success */}
+      <ConfirmDialog
+        visible={showPinSuccess}
+        onClose={() => setShowPinSuccess(false)}
+        title="PIN Set"
+        message="Your app is now protected. You'll need this PIN every time you open Oja POS."
+        variant="success"
+        showCancel={false}
+      />
     </View>
   );
 }
