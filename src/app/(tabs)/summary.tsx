@@ -356,8 +356,8 @@ export default function ReportsScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
-            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Summary</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">Analytics</Text>
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Summary</Text>
           </Animated.View>
         </View>
 
@@ -405,7 +405,7 @@ export default function ReportsScreen() {
         </Animated.View>
 
         {bestDay && (
-          <Animated.View entering={FadeInDown.delay(340).duration(600)} className="mx-5 mt-3">
+          <Animated.View entering={FadeInDown.delay(340).duration(600)} className="mx-5 mt-4">
             <View className="bg-amber-50 dark:bg-amber-950/40 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800/50 flex-row items-center">
               <Text className="text-lg mr-2">🏆</Text>
               <Text className="text-stone-700 dark:text-stone-300 text-sm flex-1">
@@ -417,7 +417,7 @@ export default function ReportsScreen() {
         )}
 
         {getDateRangeData.totalTransactions > 0 && (
-          <Animated.View entering={FadeInDown.delay(345).duration(600)} className="mx-5 mt-3">
+          <Animated.View entering={FadeInDown.delay(345).duration(600)} className="mx-5 mt-4">
             <Pressable
               onPress={handleShareWhatsApp}
               className="bg-green-600 rounded-xl px-4 py-3 flex-row items-center justify-center"
@@ -436,7 +436,7 @@ export default function ReportsScreen() {
         )}
 
         {paymentBreakdown.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(380).duration(600)} className="mx-5">
+          <Animated.View entering={FadeInDown.delay(380).duration(600)} className="mx-5 mt-4">
             {Platform.OS === 'web' ? <WebPieChart /> : <NativePieChart />}
           </Animated.View>
         )}

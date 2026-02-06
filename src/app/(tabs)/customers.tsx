@@ -407,7 +407,7 @@ export default function CreditBookScreen() {
         </Animated.View>
 
         {/* Search */}
-        <Animated.View entering={FadeInDown.delay(300).duration(600)} className="px-5 mt-3">
+        <Animated.View entering={FadeInDown.delay(300).duration(600)} className="px-5 mt-4">
           <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
             <Search size={20} color="#78716c" />
             <TextInput

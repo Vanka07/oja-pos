@@ -588,8 +588,8 @@ export default function POSScreen() {
         onRequestClose={() => setShowCreditCustomerPicker(false)}
       >
         <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 16 }}>
-            <View className="p-5 border-b border-stone-200 dark:border-stone-800">
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[70%]" style={{ paddingBottom: insets.bottom + 20 }}>
+            <View className="p-6 border-b border-stone-200 dark:border-stone-800">
               <View className="flex-row items-center justify-between">
                 <Text className="text-stone-900 dark:text-white font-semibold text-lg">Select Customer</Text>
                 <Pressable onPress={() => { setShowCreditCustomerPicker(false); setCreditCustomerSearch(''); }}>
