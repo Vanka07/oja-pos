@@ -141,8 +141,6 @@ export default function TabLayout() {
         }}
         listeners={{ tabPress: handleTabPress }}
       />
-      {/* Hidden screens */}
-      <Tabs.Screen name="reports" options={{ href: null }} />
     </Tabs>
   );
 }

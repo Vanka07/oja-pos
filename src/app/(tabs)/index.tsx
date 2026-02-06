@@ -133,7 +133,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(200).duration(600)}
           className="mx-5 mt-6"
         >
-          <Pressable onPress={() => canViewReports ? router.push('/(tabs)/reports') : null} className="active:opacity-90">
+          <Pressable onPress={() => canViewReports ? router.push('/(tabs)/summary') : null} className="active:opacity-90">
           <LinearGradient
             colors={['#e05e1b', '#c2410c', '#9a3412']}
             start={{ x: 0, y: 0 }}
@@ -153,19 +153,19 @@ export default function DashboardScreen() {
               <Banknote size={20} color="rgba(255,255,255,0.8)" />
               <Text className="text-white/80 text-sm font-medium">{t('dashboard.todaysRevenue')}</Text>
             </View>
-            <Text className="text-white text-4xl font-extrabold tracking-tight mb-4">
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-white text-4xl font-extrabold tracking-tight mb-4">
               {formatNaira(summary.totalSales)}
             </Text>
             <View className="flex-row gap-6">
               <View>
                 <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.transactions')}</Text>
-                <Text className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
+                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
               </View>
               {canViewReports && (
                 <View>
                   <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.profit')}</Text>
                   <View className="flex-row items-center gap-2">
-                    <Text className="text-emerald-100 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
+                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-emerald-100 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
                     {summary.totalSales > 0 && (
                       <View className="bg-white/20 px-2 py-0.5 rounded-full">
                         <Text className="text-white/90 text-xs font-medium">
@@ -194,7 +194,7 @@ export default function DashboardScreen() {
           entering={FadeInDown.delay(300).duration(600)}
           className="mx-5 mt-4"
         >
-          <Pressable onPress={() => router.push('/(tabs)/reports')} className="active:opacity-80">
+          <Pressable onPress={() => router.push('/(tabs)/summary')} className="active:opacity-80">
             <View className="flex-row gap-3">
               <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
                 <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.cash')}</Text>
@@ -231,7 +231,7 @@ export default function DashboardScreen() {
 
           <Pressable
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
-            onPress={() => canViewReports ? router.push('/(tabs)/reports') : null}
+            onPress={() => canViewReports ? router.push('/(tabs)/summary') : null}
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
@@ -351,7 +351,7 @@ export default function DashboardScreen() {
                   className="mr-3"
                 >
                   <Pressable 
-                    onPress={() => router.push('/inventory' as Href)}
+                    onPress={() => router.push('/(tabs)/inventory' as Href)}
                     className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 w-36 active:opacity-80"
                   >
                     <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>

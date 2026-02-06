@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/html-elements": "^0.13.7",
     "@expo/metro-runtime": "~5.0.5",
     "@expo/react-native-action-sheet": "^4.1.1",
