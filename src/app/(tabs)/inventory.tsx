@@ -37,6 +37,7 @@ export default function InventoryScreen() {
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 const [showUpsell, setShowUpsell] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState('');
@@ -139,107 +140,136 @@ const [showUpsell, setShowUpsell] = useState(false);
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
-              {canAddProduct && (
+      <FlatList
+        className="flex-1"
+        data={filteredProducts}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setTimeout(() => setRefreshing(false), 500);
+            }}
+            tintColor="#e05e1b"
+            colors={['#e05e1b']}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+              <Animated.View entering={FadeInDown.delay(100).duration(600)}>
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
+                  {canAddProduct && (
+                    <Pressable
+                      onPress={() => {
+                        if (products.length >= FREE_PRODUCT_LIMIT && !canAccess('unlimited_products')) {
+                          setShowUpsell(true);
+                        } else {
+                          setShowAddModal(true);
+                        }
+                      }}
+                      accessibilityLabel="Add product"
+                      accessibilityRole="button"
+                      className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
+                    >
+                      <Plus size={18} color="white" />
+                    </Pressable>
+                  )}
+                </View>
+                <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Stock</Text>
+              </Animated.View>
+            </View>
+
+            {/* Stats */}
+            <Animated.View entering={FadeInDown.delay(200).duration(600)} className="flex-row mx-5 mt-6 gap-3">
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <Package size={16} color="#3b82f6" />
+                  <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
+                </View>
+                <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
+              </View>
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <TrendingUp size={16} color="#10b981" />
+                  <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
+                </View>
+                <Text className="text-orange-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
+              </View>
+            </Animated.View>
+
+            {/* Low Stock Alert */}
+            {lowStockProducts.length > 0 && (
+              <Animated.View entering={FadeInDown.delay(300).duration(600)} className="mx-5 mt-4">
                 <Pressable
-                  onPress={() => {
-                    if (products.length >= FREE_PRODUCT_LIMIT && !canAccess('unlimited_products')) {
-                      setShowUpsell(true);
-                    } else {
-                      setShowAddModal(true);
-                    }
-                  }}
-                  className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
+                  onPress={() => setShowLowStockOnly(!showLowStockOnly)}
+                  accessibilityLabel={`${lowStockProducts.length} low stock items, ${showLowStockOnly ? 'currently filtered' : 'tap to filter'}`}
+                  accessibilityRole="button"
+                  className={`rounded-xl p-4 border flex-row items-center justify-between ${
+                    showLowStockOnly ? 'bg-amber-500/20 border-amber-500/50' : 'bg-amber-500/10 border-amber-500/30'
+                  } active:opacity-80`}
                 >
-                  <Plus size={18} color="white" />
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-8 h-8 rounded-lg bg-amber-500/20 items-center justify-center">
+                      <AlertTriangle size={16} color="#f59e0b" />
+                    </View>
+                    <View>
+                      <Text className="text-amber-400 font-medium">{lowStockProducts.length} Low Stock Items</Text>
+                      <Text className="text-stone-500 text-xs">Tap to {showLowStockOnly ? 'show all' : 'filter'}</Text>
+                    </View>
+                  </View>
+                  <View className={`w-5 h-5 rounded-full border-2 ${showLowStockOnly ? 'bg-amber-500 border-amber-500' : 'border-amber-500/50'} items-center justify-center`}>
+                    {showLowStockOnly && <View className="w-2 h-2 rounded-full bg-white" />}
+                  </View>
                 </Pressable>
-              )}
-            </View>
-            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Stock</Text>
-          </Animated.View>
-        </View>
-
-        {/* Stats */}
-        <Animated.View entering={FadeInDown.delay(200).duration(600)} className="flex-row mx-5 mt-6 gap-3">
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-            <View className="flex-row items-center gap-2 mb-2">
-              <Package size={16} color="#3b82f6" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
-            </View>
-            <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
-          </View>
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-            <View className="flex-row items-center gap-2 mb-2">
-              <TrendingUp size={16} color="#10b981" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
-            </View>
-            <Text className="text-orange-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
-          </View>
-        </Animated.View>
-
-        {/* Low Stock Alert */}
-        {lowStockProducts.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(300).duration(600)} className="mx-5 mt-4">
-            <Pressable
-              onPress={() => setShowLowStockOnly(!showLowStockOnly)}
-              className={`rounded-xl p-4 border flex-row items-center justify-between ${
-                showLowStockOnly ? 'bg-amber-500/20 border-amber-500/50' : 'bg-amber-500/10 border-amber-500/30'
-              } active:opacity-80`}
-            >
-              <View className="flex-row items-center gap-3">
-                <View className="w-8 h-8 rounded-lg bg-amber-500/20 items-center justify-center">
-                  <AlertTriangle size={16} color="#f59e0b" />
-                </View>
-                <View>
-                  <Text className="text-amber-400 font-medium">{lowStockProducts.length} Low Stock Items</Text>
-                  <Text className="text-stone-500 text-xs">Tap to {showLowStockOnly ? 'show all' : 'filter'}</Text>
-                </View>
-              </View>
-              <View className={`w-5 h-5 rounded-full border-2 ${showLowStockOnly ? 'bg-amber-500 border-amber-500' : 'border-amber-500/50'} items-center justify-center`}>
-                {showLowStockOnly && <View className="w-2 h-2 rounded-full bg-white" />}
-              </View>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {/* Search */}
-        <Animated.View entering={FadeInDown.delay(400).duration(600)} className="px-5 mt-4">
-          <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
-            <Search size={20} color="#78716c" />
-            <TextInput className="flex-1 py-3 px-3 text-stone-900 dark:text-white text-base" placeholder="Search products..." placeholderTextColor="#78716c" value={searchQuery} onChangeText={setSearchQuery} />
-            {searchQuery && <Pressable onPress={() => setSearchQuery('')}><X size={18} color="#78716c" /></Pressable>}
-          </View>
-        </Animated.View>
-
-        {/* Categories */}
-        <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, marginTop: 12 }} style={{ flexGrow: 0 }}>
-            <Pressable onPress={() => setSelectedCategory(null)} className={`mr-2 px-4 py-2 rounded-full border ${!selectedCategory ? 'bg-orange-500 border-orange-500' : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'}`}>
-              <Text className={!selectedCategory ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>All</Text>
-            </Pressable>
-            {categories.map((cat) => (
-              <Pressable key={cat.id} onPress={() => setSelectedCategory(cat.name)} className={`mr-2 px-4 py-2 rounded-full border ${selectedCategory === cat.name ? 'bg-orange-500 border-orange-500' : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'}`}>
-                <Text className={selectedCategory === cat.name ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>{cat.name}</Text>
-              </Pressable>
-            ))}
-            {canEditProduct && (
-              <Pressable onPress={() => router.push('/categories')} className="mr-2 px-4 py-2 rounded-full border border-dashed border-stone-400 dark:border-stone-600">
-                <Text className="text-stone-500 dark:text-stone-400">+ Edit</Text>
-              </Pressable>
+              </Animated.View>
             )}
-          </ScrollView>
-        </Animated.View>
 
-        {/* Products List */}
-        <Animated.View entering={FadeInDown.delay(600).duration(600)} className="px-5 mt-4">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
-          {filteredProducts.length === 0 && products.length === 0 && (
-            <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
+            {/* Search */}
+            <Animated.View entering={FadeInDown.delay(400).duration(600)} className="px-5 mt-4">
+              <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
+                <Search size={20} color="#78716c" />
+                <TextInput accessibilityLabel="Search products" className="flex-1 py-3 px-3 text-stone-900 dark:text-white text-base" placeholder="Search products..." placeholderTextColor="#78716c" value={searchQuery} onChangeText={setSearchQuery} />
+                {searchQuery && <Pressable onPress={() => setSearchQuery('')} accessibilityLabel="Clear search" accessibilityRole="button"><X size={18} color="#78716c" /></Pressable>}
+              </View>
+            </Animated.View>
+
+            {/* Categories */}
+            <Animated.View entering={FadeInDown.delay(500).duration(600)}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, marginTop: 12 }} style={{ flexGrow: 0 }}>
+                <Pressable onPress={() => setSelectedCategory(null)} className={`mr-2 px-4 py-2 rounded-full border ${!selectedCategory ? 'bg-orange-500 border-orange-500' : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'}`}>
+                  <Text className={!selectedCategory ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>All</Text>
+                </Pressable>
+                {categories.map((cat) => (
+                  <Pressable key={cat.id} onPress={() => setSelectedCategory(cat.name)} className={`mr-2 px-4 py-2 rounded-full border ${selectedCategory === cat.name ? 'bg-orange-500 border-orange-500' : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'}`}>
+                    <Text className={selectedCategory === cat.name ? 'text-white font-medium' : 'text-stone-600 dark:text-stone-400'}>{cat.name}</Text>
+                  </Pressable>
+                ))}
+                {canEditProduct && (
+                  <Pressable onPress={() => router.push('/categories')} className="mr-2 px-4 py-2 rounded-full border border-dashed border-stone-400 dark:border-stone-600">
+                    <Text className="text-stone-500 dark:text-stone-400">+ Edit</Text>
+                  </Pressable>
+                )}
+              </ScrollView>
+            </Animated.View>
+
+            {/* Product count */}
+            <View className="px-5 mt-4">
+              <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          products.length === 0 ? (
+            <View className="mx-5 bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState icon={Package} title="Your shelf is empty" description="Add your first product to get started" buttonLabel="Add Product" onButtonPress={() => setShowAddModal(true)} />
             </View>
           )}
@@ -367,11 +397,11 @@ const [showUpsell, setShowUpsell] = useState(false);
                   <View className="flex-row gap-3">
                     <View className="flex-1">
                       <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
-                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.costPrice} onChangeText={(text) => setFormData({ ...formData, costPrice: text })} />
+                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="e.g. 500" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.costPrice} onChangeText={(text) => setFormData({ ...formData, costPrice: text })} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
-                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.sellingPrice} onChangeText={(text) => setFormData({ ...formData, sellingPrice: text })} />
+                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="e.g. 750" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.sellingPrice} onChangeText={(text) => setFormData({ ...formData, sellingPrice: text })} />
                     </View>
                   </View>
                   <View className="flex-row gap-3">

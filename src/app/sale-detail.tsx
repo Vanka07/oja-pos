@@ -105,10 +105,10 @@ export default function SaleDetailScreen() {
 
   if (!sale) {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center px-8">
-        <Text className="text-white text-lg font-semibold text-center">Sale not found</Text>
-        <Pressable onPress={() => router.back()} className="mt-4">
-          <Text className="text-orange-500 font-medium">Go Back</Text>
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
+        <Text className="text-stone-900 dark:text-white text-lg font-semibold text-center">Sale not found</Text>
+        <Pressable onPress={() => router.back()} className="mt-4 bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
+          <Text className="text-white font-medium">Go Back</Text>
         </Pressable>
       </View>
     );
@@ -293,7 +293,7 @@ export default function SaleDetailScreen() {
             )}
             <View className="border-t border-stone-200 dark:border-stone-700 mt-2 pt-3 flex-row justify-between">
               <Text className="text-stone-900 dark:text-white text-lg font-bold">Total</Text>
-              <Text className="text-orange-500 text-lg font-bold">
+              <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-orange-500 text-lg font-bold">
                 {formatNaira(sale.total)}
               </Text>
             </View>

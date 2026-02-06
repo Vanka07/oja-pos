@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useFonts } from 'expo-font';
+import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
 import { useStaffStore } from '@/store/staffStore';
@@ -207,6 +208,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
+    'Poppins-Medium': Poppins_500Medium,
     'Poppins-Bold': require('../../assets/fonts/Poppins-Bold.ttf'),
     'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
     'Poppins-ExtraBold': require('../../assets/fonts/Poppins-ExtraBold.ttf'),

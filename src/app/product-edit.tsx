@@ -219,7 +219,7 @@ export default function ProductEditScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
-                    placeholder="0"
+                    placeholder="e.g. 500"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
                     value={formData.costPrice}
@@ -230,7 +230,7 @@ export default function ProductEditScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
-                    placeholder="0"
+                    placeholder="e.g. 750"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
                     value={formData.sellingPrice}

@@ -28,6 +28,7 @@ import {
   ShoppingBag,
   LayoutGrid,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { checkAndSendLowStockAlerts } from '@/lib/lowStockAlerts';
@@ -41,6 +42,7 @@ import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { canAccess, FEATURE_DESCRIPTIONS } from '@/lib/premiumFeatures';
 import PremiumUpsell from '@/components/PremiumUpsell';
+import EmptyState from '@/components/EmptyState';
 import { useThemeStore } from '@/store/themeStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useCatalogStore } from '@/store/catalogStore';
@@ -86,9 +88,10 @@ export default function MoreScreen() {
   const [showPinSuccess, setShowPinSuccess] = useState(false);
 
   // Subscription
-  const isPremium = useSubscriptionStore((s) => s.isPremium)();
   const subscriptionPlan = useSubscriptionStore((s) => s.plan);
-  const daysRemaining = useSubscriptionStore((s) => s.daysRemaining)();
+  const expiresAt = useSubscriptionStore((s) => s.expiresAt);
+  const isPremium = subscriptionPlan !== 'starter' && !!expiresAt && new Date(expiresAt) > new Date();
+  const daysRemaining = expiresAt ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
 
   const showPremiumUpsell = useCallback((feature: string) => {
     setUpsellFeature(feature);
@@ -112,7 +115,6 @@ export default function MoreScreen() {
   const lockApp = useAuthStore((s) => s.lock);
   const setPin = useAuthStore((s) => s.setPin);
   const currentPin = useAuthStore((s) => s.pin);
-  const hasAnyPin = useAuthStore((s) => s.hasPin)();
   const recoveryCode = useAuthStore((s) => s.recoveryCode);
   const generateRecoveryCode = useAuthStore((s) => s.generateRecoveryCode);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
@@ -136,6 +138,7 @@ export default function MoreScreen() {
   const canManageCatalog = !currentStaff || hasPermission(currentStaff.role, 'manage_catalog');
   const canManageSub = !currentStaff || hasPermission(currentStaff.role, 'manage_subscription');
   const hasStaff = staffMembers.length > 0;
+  const hasAnyPin = currentPin !== null || hasStaff;
   const recentActivities = staffActivities.slice(0, 5);
   const products = useRetailStore((s) => s.products);
   const sales = useRetailStore((s) => s.sales);
@@ -333,7 +336,7 @@ export default function MoreScreen() {
               {currentCashSession ? (
                 <>
                   <Text className="text-white/70 text-sm mb-1">Session Open</Text>
-                  <Text className="text-white text-2xl font-bold mb-2">
+                  <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white text-2xl font-bold mb-2">
                     Expected: {formatNaira(expectedCash)}
                   </Text>
                   <Text className="text-white/70 text-sm">
@@ -362,6 +365,8 @@ export default function MoreScreen() {
           {canAddExpense && (
             <Pressable
               onPress={() => setShowExpenseModal(true)}
+              accessibilityLabel="Add expense"
+              accessibilityRole="button"
               className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
             >
               <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mb-3">
@@ -374,6 +379,8 @@ export default function MoreScreen() {
 
           <Pressable
             onPress={() => setShowCalculatorModal(true)}
+            accessibilityLabel="Price calculator"
+            accessibilityRole="button"
             className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:scale-98"
           >
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
@@ -392,12 +399,14 @@ export default function MoreScreen() {
         >
           <Pressable
             onPress={() => setShowExpensesListModal(true)}
+            accessibilityLabel="Today's expenses"
+            accessibilityRole="button"
             className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 active:opacity-90"
           >
             <View className="flex-row items-center justify-between">
               <View>
                 <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Today's Expenses</Text>
-                <Text className="text-red-400 text-2xl font-bold mt-1">{formatNaira(todayExpenseTotal)}</Text>
+                <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 text-2xl font-bold mt-1">{formatNaira(todayExpenseTotal)}</Text>
                 <Text className="text-stone-500 dark:text-stone-500 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
@@ -536,6 +545,8 @@ export default function MoreScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setThemePreference(item.key);
                   }}
+                  accessibilityLabel={`Set ${item.label.toLowerCase()} theme`}
+                  accessibilityRole="button"
                   className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-lg ${
                     themePreference === item.key
                       ? 'bg-orange-500'
@@ -1025,6 +1036,8 @@ export default function MoreScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                   lockApp();
                 }}
+                accessibilityLabel="Lock app"
+                accessibilityRole="button"
                 className="flex-row items-center p-4 active:bg-stone-200/50 dark:active:bg-stone-800/50"
               >
                 <View className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center mr-3">

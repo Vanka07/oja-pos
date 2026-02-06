@@ -7,7 +7,7 @@ import { ArrowLeft, Share2, Copy, ExternalLink, Check, ShoppingBag, Eye } from '
 import { useCatalogStore } from '@/store/catalogStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
-import { useRetailStore } from '@/store/retailStore';
+import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { generateCatalogUrl, generateShareMessage } from '@/lib/catalogGenerator';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -101,7 +101,11 @@ export default function CatalogScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const message = generateShareMessage();
     const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    await Linking.openURL(waUrl);
+    if (Platform.OS === 'web') {
+      window.open(waUrl, '_blank');
+    } else {
+      await Linking.openURL(waUrl).catch(() => {});
+    }
   }, [catalogUrl.url]);
 
   const handleCopyLink = useCallback(async () => {
@@ -369,7 +373,7 @@ export default function CatalogScreen() {
                               <Text className="text-stone-900 dark:text-white text-sm font-medium">{product.name}</Text>
                             </View>
                             <Text className="text-orange-500 font-semibold text-sm">
-                              ₦{product.sellingPrice.toLocaleString()}
+                              {formatNaira(product.sellingPrice)}
                             </Text>
                           </Pressable>
                         );
