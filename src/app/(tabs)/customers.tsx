@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -58,6 +58,12 @@ export default function CreditBookScreen() {
     newBalance: number;
     paymentMethod: string;
   } | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFreezeConfirm, setShowFreezeConfirm] = useState(false);
+  const [freezeTarget, setFreezeTarget] = useState<Customer | null>(null);
+  const [showReminderInfo, setShowReminderInfo] = useState(false);
+  const [reminderInfoDays, setReminderInfoDays] = useState(0);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -230,32 +236,26 @@ export default function CreditBookScreen() {
   }, [shopInfo, setLastReminderSent]);
 
   const handleToggleFreeze = useCallback((customer: Customer) => {
-    const newFrozen = !customer.creditFrozen;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    if (newFrozen) {
-      Alert.alert(
-        'Freeze Credit',
-        `Stop credit sales to ${customer.name}? They won't be able to buy on credit until you unfreeze.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Freeze',
-            style: 'destructive',
-            onPress: () => {
-              freezeCustomerCredit(customer.id, true);
-              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
-              if (fresh) setSelectedCustomer(fresh);
-            },
-          },
-        ]
-      );
+    if (!customer.creditFrozen) {
+      setFreezeTarget(customer);
+      setShowFreezeConfirm(true);
     } else {
       freezeCustomerCredit(customer.id, false);
       const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
       if (fresh) setSelectedCustomer(fresh);
     }
   }, [freezeCustomerCredit]);
+
+  const confirmFreeze = useCallback(() => {
+    if (!freezeTarget) return;
+    freezeCustomerCredit(freezeTarget.id, true);
+    const fresh = useRetailStore.getState().customers.find((c) => c.id === freezeTarget.id);
+    if (fresh) setSelectedCustomer(fresh);
+    setShowFreezeConfirm(false);
+    setFreezeTarget(null);
+  }, [freezeTarget, freezeCustomerCredit]);
 
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
@@ -291,6 +291,17 @@ export default function CreditBookScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setTimeout(() => setRefreshing(false), 500);
+            }}
+            tintColor="#e05e1b"
+            colors={['#e05e1b']}
+          />
+        }
       >
         {/* Header */}
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
@@ -662,7 +673,8 @@ export default function CreditBookScreen() {
                         <Pressable
                           onPress={() => {
                             if (recentlyReminded) {
-                              Alert.alert('Reminded Recently', `Last reminder was ${reminderDays} day${reminderDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.`);
+                              setReminderInfoDays(reminderDays ?? 0);
+                              setShowReminderInfo(true);
                               return;
                             }
                             sendWhatsAppReminder(selectedCustomer);
@@ -896,6 +908,76 @@ export default function CreditBookScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Freeze Confirmation Modal */}
+      <Modal
+        visible={showFreezeConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFreezeConfirm(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowFreezeConfirm(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <ShieldOff size={28} color="#ef4444" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Freeze Credit?</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Stop credit sales to {freezeTarget?.name}? They won't be able to buy on credit until you unfreeze.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowFreezeConfirm(false)}
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmFreeze}
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Freeze</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Reminder Info Modal */}
+      <Modal
+        visible={showReminderInfo}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReminderInfo(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowReminderInfo(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-amber-500/20 items-center justify-center mb-4">
+                <Clock size={28} color="#f59e0b" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Reminded Recently</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Last reminder was {reminderInfoDays} day{reminderInfoDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.
+              </Text>
+              <Pressable
+                onPress={() => setShowReminderInfo(false)}
+                className="bg-orange-500 w-full py-3.5 rounded-xl active:opacity-90"
+              >
+                <Text className="text-white font-semibold text-center">Got it</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );

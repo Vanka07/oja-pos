@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -50,6 +50,8 @@ export default function POSScreen() {
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
   const [showCreditCustomerPicker, setShowCreditCustomerPicker] = useState(false);
+  const [showNoCreditCustomersModal, setShowNoCreditCustomersModal] = useState(false);
+  const [creditCustomerSearch, setCreditCustomerSearch] = useState('');
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
   const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
@@ -153,7 +155,7 @@ export default function POSScreen() {
       // Show customer picker for credit sales
       if (customers.length === 0) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('No Customers', 'Add a customer in the Credit Book first before making a credit sale.');
+        setShowNoCreditCustomersModal(true);
         return;
       }
       setShowCreditCustomerPicker(true);
@@ -324,68 +326,63 @@ export default function POSScreen() {
           </Animated.View>
 
           {/* Products Grid */}
-          <ScrollView
-            className="flex-1 px-5"
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 200 }}
-          >
-            <View className="flex-row flex-wrap gap-3">
-              {filteredProducts.map((product, index) => {
-                const inCart = cart.find((i) => i.product.id === product.id);
-                const firstLetter = product.name.charAt(0).toUpperCase();
-                const letterColors = ['#e05e1b', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
-                const colorIndex = firstLetter.charCodeAt(0) % letterColors.length;
-                const placeholderColor = letterColors[colorIndex];
-                return (
-                  <Animated.View
-                    key={product.id}
-                    entering={FadeIn.delay(100 + index * 30).duration(400)}
-                    className="w-[47%]"
-                  >
-                    <Pressable
-                      onPress={() => handleAddToCart(product)}
-                      className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-3 border ${
-                        inCart ? 'border-orange-500' : 'border-stone-200 dark:border-stone-800'
-                      } active:scale-95`}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: cart.length > 0 ? 180 : 120 }}
+            columnWrapperStyle={{ gap: 12 }}
+            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            renderItem={({ item: product }) => {
+              const inCart = cart.find((i) => i.product.id === product.id);
+              const firstLetter = product.name.charAt(0).toUpperCase();
+              const letterColors = ['#e05e1b', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
+              const colorIndex = firstLetter.charCodeAt(0) % letterColors.length;
+              const placeholderColor = letterColors[colorIndex];
+              return (
+                <Pressable
+                  onPress={() => handleAddToCart(product)}
+                  style={{ flex: 1 }}
+                  className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-3 border ${
+                    inCart ? 'border-orange-500' : 'border-stone-200 dark:border-stone-800'
+                  } active:scale-95`}
+                >
+                  {product.imageUrl ? (
+                    <View className="w-full h-16 rounded-lg bg-stone-200 dark:bg-stone-800 mb-2 overflow-hidden items-center justify-center">
+                      <Text className="text-stone-400 text-xs">📷</Text>
+                    </View>
+                  ) : (
+                    <View
+                      className="w-full h-16 rounded-lg mb-2 items-center justify-center"
+                      style={{ backgroundColor: placeholderColor + '18' }}
                     >
-                      {/* Product image placeholder */}
-                      {product.imageUrl ? (
-                        <View className="w-full h-16 rounded-lg bg-stone-200 dark:bg-stone-800 mb-2 overflow-hidden items-center justify-center">
-                          <Text className="text-stone-400 text-xs">📷</Text>
-                        </View>
-                      ) : (
-                        <View
-                          className="w-full h-16 rounded-lg mb-2 items-center justify-center"
-                          style={{ backgroundColor: placeholderColor + '18' }}
-                        >
-                          <Text style={{ color: placeholderColor, fontSize: 22, fontWeight: '700' }}>
-                            {firstLetter}
-                          </Text>
-                        </View>
-                      )}
-                      <Text className="text-stone-900 dark:text-white font-semibold text-sm mb-1" numberOfLines={2}>
-                        {product.name}
+                      <Text style={{ color: placeholderColor, fontSize: 22, fontWeight: '700' }}>
+                        {firstLetter}
                       </Text>
-                      <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
-                      <View className="flex-row items-center justify-between">
-                        <Text className="text-orange-400 font-bold text-base">
-                          {formatNaira(product.sellingPrice)}
-                        </Text>
-                        <View className="bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded">
-                          <Text className="text-stone-600 dark:text-stone-400 text-xs">{product.quantity}</Text>
-                        </View>
-                      </View>
-                      {inCart && (
-                        <View className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-orange-500 items-center justify-center">
-                          <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
-                        </View>
-                      )}
-                    </Pressable>
-                  </Animated.View>
-                );
-              })}
-            </View>
-          </ScrollView>
+                    </View>
+                  )}
+                  <Text className="text-stone-900 dark:text-white font-semibold text-sm mb-1" numberOfLines={2}>
+                    {product.name}
+                  </Text>
+                  <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-orange-400 font-bold text-base">
+                      {formatNaira(product.sellingPrice)}
+                    </Text>
+                    <View className="bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded">
+                      <Text className="text-stone-600 dark:text-stone-400 text-xs">{product.quantity}</Text>
+                    </View>
+                  </View>
+                  {inCart && (
+                    <View className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-orange-500 items-center justify-center">
+                      <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            }}
+          />
         </View>
       </View>
 
@@ -394,7 +391,7 @@ export default function POSScreen() {
         <Animated.View
           entering={SlideInRight.duration(400)}
           className="absolute bottom-0 left-0 right-0"
-          style={{ paddingBottom: insets.bottom + 80 }}
+          style={{ paddingBottom: insets.bottom + 96 }}
         >
           <View className="mx-5">
             <LinearGradient
@@ -595,14 +592,31 @@ export default function POSScreen() {
             <View className="p-5 border-b border-stone-200 dark:border-stone-800">
               <View className="flex-row items-center justify-between">
                 <Text className="text-stone-900 dark:text-white font-semibold text-lg">Select Customer</Text>
-                <Pressable onPress={() => setShowCreditCustomerPicker(false)}>
+                <Pressable onPress={() => { setShowCreditCustomerPicker(false); setCreditCustomerSearch(''); }}>
                   <X size={24} color={isDark ? '#a8a29e' : '#57534e'} />
                 </Pressable>
               </View>
               <Text className="text-stone-500 text-sm mt-1">Choose which customer to assign this credit sale to</Text>
+              {customers.length > 3 && (
+                <View className="bg-stone-100 dark:bg-stone-800 rounded-xl flex-row items-center px-3 mt-3">
+                  <Search size={16} color="#78716c" />
+                  <TextInput
+                    className="flex-1 py-2.5 px-2 text-stone-900 dark:text-white text-sm"
+                    placeholder="Search customers..."
+                    placeholderTextColor="#78716c"
+                    value={creditCustomerSearch}
+                    onChangeText={setCreditCustomerSearch}
+                  />
+                  {creditCustomerSearch ? (
+                    <Pressable onPress={() => setCreditCustomerSearch('')}>
+                      <X size={16} color="#78716c" />
+                    </Pressable>
+                  ) : null}
+                </View>
+              )}
             </View>
             <ScrollView className="p-5">
-              {customers.map((customer) => {
+              {customers.filter((c) => !creditCustomerSearch || c.name.toLowerCase().includes(creditCustomerSearch.toLowerCase()) || c.phone.includes(creditCustomerSearch)).map((customer) => {
                 const isFrozen = customer.creditFrozen;
                 const overLimit = customer.creditLimit > 0 && customer.currentCredit >= customer.creditLimit;
                 const blocked = isFrozen || overLimit;
@@ -689,6 +703,37 @@ export default function POSScreen() {
         onAddProduct={handleBarcodeAddProduct}
       />
 
+      {/* No Credit Customers Modal */}
+      <Modal
+        visible={showNoCreditCustomersModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNoCreditCustomersModal(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowNoCreditCustomersModal(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-amber-500/20 items-center justify-center mb-4">
+                <Users size={28} color="#f59e0b" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">No Customers Yet</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Add a customer in the Credit Book tab first before making a credit sale.
+              </Text>
+              <Pressable
+                onPress={() => setShowNoCreditCustomersModal(false)}
+                className="bg-orange-500 w-full py-3.5 rounded-xl active:opacity-90"
+              >
+                <Text className="text-white font-semibold text-center">Got it</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Success Modal */}
       <Modal
         visible={showSuccessModal}
@@ -760,56 +805,50 @@ export default function POSScreen() {
               </View>
             )}
 
-            {/* Share Receipt Buttons */}
-            <Pressable
-              onPress={handlePrintReceipt}
-              disabled={isPrinting}
-              className="flex-row items-center justify-center gap-2 w-full py-4 rounded-xl mb-3 bg-orange-500 active:opacity-90"
-            >
-              <Printer size={20} color="#ffffff" />
-              <Text className="text-white font-bold text-base">
-                {isPrinting ? 'Printing...' : 'Print Receipt'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={shareReceiptWhatsApp}
-              className="flex-row items-center justify-center gap-2 w-full py-4 rounded-xl mb-3 active:opacity-90"
-              style={{ backgroundColor: '#25D366' }}
-            >
-              <MessageCircle size={20} color="#ffffff" />
-              <Text className="text-white font-bold text-base">Share via WhatsApp</Text>
-            </Pressable>
-            <View className="flex-row gap-3 w-full mb-4">
-              <Pressable
-                onPress={() => {
-                  if (lastSale && shopInfo) {
-                    generateReceiptPdf(lastSale, shopInfo.name, shopInfo.phone);
-                  }
-                }}
-                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90 border border-orange-200 dark:border-orange-900/40"
-              >
-                <FileText size={18} color="#e05e1b" />
-                <Text className="text-orange-600 dark:text-orange-400 font-medium">Save PDF</Text>
-              </Pressable>
-              <Pressable
-                onPress={shareReceipt}
-                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
-              >
-                <Share2 size={18} color="#a8a29e" />
-                <Text className="text-stone-600 dark:text-stone-300 font-medium">Share Other</Text>
-              </Pressable>
-            </View>
-
+            {/* Primary Action */}
             <Pressable
               onPress={() => {
                 setShowSuccessModal(false);
                 setLastSale(null);
                 setLowStockAlert(null);
               }}
-              className="bg-orange-500 w-full py-4 rounded-xl active:opacity-90"
+              className="bg-orange-500 w-full py-4 rounded-xl active:opacity-90 mb-4"
             >
-              <Text className="text-white font-semibold text-center text-lg">New Sale</Text>
+              <Text className="text-white font-bold text-center text-lg">New Sale</Text>
             </Pressable>
+
+            {/* Share Receipt Options — compact row */}
+            <View className="flex-row gap-2 w-full">
+              <Pressable
+                onPress={handlePrintReceipt}
+                disabled={isPrinting}
+                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
+              >
+                <Printer size={16} color="#e05e1b" />
+                <Text className="text-stone-700 dark:text-stone-300 font-medium text-sm">
+                  {isPrinting ? 'Printing...' : 'Print'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={shareReceiptWhatsApp}
+                className="flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl active:opacity-90"
+                style={{ backgroundColor: '#25D366' }}
+              >
+                <MessageCircle size={16} color="#ffffff" />
+                <Text className="text-white font-medium text-sm">WhatsApp</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (lastSale && shopInfo) {
+                    generateReceiptPdf(lastSale, shopInfo.name, shopInfo.phone);
+                  }
+                }}
+                className="flex-1 flex-row items-center justify-center gap-2 bg-stone-200 dark:bg-stone-800 py-3 rounded-xl active:opacity-90"
+              >
+                <FileText size={16} color="#e05e1b" />
+                <Text className="text-stone-700 dark:text-stone-300 font-medium text-sm">PDF</Text>
+              </Pressable>
+            </View>
           </Animated.View>
           </Pressable>
         </Pressable>
