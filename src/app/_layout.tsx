@@ -60,7 +60,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         authState.lock();
       } else if (hasPinOrStaff && sessionAuthenticated) {
         // User already authenticated this session, keep unlocked
-        authState.unlock();
+        useAuthStore.setState({ isLocked: false });
       }
       setIsReady(true);
       SplashScreen.hideAsync();
