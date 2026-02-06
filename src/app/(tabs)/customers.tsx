@@ -496,7 +496,7 @@ export default function CreditBookScreen() {
                       <View className="items-end">
                         {hasDebt ? (
                           <>
-                            <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
+                            <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
                             <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
                           </>
                         ) : (
@@ -615,7 +615,7 @@ export default function CreditBookScreen() {
                       <View className="flex-row justify-between">
                         <View>
                           <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Outstanding</Text>
-                          <Text className="text-red-400 text-2xl font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
+                          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 text-2xl font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
                         </View>
                         <View className="items-end">
                           <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Credit Limit</Text>
@@ -831,8 +831,9 @@ export default function CreditBookScreen() {
                         <View>
                           <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
                           <TextInput
+                            style={{ fontFamily: 'Poppins-Bold' }}
                             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                            placeholder="0"
+                            placeholder="₦0"
                             placeholderTextColor="#57534e"
                             keyboardType="numeric"
                             value={paymentAmount}

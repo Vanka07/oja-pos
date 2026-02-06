@@ -413,7 +413,7 @@ export default function POSScreen() {
                       <Text className="text-white/80 text-xs">
                         {cart.reduce((sum, item) => sum + item.quantity, 0)} items
                       </Text>
-                      <Text className="text-white text-xl font-bold">
+                      <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white text-xl font-bold">
                         {formatNaira(cartTotal)}
                       </Text>
                     </View>
@@ -505,7 +505,7 @@ export default function POSScreen() {
                 <View className="h-px bg-stone-300 dark:bg-stone-700 my-2" />
                 <View className="flex-row justify-between">
                   <Text className="text-stone-900 dark:text-white font-semibold text-lg">Total</Text>
-                  <Text className="text-orange-400 font-bold text-xl">{formatNaira(cartTotal)}</Text>
+                  <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-orange-400 font-bold text-xl">{formatNaira(cartTotal)}</Text>
                 </View>
               </View>
 

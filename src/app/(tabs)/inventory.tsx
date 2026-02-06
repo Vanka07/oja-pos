@@ -344,11 +344,11 @@ const [showUpsell, setShowUpsell] = useState(false);
                   <View className="flex-row gap-3">
                     <View className="flex-1">
                       <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
-                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.costPrice} onChangeText={(text) => setFormData({ ...formData, costPrice: text })} />
+                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="e.g. 500" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.costPrice} onChangeText={(text) => setFormData({ ...formData, costPrice: text })} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
-                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.sellingPrice} onChangeText={(text) => setFormData({ ...formData, sellingPrice: text })} />
+                      <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="e.g. 750" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.sellingPrice} onChangeText={(text) => setFormData({ ...formData, sellingPrice: text })} />
                     </View>
                   </View>
                   <View className="flex-row gap-3">

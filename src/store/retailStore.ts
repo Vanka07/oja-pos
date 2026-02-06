@@ -945,9 +945,14 @@ export const useRetailStore = create<RetailState>()(
   )
 );
 
-// Naira formatter
+// Naira formatter — manual thousand separators for Hermes/Android reliability
 export const formatNaira = (amount: number): string => {
-  return '₦' + amount.toLocaleString('en-NG');
+  const isNegative = amount < 0;
+  const abs = Math.abs(amount);
+  const [whole, decimal] = abs.toFixed(2).split('.');
+  const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formatted = decimal === '00' ? withCommas : `${withCommas}.${decimal}`;
+  return (isNegative ? '-₦' : '₦') + formatted;
 };
 
 // Generate receipt text for WhatsApp sharing

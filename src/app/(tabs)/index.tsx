@@ -153,19 +153,19 @@ export default function DashboardScreen() {
               <Banknote size={20} color="rgba(255,255,255,0.8)" />
               <Text className="text-white/80 text-sm font-medium">{t('dashboard.todaysRevenue')}</Text>
             </View>
-            <Text className="text-white text-4xl font-extrabold tracking-tight mb-4">
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-white text-4xl font-extrabold tracking-tight mb-4">
               {formatNaira(summary.totalSales)}
             </Text>
             <View className="flex-row gap-6">
               <View>
                 <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.transactions')}</Text>
-                <Text className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
+                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
               </View>
               {canViewReports && (
                 <View>
                   <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.profit')}</Text>
                   <View className="flex-row items-center gap-2">
-                    <Text className="text-emerald-100 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
+                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-emerald-100 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
                     {summary.totalSales > 0 && (
                       <View className="bg-white/20 px-2 py-0.5 rounded-full">
                         <Text className="text-white/90 text-xs font-medium">

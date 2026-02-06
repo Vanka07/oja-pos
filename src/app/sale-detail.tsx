@@ -293,7 +293,7 @@ export default function SaleDetailScreen() {
             )}
             <View className="border-t border-stone-200 dark:border-stone-700 mt-2 pt-3 flex-row justify-between">
               <Text className="text-stone-900 dark:text-white text-lg font-bold">Total</Text>
-              <Text className="text-orange-500 text-lg font-bold">
+              <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-orange-500 text-lg font-bold">
                 {formatNaira(sale.total)}
               </Text>
             </View>
