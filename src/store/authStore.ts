@@ -93,6 +93,15 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-store',
       storage: createJSONStorage(() => zustandStorage),
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Old version didn't persist isLocked — set to false so existing
+          // users aren't locked on every refresh after this update
+          persistedState.isLocked = false;
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         pin: state.pin,
         // Don't persist isLocked — always start locked if PIN exists
