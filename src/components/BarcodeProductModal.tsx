@@ -7,10 +7,10 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
   Image,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { X, Package, Globe, AlertCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
@@ -113,10 +113,7 @@ export default function BarcodeProductModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }}>
         <Pressable className="flex-1 bg-black/60" onPress={onClose} />
         <View
           className="bg-white dark:bg-stone-950 rounded-t-3xl"

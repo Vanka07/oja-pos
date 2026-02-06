@@ -1,4 +1,6 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -8,7 +10,8 @@ import {
   AlertTriangle,
   X,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Pencil,
 } from 'lucide-react-native';
 import { useRetailStore, formatNaira, type Product } from '@/store/retailStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
@@ -245,42 +248,78 @@ const [showUpsell, setShowUpsell] = useState(false);
               const isLowStock = product.quantity <= product.lowStockThreshold;
               const profit = product.sellingPrice - product.costPrice;
               const margin = product.sellingPrice > 0 ? ((profit / product.sellingPrice) * 100).toFixed(0) : '0';
-              return (
-                <Animated.View key={product.id} entering={FadeIn.delay(100 + index * 30).duration(400)} layout={Layout.springify()}>
-                  <Pressable
-                    onPress={() => canEditProduct ? openProductEdit(product) : canRestock ? openStockModal(product) : undefined}
-                    className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border ${isLowStock ? 'border-amber-500/50' : 'border-stone-200 dark:border-stone-800'} active:scale-[0.99]`}
-                  >
-                    <View className="flex-row items-start justify-between">
-                      <View className="flex-1">
-                        <View className="flex-row items-center gap-2 mb-1">
-                          <Text className="text-stone-900 dark:text-white font-medium text-base" numberOfLines={1}>{product.name}</Text>
-                          {isLowStock && <View className="bg-amber-500/20 px-2 py-0.5 rounded"><Text className="text-amber-400 text-xs">Low</Text></View>}
-                        </View>
-                        <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
-                        <View className="flex-row items-center gap-4">
-                          <View>
-                            <Text className="text-stone-400 dark:text-stone-600 text-xs">Cost</Text>
-                            <Text className="text-stone-600 dark:text-stone-400 text-sm">{formatNaira(product.costPrice)}</Text>
-                          </View>
-                          <View>
-                            <Text className="text-stone-400 dark:text-stone-600 text-xs">Sell</Text>
-                            <Text className="text-orange-400 text-sm font-medium">{formatNaira(product.sellingPrice)}</Text>
-                          </View>
-                          <View>
-                            <Text className="text-stone-400 dark:text-stone-600 text-xs">Margin</Text>
-                            <Text className="text-emerald-400 text-sm">{margin}%</Text>
-                          </View>
-                        </View>
+              const hasSwipeActions = canEditProduct || canRestock;
+
+              const card = (
+                <Pressable
+                  onPress={() => canEditProduct ? openProductEdit(product) : canRestock ? openStockModal(product) : undefined}
+                  className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border ${isLowStock ? 'border-amber-500/50' : 'border-stone-200 dark:border-stone-800'} active:scale-[0.99]`}
+                >
+                  <View className="flex-row items-start justify-between">
+                    <View className="flex-1">
+                      <View className="flex-row items-center gap-2 mb-1">
+                        <Text className="text-stone-900 dark:text-white font-medium text-base" numberOfLines={1}>{product.name}</Text>
+                        {isLowStock && <View className="bg-amber-500/20 px-2 py-0.5 rounded"><Text className="text-amber-400 text-xs">Low</Text></View>}
                       </View>
-                      <View className="items-end">
-                        <View className={`px-3 py-1 rounded-lg ${isLowStock ? 'bg-amber-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
-                          <Text className={`font-bold text-lg ${isLowStock ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>{product.quantity}</Text>
+                      <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
+                      <View className="flex-row items-center gap-4">
+                        <View>
+                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Cost</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-sm">{formatNaira(product.costPrice)}</Text>
                         </View>
-                        <Text className="text-stone-400 dark:text-stone-600 text-xs mt-1">{product.unit}</Text>
+                        <View>
+                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Sell</Text>
+                          <Text className="text-orange-400 text-sm font-medium">{formatNaira(product.sellingPrice)}</Text>
+                        </View>
+                        <View>
+                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Margin</Text>
+                          <Text className="text-emerald-400 text-sm">{margin}%</Text>
+                        </View>
                       </View>
                     </View>
-                  </Pressable>
+                    <View className="items-end">
+                      <View className={`px-3 py-1 rounded-lg ${isLowStock ? 'bg-amber-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
+                        <Text className={`font-bold text-lg ${isLowStock ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>{product.quantity}</Text>
+                      </View>
+                      <Text className="text-stone-400 dark:text-stone-600 text-xs mt-1">{product.unit}</Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+
+              return (
+                <Animated.View key={product.id} entering={FadeIn.delay(100 + index * 30).duration(400)} layout={Layout.springify()}>
+                  {hasSwipeActions ? (
+                    <ReanimatedSwipeable
+                      friction={2}
+                      overshootRight={false}
+                      containerStyle={{ overflow: 'hidden', borderRadius: 12 }}
+                      renderRightActions={() => (
+                        <View style={{ flexDirection: 'row' }}>
+                          {canEditProduct && (
+                            <Pressable
+                              onPress={() => openProductEdit(product)}
+                              style={{ backgroundColor: '#e05e1b', width: 72, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Pencil size={20} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Edit</Text>
+                            </Pressable>
+                          )}
+                          {canRestock && (
+                            <Pressable
+                              onPress={() => openStockModal(product)}
+                              style={{ backgroundColor: '#10b981', width: 72, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Package size={20} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Restock</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    >
+                      {card}
+                    </ReanimatedSwipeable>
+                  ) : card}
                 </Animated.View>
               );
             })}
@@ -297,7 +336,7 @@ const [showUpsell, setShowUpsell] = useState(false);
 
       {/* Add Product Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView className="max-h-[500px]" showsVerticalScrollIndicator={false}>
@@ -357,7 +396,7 @@ const [showUpsell, setShowUpsell] = useState(false);
 
       {/* Stock Adjustment Modal */}
       <Modal visible={showStockModal} transparent animationType="slide" onRequestClose={() => setShowStockModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowStockModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">

@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -363,10 +364,7 @@ export default function PayrollScreen() {
         animationType="slide"
         onRequestClose={() => setShowPaymentModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable
             className="flex-1 bg-black/60"
             onPress={() => setShowPaymentModal(false)}
@@ -461,10 +459,7 @@ export default function PayrollScreen() {
         animationType="slide"
         onRequestClose={() => setShowAddModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable
             className="flex-1 bg-black/60"
             onPress={() => setShowAddModal(false)}

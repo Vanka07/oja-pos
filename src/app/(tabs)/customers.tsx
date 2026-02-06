@@ -1,4 +1,6 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Platform, Linking, Share } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -441,59 +443,102 @@ export default function CreditBookScreen() {
               const hasDebt = customer.currentCredit > 0;
               const isFrozen = customer.creditFrozen;
 
+              const card = (
+                <Pressable
+                  onPress={() => openCustomerDetail(customer)}
+                  className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border-l-4 border ${risk.borderColor} active:scale-[0.99]`}
+                  style={{ borderRightWidth: 1, borderTopWidth: 1, borderBottomWidth: 1, borderRightColor: isDark ? '#292524' : '#e7e5e4', borderTopColor: isDark ? '#292524' : '#e7e5e4', borderBottomColor: isDark ? '#292524' : '#e7e5e4' }}
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center gap-3 flex-1">
+                      {/* Avatar */}
+                      {(() => {
+                        const letter = customer.name.charAt(0).toUpperCase();
+                        return (
+                          <View className={`w-12 h-12 rounded-full items-center justify-center ${risk.bgColor}`}>
+                            <Text className={`text-lg font-bold ${risk.color}`}>{letter}</Text>
+                          </View>
+                        );
+                      })()}
+                      <View className="flex-1">
+                        <View className="flex-row items-center gap-2">
+                          <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
+                          {isFrozen && (
+                            <View className="bg-red-500/20 px-2 py-0.5 rounded-full">
+                              <Text className="text-red-400 text-[10px] font-bold">FROZEN</Text>
+                            </View>
+                          )}
+                        </View>
+                        {hasDebt ? (
+                          <Text className={`text-xs mt-0.5 ${risk.color}`}>{risk.label}</Text>
+                        ) : (
+                          <Text className="text-stone-500 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
+                        )}
+                      </View>
+                    </View>
+                    <View className="items-end">
+                      {hasDebt ? (
+                        <>
+                          <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
+                          <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
+                        </>
+                      ) : (
+                        <View className="bg-emerald-500/20 px-2 py-1 rounded">
+                          <Text className="text-emerald-400 text-xs font-medium">Clear</Text>
+                        </View>
+                      )}
+                    </View>
+                    <ChevronRight size={20} color="#57534e" className="ml-2" />
+                  </View>
+                </Pressable>
+              );
+
               return (
                 <Animated.View
                   key={customer.id}
                   entering={FadeIn.delay(100 + index * 30).duration(400)}
                   layout={Layout.springify()}
                 >
-                  <Pressable
-                    onPress={() => openCustomerDetail(customer)}
-                    className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border-l-4 border ${risk.borderColor} active:scale-[0.99]`}
-                    style={{ borderRightWidth: 1, borderTopWidth: 1, borderBottomWidth: 1, borderRightColor: isDark ? '#292524' : '#e7e5e4', borderTopColor: isDark ? '#292524' : '#e7e5e4', borderBottomColor: isDark ? '#292524' : '#e7e5e4' }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-3 flex-1">
-                        {/* Avatar */}
-                        {(() => {
-                          const letter = customer.name.charAt(0).toUpperCase();
-                          return (
-                            <View className={`w-12 h-12 rounded-full items-center justify-center ${risk.bgColor}`}>
-                              <Text className={`text-lg font-bold ${risk.color}`}>{letter}</Text>
-                            </View>
-                          );
-                        })()}
-                        <View className="flex-1">
-                          <View className="flex-row items-center gap-2">
-                            <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
-                            {isFrozen && (
-                              <View className="bg-red-500/20 px-2 py-0.5 rounded-full">
-                                <Text className="text-red-400 text-[10px] font-bold">FROZEN</Text>
-                              </View>
-                            )}
-                          </View>
-                          {hasDebt ? (
-                            <Text className={`text-xs mt-0.5 ${risk.color}`}>{risk.label}</Text>
-                          ) : (
-                            <Text className="text-stone-500 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
-                          )}
+                  {hasDebt ? (
+                    <ReanimatedSwipeable
+                      friction={2}
+                      overshootRight={false}
+                      containerStyle={{ overflow: 'hidden', borderRadius: 12 }}
+                      renderRightActions={() => (
+                        <View style={{ flexDirection: 'row' }}>
+                          <Pressable
+                            onPress={() => {
+                              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
+                              setSelectedCustomer(fresh || customer);
+                              setShowPaymentModal(true);
+                            }}
+                            style={{ backgroundColor: '#10b981', width: 80, alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Banknote size={22} color="white" />
+                            <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Pay</Text>
+                          </Pressable>
+                          {customer.phone ? (
+                            <Pressable
+                              onPress={() => {
+                                if (wasRemindedRecently(customer)) {
+                                  setReminderCooldownDays(daysSinceReminder(customer) ?? 0);
+                                  setShowReminderCooldown(true);
+                                  return;
+                                }
+                                sendWhatsAppReminder(customer);
+                              }}
+                              style={{ backgroundColor: '#25D366', width: 80, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <MessageCircle size={22} color="white" />
+                              <Text style={{ color: 'white', fontSize: 11, marginTop: 4, fontWeight: '600' }}>Remind</Text>
+                            </Pressable>
+                          ) : null}
                         </View>
-                      </View>
-                      <View className="items-end">
-                        {hasDebt ? (
-                          <>
-                            <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
-                            <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
-                          </>
-                        ) : (
-                          <View className="bg-emerald-500/20 px-2 py-1 rounded">
-                            <Text className="text-emerald-400 text-xs font-medium">Clear</Text>
-                          </View>
-                        )}
-                      </View>
-                      <ChevronRight size={20} color="#57534e" className="ml-2" />
-                    </View>
-                  </Pressable>
+                      )}
+                    >
+                      {card}
+                    </ReanimatedSwipeable>
+                  ) : card}
                 </Animated.View>
               );
             })}
@@ -503,7 +548,7 @@ export default function CreditBookScreen() {
 
       {/* Add Customer Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
@@ -557,7 +602,7 @@ export default function CreditBookScreen() {
 
       {/* Customer Detail Modal */}
       <Modal visible={showCustomerModal} transparent animationType="slide" onRequestClose={() => setShowCustomerModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={() => setShowCustomerModal(false)} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl max-h-[85%]" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -751,7 +796,7 @@ export default function CreditBookScreen() {
 
       {/* Payment Modal */}
       <Modal visible={showPaymentModal} transparent animationType="slide" onRequestClose={handleClosePaymentModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable className="flex-1 bg-black/60" onPress={handleClosePaymentModal} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">

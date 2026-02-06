@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -125,10 +126,7 @@ export default function ProductEditScreen() {
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }}>
         {/* Header */}
         <View
           style={{ paddingTop: insets.top + 8 }}
