@@ -92,9 +92,10 @@ export default function MoreScreen() {
   const [upsellFeature, setUpsellFeature] = useState<string>('cloud_sync');
 
   // Subscription
-  const isPremium = useSubscriptionStore((s) => s.isPremium)();
   const subscriptionPlan = useSubscriptionStore((s) => s.plan);
-  const daysRemaining = useSubscriptionStore((s) => s.daysRemaining)();
+  const expiresAt = useSubscriptionStore((s) => s.expiresAt);
+  const isPremium = subscriptionPlan !== 'starter' && !!expiresAt && new Date(expiresAt) > new Date();
+  const daysRemaining = expiresAt ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
 
   const showPremiumUpsell = useCallback((feature: string) => {
     setUpsellFeature(feature);
@@ -130,7 +131,6 @@ export default function MoreScreen() {
   const lockApp = useAuthStore((s) => s.lock);
   const setPin = useAuthStore((s) => s.setPin);
   const currentPin = useAuthStore((s) => s.pin);
-  const hasAnyPin = useAuthStore((s) => s.hasPin)();
   const recoveryCode = useAuthStore((s) => s.recoveryCode);
   const generateRecoveryCode = useAuthStore((s) => s.generateRecoveryCode);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
@@ -159,6 +159,7 @@ export default function MoreScreen() {
   const canManageCatalog = !currentStaff || hasPermission(currentStaff.role, 'manage_catalog');
   const canManageSub = !currentStaff || hasPermission(currentStaff.role, 'manage_subscription');
   const hasStaff = staffMembers.length > 0;
+  const hasAnyPin = currentPin !== null || hasStaff;
   const recentActivities = staffActivities.slice(0, 5);
   const products = useRetailStore((s) => s.products);
   const sales = useRetailStore((s) => s.sales);

@@ -351,7 +351,7 @@ export default function DashboardScreen() {
                   className="mr-3"
                 >
                   <Pressable 
-                    onPress={() => router.push('/inventory' as Href)}
+                    onPress={() => router.push('/(tabs)/inventory' as Href)}
                     className="bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border border-stone-200 dark:border-stone-800 w-36 active:opacity-80"
                   >
                     <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>
