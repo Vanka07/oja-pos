@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +59,7 @@ export default function ProductEditScreen() {
   });
 
   const [stockAdjustment, setStockAdjustment] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const unitOptions = ['pcs', 'pack', 'tin', 'bottle', 'bar', 'bag', 'carton', 'kg', 'litre'];
 
@@ -95,21 +96,14 @@ export default function ProductEditScreen() {
   const handleDelete = useCallback(() => {
     if (!product) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteProduct(product.id);
-            router.back();
-          },
-        },
-      ]
-    );
+    setShowDeleteConfirm(true);
+  }, [product]);
+
+  const confirmDelete = useCallback(() => {
+    if (!product) return;
+    deleteProduct(product.id);
+    setShowDeleteConfirm(false);
+    router.back();
   }, [product, deleteProduct, router]);
 
   if (!product) {
@@ -227,7 +221,7 @@ export default function ProductEditScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
-                    placeholder="0"
+                    placeholder="e.g. 500"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
                     value={formData.costPrice}
@@ -238,7 +232,7 @@ export default function ProductEditScreen() {
                   <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
-                    placeholder="0"
+                    placeholder="e.g. 750"
                     placeholderTextColor="#57534e"
                     keyboardType="numeric"
                     value={formData.sellingPrice}
@@ -365,6 +359,45 @@ export default function ProductEditScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteConfirm(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowDeleteConfirm(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <Trash2 size={28} color="#ef4444" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Delete Product?</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Are you sure you want to delete "{product?.name}"? This cannot be undone.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowDeleteConfirm(false)}
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmDelete}
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Delete</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform, Linking, Share, RefreshControl, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -58,6 +58,12 @@ export default function CreditBookScreen() {
     newBalance: number;
     paymentMethod: string;
   } | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFreezeConfirm, setShowFreezeConfirm] = useState(false);
+  const [freezeTarget, setFreezeTarget] = useState<Customer | null>(null);
+  const [showReminderInfo, setShowReminderInfo] = useState(false);
+  const [reminderInfoDays, setReminderInfoDays] = useState(0);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -230,32 +236,26 @@ export default function CreditBookScreen() {
   }, [shopInfo, setLastReminderSent]);
 
   const handleToggleFreeze = useCallback((customer: Customer) => {
-    const newFrozen = !customer.creditFrozen;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    if (newFrozen) {
-      Alert.alert(
-        'Freeze Credit',
-        `Stop credit sales to ${customer.name}? They won't be able to buy on credit until you unfreeze.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Freeze',
-            style: 'destructive',
-            onPress: () => {
-              freezeCustomerCredit(customer.id, true);
-              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
-              if (fresh) setSelectedCustomer(fresh);
-            },
-          },
-        ]
-      );
+    if (!customer.creditFrozen) {
+      setFreezeTarget(customer);
+      setShowFreezeConfirm(true);
     } else {
       freezeCustomerCredit(customer.id, false);
       const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
       if (fresh) setSelectedCustomer(fresh);
     }
   }, [freezeCustomerCredit]);
+
+  const confirmFreeze = useCallback(() => {
+    if (!freezeTarget) return;
+    freezeCustomerCredit(freezeTarget.id, true);
+    const fresh = useRetailStore.getState().customers.find((c) => c.id === freezeTarget.id);
+    if (fresh) setSelectedCustomer(fresh);
+    setShowFreezeConfirm(false);
+    setFreezeTarget(null);
+  }, [freezeTarget, freezeCustomerCredit]);
 
   const gradientColors: [string, string, string] = isDark
     ? ['#292524', '#1c1917', '#0c0a09']
@@ -287,141 +287,163 @@ export default function CreditBookScreen() {
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
 
-      <ScrollView
+      <FlatList
         className="flex-1"
+        data={filteredCustomers}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">
-                Customers
-              </Text>
-              <Pressable
-                onPress={() => setShowAddModal(true)}
-                className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
-              >
-                <Plus size={18} color="white" />
-              </Pressable>
-            </View>
-            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
-              Credit Book
-            </Text>
-          </Animated.View>
-        </View>
-
-        {/* Stats Cards — 3 columns */}
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(600)}
-          className="flex-row mx-5 mt-6 gap-2"
-        >
-          {/* Total Owed */}
-          <View className="flex-1 bg-red-500/10 rounded-2xl p-3 border border-red-500/30">
-            <View className="flex-row items-center gap-1 mb-1">
-              <AlertCircle size={14} color="#ef4444" />
-              <Text className="text-red-400 text-xs font-semibold">Total Owed</Text>
-            </View>
-            <Text className="text-red-400 text-lg font-bold">{formatNaira(creditSummary.totalOwed)}</Text>
-            {creditSummary.overdueAmount > 0 && (
-              <Text className="text-red-400/60 text-xs mt-1">
-                {formatNaira(creditSummary.overdueAmount)} overdue
-              </Text>
-            )}
-          </View>
-
-          {/* Overdue */}
-          <View className={`flex-1 rounded-2xl p-3 border ${creditSummary.overdueCount > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/80 dark:bg-stone-900/80 border-stone-200 dark:border-stone-800'}`}>
-            <View className="flex-row items-center gap-1 mb-1">
-              <Clock size={14} color={creditSummary.overdueCount > 0 ? '#f59e0b' : '#78716c'} />
-              <Text className={`text-xs font-semibold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-500'}`}>Overdue</Text>
-            </View>
-            <Text className={`text-lg font-bold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>
-              {creditSummary.overdueCount}
-            </Text>
-            {creditSummary.avgDaysOverdue > 0 && (
-              <Text className="text-stone-500 text-xs mt-1">
-                ~{creditSummary.avgDaysOverdue}d avg
-              </Text>
-            )}
-          </View>
-
-          {/* High Risk / Frozen */}
-          <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-3 border border-stone-200 dark:border-stone-800">
-            <View className="flex-row items-center gap-1 mb-1">
-              <ShieldOff size={14} color="#78716c" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold">At Risk</Text>
-            </View>
-            <Text className="text-stone-900 dark:text-white text-lg font-bold">
-              {creditSummary.highRiskCount}
-            </Text>
-            {creditSummary.frozenCount > 0 && (
-              <Text className="text-red-400 text-xs mt-1">
-                {creditSummary.frozenCount} frozen
-              </Text>
-            )}
-          </View>
-        </Animated.View>
-
-        {/* Filter Tabs */}
-        <Animated.View entering={FadeInDown.delay(250).duration(600)} className="px-5 mt-4">
-          <View className="flex-row gap-2">
-            {(['all', 'overdue', 'frozen'] as FilterMode[]).map((mode) => {
-              const isActive = filterMode === mode;
-              const count = mode === 'overdue' ? overdueCustomers.length : mode === 'frozen' ? customers.filter((c) => c.creditFrozen).length : customers.length;
-              return (
-                <Pressable
-                  key={mode}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setFilterMode(mode);
-                  }}
-                  className={`px-4 py-2 rounded-full flex-row items-center gap-1.5 ${isActive ? 'bg-orange-500' : 'bg-stone-200 dark:bg-stone-800'}`}
-                >
-                  <Text className={`text-sm font-medium capitalize ${isActive ? 'text-white' : 'text-stone-600 dark:text-stone-400'}`}>
-                    {mode}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setTimeout(() => setRefreshing(false), 500);
+            }}
+            tintColor="#e05e1b"
+            colors={['#e05e1b']}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={{ paddingTop: insets.top + 8 }} className="px-5">
+              <Animated.View entering={FadeInDown.delay(100).duration(600)}>
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">
+                    Customers
                   </Text>
-                  {count > 0 && (mode === 'overdue' || mode === 'frozen') && (
-                    <View className={`px-1.5 py-0.5 rounded-full min-w-[20px] items-center ${isActive ? 'bg-white/30' : mode === 'overdue' ? 'bg-amber-500/30' : 'bg-red-500/30'}`}>
-                      <Text className={`text-xs font-bold ${isActive ? 'text-white' : mode === 'overdue' ? 'text-amber-500' : 'text-red-500'}`}>
-                        {count}
+                  <Pressable
+                    onPress={() => setShowAddModal(true)}
+                    accessibilityLabel="Add customer"
+                    accessibilityRole="button"
+                    className="bg-orange-500 w-8 h-8 rounded-full items-center justify-center active:scale-95"
+                  >
+                    <Plus size={18} color="white" />
+                  </Pressable>
+                </View>
+                <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
+                  Credit Book
+                </Text>
+              </Animated.View>
+            </View>
+
+            {/* Stats Cards — 3 columns */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(600)}
+              className="flex-row mx-5 mt-6 gap-2"
+            >
+              <View className="flex-1 bg-red-500/10 rounded-2xl p-3 border border-red-500/30">
+                <View className="flex-row items-center gap-1 mb-1">
+                  <AlertCircle size={14} color="#ef4444" />
+                  <Text className="text-red-400 text-xs font-semibold">Total Owed</Text>
+                </View>
+                <Text className="text-red-400 text-lg font-bold">{formatNaira(creditSummary.totalOwed)}</Text>
+                {creditSummary.overdueAmount > 0 && (
+                  <Text className="text-red-400/60 text-xs mt-1">
+                    {formatNaira(creditSummary.overdueAmount)} overdue
+                  </Text>
+                )}
+              </View>
+              <View className={`flex-1 rounded-2xl p-3 border ${creditSummary.overdueCount > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/80 dark:bg-stone-900/80 border-stone-200 dark:border-stone-800'}`}>
+                <View className="flex-row items-center gap-1 mb-1">
+                  <Clock size={14} color={creditSummary.overdueCount > 0 ? '#f59e0b' : '#78716c'} />
+                  <Text className={`text-xs font-semibold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-500'}`}>Overdue</Text>
+                </View>
+                <Text className={`text-lg font-bold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>
+                  {creditSummary.overdueCount}
+                </Text>
+                {creditSummary.avgDaysOverdue > 0 && (
+                  <Text className="text-stone-500 text-xs mt-1">
+                    ~{creditSummary.avgDaysOverdue}d avg
+                  </Text>
+                )}
+              </View>
+              <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-3 border border-stone-200 dark:border-stone-800">
+                <View className="flex-row items-center gap-1 mb-1">
+                  <ShieldOff size={14} color="#78716c" />
+                  <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold">At Risk</Text>
+                </View>
+                <Text className="text-stone-900 dark:text-white text-lg font-bold">
+                  {creditSummary.highRiskCount}
+                </Text>
+                {creditSummary.frozenCount > 0 && (
+                  <Text className="text-red-400 text-xs mt-1">
+                    {creditSummary.frozenCount} frozen
+                  </Text>
+                )}
+              </View>
+            </Animated.View>
+
+            {/* Filter Tabs */}
+            <Animated.View entering={FadeInDown.delay(250).duration(600)} className="px-5 mt-4">
+              <View className="flex-row gap-2">
+                {(['all', 'overdue', 'frozen'] as FilterMode[]).map((mode) => {
+                  const isActive = filterMode === mode;
+                  const count = mode === 'overdue' ? overdueCustomers.length : mode === 'frozen' ? customers.filter((c) => c.creditFrozen).length : customers.length;
+                  const accessibilityLabel = mode === 'all' ? 'All customers' : mode === 'overdue' ? `Overdue customers, ${count} items` : `Frozen customers, ${count} items`;
+                  return (
+                    <Pressable
+                      key={mode}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setFilterMode(mode);
+                      }}
+                      accessibilityLabel={accessibilityLabel}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                      className={`px-4 py-2 rounded-full flex-row items-center gap-1.5 ${isActive ? 'bg-orange-500' : 'bg-stone-200 dark:bg-stone-800'}`}
+                    >
+                      <Text className={`text-sm font-medium capitalize ${isActive ? 'text-white' : 'text-stone-600 dark:text-stone-400'}`}>
+                        {mode}
                       </Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </Animated.View>
+                      {count > 0 && (mode === 'overdue' || mode === 'frozen') && (
+                        <View className={`px-1.5 py-0.5 rounded-full min-w-[20px] items-center ${isActive ? 'bg-white/30' : mode === 'overdue' ? 'bg-amber-500/30' : 'bg-red-500/30'}`}>
+                          <Text className={`text-xs font-bold ${isActive ? 'text-white' : mode === 'overdue' ? 'text-amber-500' : 'text-red-500'}`}>
+                            {count}
+                          </Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Animated.View>
 
-        {/* Search */}
-        <Animated.View entering={FadeInDown.delay(300).duration(600)} className="px-5 mt-3">
-          <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
-            <Search size={20} color="#78716c" />
-            <TextInput
-              className="flex-1 py-3 px-3 text-stone-900 dark:text-white text-base"
-              placeholder="Search customers..."
-              placeholderTextColor="#78716c"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery ? (
-              <Pressable onPress={() => setSearchQuery('')}>
-                <X size={18} color="#78716c" />
-              </Pressable>
-            ) : null}
-          </View>
-        </Animated.View>
+            {/* Search */}
+            <Animated.View entering={FadeInDown.delay(300).duration(600)} className="px-5 mt-4">
+              <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl flex-row items-center px-4 border border-stone-200 dark:border-stone-800">
+                <Search size={20} color="#78716c" />
+                <TextInput
+                  accessibilityLabel="Search customers"
+                  className="flex-1 py-3 px-3 text-stone-900 dark:text-white text-base"
+                  placeholder="Search customers..."
+                  placeholderTextColor="#78716c"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery ? (
+                  <Pressable onPress={() => setSearchQuery('')} accessibilityLabel="Clear search" accessibilityRole="button">
+                    <X size={18} color="#78716c" />
+                  </Pressable>
+                ) : null}
+              </View>
+            </Animated.View>
 
-        {/* Customers List */}
-        <Animated.View entering={FadeInDown.delay(400).duration(600)} className="px-5 mt-4">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">
-            {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
-          </Text>
-
-          {filteredCustomers.length === 0 && customers.length === 0 && (
-            <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
+            {/* Customer count */}
+            <View className="px-5 mt-4">
+              <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">
+                {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          customers.length === 0 ? (
+            <View className="mx-5 bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState
                 icon={Users}
                 title="No customers yet"
@@ -430,79 +452,74 @@ export default function CreditBookScreen() {
                 onButtonPress={() => setShowAddModal(true)}
               />
             </View>
-          )}
-
-          {filteredCustomers.length === 0 && customers.length > 0 && (
-            <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 p-6 items-center">
+          ) : filteredCustomers.length === 0 ? (
+            <View className="mx-5 bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 p-6 items-center">
               <Text className="text-stone-500 text-sm">No {filterMode === 'all' ? 'matching' : filterMode} customers</Text>
             </View>
-          )}
+          ) : null
+        }
+        renderItem={({ item: customer, index }) => {
+          const risk = getCreditRisk(customer);
+          const hasDebt = customer.currentCredit > 0;
+          const isFrozen = customer.creditFrozen;
 
-          <View className="gap-3">
-            {filteredCustomers.map((customer, index) => {
-              const risk = getCreditRisk(customer);
-              const hasDebt = customer.currentCredit > 0;
-              const isFrozen = customer.creditFrozen;
-
-              return (
-                <Animated.View
-                  key={customer.id}
-                  entering={FadeIn.delay(100 + index * 30).duration(400)}
-                  layout={Layout.springify()}
+          return (
+            <View className="px-5 mb-3">
+              <Animated.View
+                entering={FadeIn.delay(Math.min(index * 30, 300)).duration(400)}
+                layout={Layout.springify()}
+              >
+                <Pressable
+                  onPress={() => openCustomerDetail(customer)}
+                  className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border-l-4 border ${risk.borderColor} active:scale-[0.99]`}
+                  style={{ borderRightWidth: 1, borderTopWidth: 1, borderBottomWidth: 1, borderRightColor: isDark ? '#292524' : '#e7e5e4', borderTopColor: isDark ? '#292524' : '#e7e5e4', borderBottomColor: isDark ? '#292524' : '#e7e5e4' }}
                 >
-                  <Pressable
-                    onPress={() => openCustomerDetail(customer)}
-                    className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-4 border-l-4 border ${risk.borderColor} active:scale-[0.99]`}
-                    style={{ borderRightWidth: 1, borderTopWidth: 1, borderBottomWidth: 1, borderRightColor: isDark ? '#292524' : '#e7e5e4', borderTopColor: isDark ? '#292524' : '#e7e5e4', borderBottomColor: isDark ? '#292524' : '#e7e5e4' }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-3 flex-1">
-                        {/* Avatar */}
-                        {(() => {
-                          const letter = customer.name.charAt(0).toUpperCase();
-                          return (
-                            <View className={`w-12 h-12 rounded-full items-center justify-center ${risk.bgColor}`}>
-                              <Text className={`text-lg font-bold ${risk.color}`}>{letter}</Text>
-                            </View>
-                          );
-                        })()}
-                        <View className="flex-1">
-                          <View className="flex-row items-center gap-2">
-                            <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
-                            {isFrozen && (
-                              <View className="bg-red-500/20 px-2 py-0.5 rounded-full">
-                                <Text className="text-red-400 text-[10px] font-bold">FROZEN</Text>
-                              </View>
-                            )}
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center gap-3 flex-1">
+                      {(() => {
+                        const letter = customer.name.charAt(0).toUpperCase();
+                        return (
+                          <View className={`w-12 h-12 rounded-full items-center justify-center ${risk.bgColor}`}>
+                            <Text className={`text-lg font-bold ${risk.color}`}>{letter}</Text>
                           </View>
-                          {hasDebt ? (
-                            <Text className={`text-xs mt-0.5 ${risk.color}`}>{risk.label}</Text>
-                          ) : (
-                            <Text className="text-stone-500 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
+                        );
+                      })()}
+                      <View className="flex-1">
+                        <View className="flex-row items-center gap-2">
+                          <Text className="text-stone-900 dark:text-white font-medium text-base">{customer.name}</Text>
+                          {isFrozen && (
+                            <View className="bg-red-500/20 px-2 py-0.5 rounded-full">
+                              <Text className="text-red-400 text-[10px] font-bold">FROZEN</Text>
+                            </View>
                           )}
                         </View>
-                      </View>
-                      <View className="items-end">
                         {hasDebt ? (
-                          <>
-                            <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
-                            <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
-                          </>
+                          <Text className={`text-xs mt-0.5 ${risk.color}`}>{risk.label}</Text>
                         ) : (
-                          <View className="bg-emerald-500/20 px-2 py-1 rounded">
-                            <Text className="text-emerald-400 text-xs font-medium">Clear</Text>
-                          </View>
+                          <Text className="text-stone-500 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
                         )}
                       </View>
-                      <ChevronRight size={20} color="#57534e" className="ml-2" />
                     </View>
-                  </Pressable>
-                </Animated.View>
-              );
-            })}
-          </View>
-        </Animated.View>
-      </ScrollView>
+                    <View className="items-end">
+                      {hasDebt ? (
+                        <>
+                          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
+                          <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
+                        </>
+                      ) : (
+                        <View className="bg-emerald-500/20 px-2 py-1 rounded">
+                          <Text className="text-emerald-400 text-xs font-medium">Clear</Text>
+                        </View>
+                      )}
+                    </View>
+                    <ChevronRight size={20} color="#57534e" className="ml-2" />
+                  </View>
+                </Pressable>
+              </Animated.View>
+            </View>
+          );
+        }}
+      />
 
       {/* Add Customer Modal */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
@@ -512,7 +529,7 @@ export default function CreditBookScreen() {
             <View className="p-6">
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-stone-900 dark:text-white text-xl font-bold">Add Customer</Text>
-                <Pressable onPress={() => setShowAddModal(false)}>
+                <Pressable onPress={() => setShowAddModal(false)} accessibilityLabel="Close" accessibilityRole="button">
                   <X size={24} color="#78716c" />
                 </Pressable>
               </View>
@@ -581,7 +598,7 @@ export default function CreditBookScreen() {
                           </View>
                         )}
                       </View>
-                      <Pressable onPress={() => setShowCustomerModal(false)}>
+                      <Pressable onPress={() => setShowCustomerModal(false)} accessibilityLabel="Close" accessibilityRole="button">
                         <X size={24} color="#78716c" />
                       </Pressable>
                     </View>
@@ -604,7 +621,7 @@ export default function CreditBookScreen() {
                       <View className="flex-row justify-between">
                         <View>
                           <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Outstanding</Text>
-                          <Text className="text-red-400 text-2xl font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
+                          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 text-2xl font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
                         </View>
                         <View className="items-end">
                           <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Credit Limit</Text>
@@ -662,7 +679,8 @@ export default function CreditBookScreen() {
                         <Pressable
                           onPress={() => {
                             if (recentlyReminded) {
-                              Alert.alert('Reminded Recently', `Last reminder was ${reminderDays} day${reminderDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.`);
+                              setReminderInfoDays(reminderDays ?? 0);
+                              setShowReminderInfo(true);
                               return;
                             }
                             sendWhatsAppReminder(selectedCustomer);
@@ -803,7 +821,7 @@ export default function CreditBookScreen() {
                 <View>
                   <View className="flex-row items-center justify-between mb-6">
                     <Text className="text-stone-900 dark:text-white text-xl font-bold">Record Payment</Text>
-                    <Pressable onPress={handleClosePaymentModal}>
+                    <Pressable onPress={handleClosePaymentModal} accessibilityLabel="Close" accessibilityRole="button">
                       <X size={24} color="#78716c" />
                     </Pressable>
                   </View>
@@ -819,8 +837,9 @@ export default function CreditBookScreen() {
                         <View>
                           <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
                           <TextInput
+                            style={{ fontFamily: 'Poppins-Bold' }}
                             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
-                            placeholder="0"
+                            placeholder="₦0"
                             placeholderTextColor="#57534e"
                             keyboardType="numeric"
                             value={paymentAmount}
@@ -896,6 +915,76 @@ export default function CreditBookScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Freeze Confirmation Modal */}
+      <Modal
+        visible={showFreezeConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFreezeConfirm(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowFreezeConfirm(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-red-500/20 items-center justify-center mb-4">
+                <ShieldOff size={28} color="#ef4444" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Freeze Credit?</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Stop credit sales to {freezeTarget?.name}? They won't be able to buy on credit until you unfreeze.
+              </Text>
+              <View className="flex-row gap-3 w-full">
+                <Pressable
+                  onPress={() => setShowFreezeConfirm(false)}
+                  className="flex-1 bg-stone-200 dark:bg-stone-800 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-stone-900 dark:text-white font-semibold text-center">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmFreeze}
+                  className="flex-1 bg-red-500 py-3.5 rounded-xl active:opacity-90"
+                >
+                  <Text className="text-white font-semibold text-center">Freeze</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Reminder Info Modal */}
+      <Modal
+        visible={showReminderInfo}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReminderInfo(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/60 items-center justify-center px-8"
+          onPress={() => setShowReminderInfo(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white dark:bg-stone-900 rounded-2xl p-6 w-full items-center">
+              <View className="w-14 h-14 rounded-full bg-amber-500/20 items-center justify-center mb-4">
+                <Clock size={28} color="#f59e0b" />
+              </View>
+              <Text className="text-stone-900 dark:text-white text-lg font-bold mb-2">Reminded Recently</Text>
+              <Text className="text-stone-500 dark:text-stone-400 text-center text-sm mb-6">
+                Last reminder was {reminderInfoDays} day{reminderInfoDays !== 1 ? 's' : ''} ago. Wait a bit before sending another.
+              </Text>
+              <Pressable
+                onPress={() => setShowReminderInfo(false)}
+                className="bg-orange-500 w-full py-3.5 rounded-xl active:opacity-90"
+              >
+                <Text className="text-white font-semibold text-center">Got it</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );

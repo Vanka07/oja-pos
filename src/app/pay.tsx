@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChevronLeft, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { verifyPayment, extractReference } from '@/lib/paystack';
 import { track } from '@/lib/analytics';
@@ -25,6 +26,8 @@ export default function PayScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ url: string; reference: string; email: string; plan: string }>();
 
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const activate = useSubscriptionStore((s) => s.activate);
@@ -106,12 +109,12 @@ export default function PayScreen() {
   // Status overlay screens
   if (status === 'verifying') {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center px-8">
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
         <ActivityIndicator size="large" color="#e05e1b" />
-        <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-xl mt-6 text-center">
+        <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-stone-900 dark:text-white text-xl mt-6 text-center">
           Verifying Payment...
         </Text>
-        <Text className="text-stone-400 text-center mt-2">
+        <Text className="text-stone-500 dark:text-stone-400 text-center mt-2">
           Please wait while we confirm your payment.
         </Text>
       </View>
@@ -120,15 +123,15 @@ export default function PayScreen() {
 
   if (status === 'success') {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center px-8">
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.duration(600)} className="items-center">
           <View className="w-20 h-20 rounded-full bg-emerald-500/20 items-center justify-center mb-6">
             <CheckCircle size={48} color="#10b981" />
           </View>
-          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white text-2xl text-center">
+          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl text-center">
             Payment Successful! 🎉
           </Text>
-          <Text className="text-stone-400 text-center mt-3">
+          <Text className="text-stone-500 dark:text-stone-400 text-center mt-3">
             Your {targetPlan === 'growth' ? 'Growth' : 'Business'} plan is now active for 30 days. Enjoy all premium features!
           </Text>
           <Pressable
@@ -144,15 +147,15 @@ export default function PayScreen() {
 
   if (status === 'failed') {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center px-8">
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.duration(600)} className="items-center">
           <View className="w-20 h-20 rounded-full bg-red-500/20 items-center justify-center mb-6">
             <AlertCircle size={48} color="#ef4444" />
           </View>
-          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white text-2xl text-center">
+          <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl text-center">
             Payment Failed
           </Text>
-          <Text className="text-stone-400 text-center mt-3">
+          <Text className="text-stone-500 dark:text-stone-400 text-center mt-3">
             {errorMessage || 'Something went wrong with your payment.'}
           </Text>
           <View className="flex-row gap-3 mt-8">
@@ -165,9 +168,9 @@ export default function PayScreen() {
             </Pressable>
             <Pressable
               onPress={() => router.back()}
-              className="bg-stone-800 px-6 py-4 rounded-2xl active:opacity-90"
+              className="bg-stone-200 dark:bg-stone-800 px-6 py-4 rounded-2xl active:opacity-90"
             >
-              <Text className="text-stone-300 font-semibold">Go Back</Text>
+              <Text className="text-stone-600 dark:text-stone-300 font-semibold">Go Back</Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -178,12 +181,12 @@ export default function PayScreen() {
   // Web platform: show waiting screen since payment is in popup
   if (Platform.OS === 'web') {
     return (
-      <View className="flex-1 bg-stone-950 items-center justify-center px-8">
+      <View className="flex-1 bg-stone-50 dark:bg-stone-950 items-center justify-center px-8">
         <ActivityIndicator size="large" color="#e05e1b" />
-        <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-xl mt-6 text-center">
+        <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-stone-900 dark:text-white text-xl mt-6 text-center">
           Complete Payment
         </Text>
-        <Text className="text-stone-400 text-center mt-2">
+        <Text className="text-stone-500 dark:text-stone-400 text-center mt-2">
           A payment window has been opened. Complete your payment there.
         </Text>
         <Pressable

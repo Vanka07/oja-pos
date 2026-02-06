@@ -65,6 +65,7 @@ export default function ReportsScreen() {
   const getDailySummary = useRetailStore((s) => s.getDailySummary);
   const getTopSellingProducts = useRetailStore((s) => s.getTopSellingProducts);
   const getSalesByDateRange = useRetailStore((s) => s.getSalesByDateRange);
+  const getExpensesByDateRange = useRetailStore((s) => s.getExpensesByDateRange);
 
   const getDateRangeData = useMemo(() => {
     const today = new Date();
@@ -74,7 +75,11 @@ export default function ReportsScreen() {
     if (dateRange === 'week') startDate.setDate(today.getDate() - 7);
     else if (dateRange === 'month') startDate.setDate(today.getDate() - 30);
     else startDate.setDate(today.getDate() - 365);
-    const rangeSales = getSalesByDateRange(getLocalDateStr(startDate), todayStr);
+    const startDateStr = getLocalDateStr(startDate);
+    const rangeSales = getSalesByDateRange(startDateStr, todayStr);
+    const rangeExpenses = getExpensesByDateRange(startDateStr, todayStr);
+    const totalExpenses = rangeExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const grossProfit = rangeSales.reduce((sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + (item.product.sellingPrice - item.product.costPrice) * item.quantity, 0), 0);
     return {
       date: `${startDate.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}`,
       totalSales: rangeSales.reduce((sum, s) => sum + s.total, 0),
@@ -83,9 +88,9 @@ export default function ReportsScreen() {
       transferSales: rangeSales.filter((s) => s.paymentMethod === 'transfer').reduce((sum, s) => sum + s.total, 0),
       posSales: rangeSales.filter((s) => s.paymentMethod === 'pos').reduce((sum, s) => sum + s.total, 0),
       creditSales: rangeSales.filter((s) => s.paymentMethod === 'credit').reduce((sum, s) => sum + s.total, 0),
-      profit: rangeSales.reduce((sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + (item.product.sellingPrice - item.product.costPrice) * item.quantity, 0), 0),
+      profit: grossProfit - totalExpenses,
     };
-  }, [dateRange, getDailySummary, getSalesByDateRange]);
+  }, [dateRange, getDailySummary, getSalesByDateRange, getExpensesByDateRange]);
 
   const topProducts = useMemo(() => {
     const days = dateRange === 'today' ? 1 : dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;
@@ -332,7 +337,7 @@ export default function ReportsScreen() {
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
-          <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
+          <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Summary</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <View className="w-20 h-20 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center mb-4">
@@ -351,8 +356,8 @@ export default function ReportsScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
-            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Reports</Text>
+            <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">Analytics</Text>
+            <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Summary</Text>
           </Animated.View>
         </View>
 
@@ -400,7 +405,7 @@ export default function ReportsScreen() {
         </Animated.View>
 
         {bestDay && (
-          <Animated.View entering={FadeInDown.delay(340).duration(600)} className="mx-5 mt-3">
+          <Animated.View entering={FadeInDown.delay(340).duration(600)} className="mx-5 mt-4">
             <View className="bg-amber-50 dark:bg-amber-950/40 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800/50 flex-row items-center">
               <Text className="text-lg mr-2">🏆</Text>
               <Text className="text-stone-700 dark:text-stone-300 text-sm flex-1">
@@ -412,7 +417,7 @@ export default function ReportsScreen() {
         )}
 
         {getDateRangeData.totalTransactions > 0 && (
-          <Animated.View entering={FadeInDown.delay(345).duration(600)} className="mx-5 mt-3">
+          <Animated.View entering={FadeInDown.delay(345).duration(600)} className="mx-5 mt-4">
             <Pressable
               onPress={handleShareWhatsApp}
               className="bg-green-600 rounded-xl px-4 py-3 flex-row items-center justify-center"
@@ -431,7 +436,7 @@ export default function ReportsScreen() {
         )}
 
         {paymentBreakdown.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(380).duration(600)} className="mx-5">
+          <Animated.View entering={FadeInDown.delay(380).duration(600)} className="mx-5 mt-4">
             {Platform.OS === 'web' ? <WebPieChart /> : <NativePieChart />}
           </Animated.View>
         )}
