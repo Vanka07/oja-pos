@@ -57,24 +57,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       SplashScreen.hideAsync();
     }, 300);
 
-    // iOS PWA fallback: periodic check every 2 seconds
-    // This catches cases where JS events don't fire properly
-    const intervalCheck = setInterval(() => {
-      if (Platform.OS === 'web') {
-        const authState = useAuthStore.getState();
-        const staffState = useStaffStore.getState();
-        const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
-        
-        // If PIN exists, page is hidden, but not locked - lock it
-        if (hasPinOrStaff && document.hidden && !authState.isLocked) {
-          authState.lock();
-        }
-      }
-    }, 2000);
-
     return () => {
       clearTimeout(timer);
-      clearInterval(intervalCheck);
     };
   }, []);
 
@@ -109,50 +93,27 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
-    
-    // Web-specific: multiple event listeners for iOS PWA compatibility
-    const checkAndLock = (shouldLock: boolean) => {
-      const authState = useAuthStore.getState();
-      const staffState = useStaffStore.getState();
-      const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
-      
-      if (shouldLock && hasPinOrStaff) {
-        authState.lock();
-      } else if (!shouldLock && hasPinOrStaff && !authState.isLocked) {
-        // Coming back - if should be locked but isn't, lock it
-        authState.lock();
+
+    // Web-specific: lock when tab becomes hidden (user switches away)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        const authState = useAuthStore.getState();
+        const staffState = useStaffStore.getState();
+        const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+        if (hasPinOrStaff) {
+          authState.lock();
+        }
       }
     };
-    
-    // Visibility change (standard)
-    const handleVisibilityChange = () => {
-      checkAndLock(document.visibilityState === 'hidden');
-    };
-    
-    // Page show/hide (better iOS support)
-    const handlePageHide = () => checkAndLock(true);
-    const handlePageShow = () => checkAndLock(false);
-    
-    // Focus/blur (additional fallback)
-    const handleBlur = () => checkAndLock(true);
-    const handleFocus = () => checkAndLock(false);
-    
+
     if (Platform.OS === 'web') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('pagehide', handlePageHide);
-      window.addEventListener('pageshow', handlePageShow);
-      window.addEventListener('blur', handleBlur);
-      window.addEventListener('focus', handleFocus);
     }
-    
+
     return () => {
       subscription.remove();
       if (Platform.OS === 'web') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('pagehide', handlePageHide);
-        window.removeEventListener('pageshow', handlePageShow);
-        window.removeEventListener('blur', handleBlur);
-        window.removeEventListener('focus', handleFocus);
       }
     };
   }, []);
