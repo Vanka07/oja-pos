@@ -90,8 +90,10 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     };
   }, [isCloudAuthenticated, shopId, cloudSession]);
 
-  // Lock app when going to background (only if PIN is set)
+  // Lock app when going to background (only if PIN is set) - native only
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // 'background' or 'inactive' on native
       if (nextAppState === 'background' || nextAppState === 'inactive') {
@@ -108,68 +110,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-    // Web-specific: lock when tab becomes hidden (user switches away)
-    let isPageUnloading = false;
-    let visibilityLockTimer: ReturnType<typeof setTimeout> | null = null;
-    const clearVisibilityTimer = () => {
-      if (visibilityLockTimer) {
-        clearTimeout(visibilityLockTimer);
-        visibilityLockTimer = null;
-      }
-    };
-    const markPageUnloading = () => {
-      isPageUnloading = true;
-      clearVisibilityTimer();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (isPageUnloading) return;
-        let sessionAuthenticated = false;
-        if (typeof localStorage !== 'undefined') {
-          try {
-            const raw = localStorage.getItem('oja_authenticated_session');
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
-              const ttlMs = 12 * 60 * 60 * 1000;
-              sessionAuthenticated = ts > 0 && Date.now() - ts < ttlMs;
-            }
-          } catch {
-            sessionAuthenticated = false;
-          }
-        }
-        if (sessionAuthenticated) return;
-        clearVisibilityTimer();
-        visibilityLockTimer = setTimeout(() => {
-          if (isPageUnloading) return;
-          if (document.visibilityState !== 'hidden') return;
-          const authState = useAuthStore.getState();
-          const staffState = useStaffStore.getState();
-          const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
-            (s) => s.active && isAppRole(s.role) && s.pin?.length
-          );
-          if (hasPinOrStaff) {
-            authState.lock();
-          }
-        }, 500);
-      } else {
-        clearVisibilityTimer();
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('beforeunload', markPageUnloading);
-      window.addEventListener('pagehide', markPageUnloading);
-    }
-
     return () => {
       subscription.remove();
-      if (Platform.OS === 'web') {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('beforeunload', markPageUnloading);
-        window.removeEventListener('pagehide', markPageUnloading);
-      }
     };
   }, []);
 
@@ -187,8 +129,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     return <SkeletonLoader />;
   }
 
-  // Show lock screen if any PIN exists (legacy or staff) and app is locked
-  if (hasAnyPin && isLocked && !(Platform.OS === 'web' && inOnboarding && !hasCompletedOnboarding)) {
+  // Show lock screen if any PIN exists (legacy or staff) and app is locked (native only)
+  if (Platform.OS !== 'web' && hasAnyPin && isLocked) {
     return <LockScreen />;
   }
 

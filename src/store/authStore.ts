@@ -131,6 +131,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       lock: () => {
+        if (Platform.OS === 'web') {
+          set({ isLocked: false });
+          return;
+        }
         // Also clear current staff on lock
         useStaffStore.getState().logout();
         // Clear session authentication on web so next refresh will require PIN
@@ -184,6 +188,10 @@ export const useAuthStore = create<AuthState>()(
         // After hydration, lock if PIN exists UNLESS already authenticated this session (web)
         // Use setTimeout to ensure this runs after all stores hydrate
         setTimeout(() => {
+          if (Platform.OS === 'web') {
+            useAuthStore.setState({ isLocked: false });
+            return;
+          }
           const authState = useAuthStore.getState();
           const staffState = useStaffStore.getState();
           const hasAppPin = staffState.staff.some(
