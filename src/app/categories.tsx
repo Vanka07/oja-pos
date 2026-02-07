@@ -140,7 +140,7 @@ export default function CategoriesScreen() {
                 <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-2xl font-extrabold tracking-tight">
                   Categories
                 </Text>
-                <Text className="text-stone-500 text-sm">{categories.length} categories</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">{categories.length} categories</Text>
               </View>
               {canManage && (
                 <Pressable
@@ -161,7 +161,7 @@ export default function CategoriesScreen() {
               <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 p-8 items-center">
                 <Package size={48} color="#78716c" />
                 <Text className="text-stone-900 dark:text-white font-semibold text-lg mt-4 mb-2">No categories yet</Text>
-                <Text className="text-stone-500 text-sm text-center mb-4">Add categories to organize your products</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm text-center mb-4">Add categories to organize your products</Text>
                 <Pressable onPress={openAddModal} className="bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
                   <Text className="text-white font-semibold">Add Category</Text>
                 </Pressable>
@@ -191,7 +191,7 @@ export default function CategoriesScreen() {
                       {/* Name + count */}
                       <View className="flex-1">
                         <Text className="text-stone-900 dark:text-white font-medium text-base">{category.name}</Text>
-                        <Text className="text-stone-500 text-sm">
+                        <Text className="text-stone-600 dark:text-stone-400 text-sm">
                           {count} product{count !== 1 ? 's' : ''}
                         </Text>
                       </View>
@@ -245,7 +245,7 @@ export default function CategoriesScreen() {
             <View className="gap-5">
               {/* Name */}
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category Name *</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Category Name *</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white text-base"
                   placeholder={placeholders.categoryExample}
@@ -258,7 +258,7 @@ export default function CategoriesScreen() {
 
               {/* Icon */}
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Icon</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Icon</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View className="flex-row gap-2">
                     {PRESET_ICONS.map((icon) => (
@@ -279,7 +279,7 @@ export default function CategoriesScreen() {
 
               {/* Color */}
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Color</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Color</Text>
                 <View className="flex-row flex-wrap gap-2">
                   {PRESET_COLORS.map((color) => (
                     <Pressable
@@ -308,7 +308,7 @@ export default function CategoriesScreen() {
                   </View>
                   <View>
                     <Text className="text-stone-900 dark:text-white font-medium">{formName.trim()}</Text>
-                    <Text className="text-stone-500 text-xs">Preview</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Preview</Text>
                   </View>
                   <View className="w-4 h-4 rounded-full ml-auto" style={{ backgroundColor: formColor }} />
                 </View>

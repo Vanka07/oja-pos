@@ -304,7 +304,7 @@ export default function MoreScreen() {
         {/* Header */}
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">
               Settings & Tools
             </Text>
             <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
@@ -373,7 +373,7 @@ export default function MoreScreen() {
                 <Receipt size={20} color="#ef4444" />
               </View>
               <Text className="text-stone-900 dark:text-white font-medium">Add Expense</Text>
-              <Text className="text-stone-500 dark:text-stone-500 text-xs mt-1">Record costs</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mt-1">Record costs</Text>
             </Pressable>
           )}
 
@@ -387,7 +387,7 @@ export default function MoreScreen() {
               <Calculator size={20} color="#10b981" />
             </View>
             <Text className="text-stone-900 dark:text-white font-medium">Price Calculator</Text>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs mt-1">Set margins</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm mt-1">Set margins</Text>
           </Pressable>
         </Animated.View>
 
@@ -405,9 +405,9 @@ export default function MoreScreen() {
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Today's Expenses</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Today's Expenses</Text>
                 <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-red-400 text-2xl font-bold mt-1">{formatNaira(todayExpenseTotal)}</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">{todayExpenses.length} expense{todayExpenses.length !== 1 ? 's' : ''}</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </View>
@@ -420,7 +420,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(500).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Staff</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Staff</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {hasStaff && (
               <Pressable
@@ -432,7 +432,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Switch Staff</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {currentStaff ? `Current: ${currentStaff.name}` : 'No one logged in'}
                   </Text>
                 </View>
@@ -450,7 +450,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Staff Management</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">{staffMembers.length} staff member{staffMembers.length !== 1 ? 's' : ''}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">{staffMembers.length} staff member{staffMembers.length !== 1 ? 's' : ''}</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -472,7 +472,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Payroll</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {canAccess('payroll') ? 'Track staff salaries' : 'Upgrade to Business to unlock'}
                   </Text>
                 </View>
@@ -495,7 +495,7 @@ export default function MoreScreen() {
             className="mx-5 mt-4"
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Recent Activity</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Recent Activity</Text>
               {canViewActivity && (
                 <Pressable onPress={() => router.push('/activity-log')} className="active:opacity-70">
                   <Text className="text-orange-500 text-xs font-medium">View All</Text>
@@ -518,7 +518,7 @@ export default function MoreScreen() {
                     </Text>
                   </View>
                   {activity.amount !== undefined && (
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm font-medium">{formatNaira(activity.amount)}</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium">{formatNaira(activity.amount)}</Text>
                   )}
                 </View>
               ))}
@@ -531,7 +531,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(540).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Appearance</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Appearance</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 p-3">
             <View className="flex-row gap-2">
               {([
@@ -574,7 +574,7 @@ export default function MoreScreen() {
           className="mx-5 mt-6"
         >
           <View className="flex-row items-center gap-2 mb-3">
-            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Cloud Sync</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Cloud Sync</Text>
             {!canAccess('cloud_sync') && (
               <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
                 <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
@@ -592,7 +592,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Enable Cloud Sync</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Upgrade to Business to unlock</Text>
                 </View>
                 <View className="bg-orange-500/20 px-2 py-1 rounded-full">
                   <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
@@ -608,7 +608,7 @@ export default function MoreScreen() {
                       {isSyncing ? 'Syncing...' : 'Connected'}
                     </Text>
                   </View>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Last synced: {lastSyncDisplay}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Last synced: {lastSyncDisplay}</Text>
                 </View>
 
                 {/* Sync Now */}
@@ -626,7 +626,7 @@ export default function MoreScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Sync Now</Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Push & pull latest data</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Push & pull latest data</Text>
                   </View>
                 </Pressable>
 
@@ -640,7 +640,7 @@ export default function MoreScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-red-400 font-medium">Sign Out</Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Stop cloud sync</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Stop cloud sync</Text>
                   </View>
                 </Pressable>
               </>
@@ -654,7 +654,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Enable Cloud Sync</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Back up & sync across devices</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Back up & sync across devices</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -669,7 +669,7 @@ export default function MoreScreen() {
           className="mx-5 mt-6"
         >
           <View className="flex-row items-center gap-2 mb-3">
-            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Receipt Printer</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Receipt Printer</Text>
             {!canAccess('receipt_printer') && (
               <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
                 <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
@@ -687,7 +687,7 @@ export default function MoreScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-stone-900 dark:text-white font-medium">Receipt Printer</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Upgrade to Business to unlock</Text>
               </View>
               <View className="bg-orange-500/20 px-2 py-1 rounded-full">
                 <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
@@ -743,7 +743,7 @@ export default function MoreScreen() {
                 <Text className="text-stone-900 dark:text-white font-medium">
                   {isPrintingTest ? 'Printing...' : 'Test Print'}
                 </Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Print a sample receipt</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Print a sample receipt</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
@@ -758,7 +758,7 @@ export default function MoreScreen() {
           className="mx-5 mt-6"
         >
           <View className="flex-row items-center gap-2 mb-3">
-            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Inventory Alerts</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Inventory Alerts</Text>
             {!canAccess('low_stock_alerts') && (
               <View className="bg-orange-500/20 px-2 py-0.5 rounded-full">
                 <Text className="text-orange-400 text-[10px] font-semibold">🔒 Business</Text>
@@ -776,7 +776,7 @@ export default function MoreScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Low Stock Alerts</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Upgrade to Business to unlock</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Upgrade to Business to unlock</Text>
               </View>
               <View className="bg-orange-500/20 px-2 py-1 rounded-full">
                 <Text className="text-orange-400 text-xs font-semibold">🔒</Text>
@@ -793,7 +793,7 @@ export default function MoreScreen() {
                 </View>
                 <View>
                   <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Low Stock Alerts</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {whatsAppAlertsEnabled ? 'Enabled' : 'Disabled'}
                   </Text>
                 </View>
@@ -813,7 +813,7 @@ export default function MoreScreen() {
               <>
                 {/* Phone Number */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">WhatsApp Number</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">WhatsApp Number</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                     placeholder="e.g. 2348012345678"
@@ -826,7 +826,7 @@ export default function MoreScreen() {
 
                 {/* Default Threshold */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Default Low Stock Threshold</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Default Low Stock Threshold</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                     placeholder="10"
@@ -847,7 +847,7 @@ export default function MoreScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Send Alert Now</Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Manually check & send low stock alert</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Manually check & send low stock alert</Text>
                   </View>
                   <ChevronRight size={20} color="#57534e" />
                 </Pressable>
@@ -863,7 +863,7 @@ export default function MoreScreen() {
           entering={FadeInDown.delay(600).duration(600)}
           className="mx-5 mt-6"
         >
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Settings</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Shop Settings</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             {/* Subscription Row — owner only */}
             {canManageSub && (
@@ -876,7 +876,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Subscription</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {isPremium
                       ? (subscriptionPlan === 'growth' ? 'Growth Plan' : 'Business Plan')
                       : 'Starter Plan (Free)'}
@@ -908,7 +908,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Manage Categories</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Add, edit, or remove categories</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Add, edit, or remove categories</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -925,10 +925,10 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">WhatsApp Catalog</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Share products online</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Share products online</Text>
                 </View>
                 <View className={`px-2 py-1 rounded-full mr-2 ${catalogEnabled ? 'bg-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
-                  <Text className={`text-xs font-semibold ${catalogEnabled ? 'text-emerald-400' : 'text-stone-500'}`}>
+                  <Text className={`text-xs font-semibold ${catalogEnabled ? 'text-emerald-400' : 'text-stone-600 dark:text-stone-400'}`}>
                     {catalogEnabled ? 'Enabled' : 'Disabled'}
                   </Text>
                 </View>
@@ -946,7 +946,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Shop Profile</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">{shopInfo?.name || 'Set up your shop'}</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -961,7 +961,7 @@ export default function MoreScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-stone-900 dark:text-white font-medium">Language</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">{currentLanguageName}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">{currentLanguageName}</Text>
               </View>
               <ChevronRight size={20} color="#57534e" />
             </Pressable>
@@ -981,7 +981,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">Backup your records</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Backup your records</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -1000,7 +1000,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">{currentPin ? 'Change PIN' : 'Set PIN'}</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {currentPin ? 'Update your 4-digit security PIN' : 'Protect your app with a 4-digit PIN'}
                   </Text>
                 </View>
@@ -1024,7 +1024,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-stone-900 dark:text-white font-medium">Recovery Code</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">View or resend your PIN recovery code</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">View or resend your PIN recovery code</Text>
                 </View>
                 <ChevronRight size={20} color="#57534e" />
               </Pressable>
@@ -1045,7 +1045,7 @@ export default function MoreScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-red-400 font-medium">Lock App</Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {currentStaff ? `Logged in as ${currentStaff.name}` : 'Require PIN to re-enter'}
                   </Text>
                 </View>
@@ -1062,7 +1062,7 @@ export default function MoreScreen() {
           {/* Reset All Data — owner only */}
           {canManageSub && (
             <View className="mb-6">
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">Danger Zone</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Danger Zone</Text>
               <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-red-500/30 overflow-hidden">
                 <Pressable
                   onPress={() => setShowResetConfirm(true)}
@@ -1073,7 +1073,7 @@ export default function MoreScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-red-500 font-medium">Reset All Data</Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">Delete everything and start fresh</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Delete everything and start fresh</Text>
                   </View>
                   <ChevronRight size={20} color="#ef4444" />
                 </Pressable>
@@ -1081,7 +1081,7 @@ export default function MoreScreen() {
             </View>
           )}
 
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-3">About</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">About</Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
             <View className="flex-row items-center p-4">
               <View className="w-10 h-10 rounded-xl bg-stone-200 dark:bg-stone-800 items-center justify-center mr-3">
@@ -1089,7 +1089,7 @@ export default function MoreScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-stone-900 dark:text-white font-medium">Oja POS</Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Version {APP_VERSION}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Version {APP_VERSION}</Text>
               </View>
             </View>
           </View>

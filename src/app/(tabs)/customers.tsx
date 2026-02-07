@@ -234,6 +234,21 @@ export default function CreditBookScreen() {
     });
   }, [shopInfo, setLastReminderSent]);
 
+  const openPaymentForCustomer = useCallback((customer: Customer) => {
+    const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
+    setSelectedCustomer(fresh || customer);
+    setShowPaymentModal(true);
+  }, []);
+
+  const handleQuickRemind = useCallback((customer: Customer) => {
+    if (wasRemindedRecently(customer)) {
+      setReminderCooldownDays(daysSinceReminder(customer) ?? 0);
+      setShowReminderCooldown(true);
+      return;
+    }
+    sendWhatsAppReminder(customer);
+  }, [sendWhatsAppReminder]);
+
   const handleToggleFreeze = useCallback((customer: Customer) => {
     const newFrozen = !customer.creditFrozen;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -264,7 +279,7 @@ export default function CreditBookScreen() {
       <View className="flex-1 bg-stone-50 dark:bg-stone-950">
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide uppercase mb-1">Customers</Text>
           <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Credit Book</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
@@ -272,7 +287,7 @@ export default function CreditBookScreen() {
             <Lock size={32} color="#78716c" />
           </View>
           <Text className="text-stone-900 dark:text-white text-xl font-bold mb-2">Access Restricted</Text>
-          <Text className="text-stone-500 dark:text-stone-400 text-center">You don't have permission to manage customers. Ask the shop owner for access.</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-center">You don't have permission to manage customers. Ask the shop owner for access.</Text>
         </View>
       </View>
     );
@@ -294,7 +309,7 @@ export default function CreditBookScreen() {
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">
                 Customers
               </Text>
               <Pressable
@@ -333,13 +348,13 @@ export default function CreditBookScreen() {
           <View className={`flex-1 rounded-2xl p-3 border ${creditSummary.overdueCount > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/80 dark:bg-stone-900/80 border-stone-200 dark:border-stone-800'}`}>
             <View className="flex-row items-center gap-1 mb-1">
               <Clock size={14} color={creditSummary.overdueCount > 0 ? '#f59e0b' : '#78716c'} />
-              <Text className={`text-xs font-semibold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-500'}`}>Overdue</Text>
+              <Text className={`text-xs font-semibold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-600 dark:text-stone-400'}`}>Overdue</Text>
             </View>
             <Text className={`text-lg font-bold ${creditSummary.overdueCount > 0 ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>
               {creditSummary.overdueCount}
             </Text>
             {creditSummary.avgDaysOverdue > 0 && (
-              <Text className="text-stone-500 text-xs mt-1">
+              <Text className="text-stone-600 dark:text-stone-400 text-xs mt-1">
                 ~{creditSummary.avgDaysOverdue}d avg
               </Text>
             )}
@@ -349,7 +364,7 @@ export default function CreditBookScreen() {
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-3 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-1 mb-1">
               <ShieldOff size={14} color="#78716c" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold">At Risk</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-xs font-semibold">At Risk</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-lg font-bold">
               {creditSummary.highRiskCount}
@@ -414,7 +429,7 @@ export default function CreditBookScreen() {
 
         {/* Customers List */}
         <Animated.View entering={FadeInDown.delay(400).duration(600)} className="px-5 mt-4">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-3">
             {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
           </Text>
 
@@ -432,7 +447,7 @@ export default function CreditBookScreen() {
 
           {filteredCustomers.length === 0 && customers.length > 0 && (
             <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 p-6 items-center">
-              <Text className="text-stone-500 text-sm">No {filterMode === 'all' ? 'matching' : filterMode} customers</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm">No {filterMode === 'all' ? 'matching' : filterMode} customers</Text>
             </View>
           )}
 
@@ -471,7 +486,7 @@ export default function CreditBookScreen() {
                         {hasDebt ? (
                           <Text className={`text-xs mt-0.5 ${risk.color}`}>{risk.label}</Text>
                         ) : (
-                          <Text className="text-stone-500 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs mt-0.5">{customer.phone || 'No phone'}</Text>
                         )}
                       </View>
                     </View>
@@ -479,7 +494,7 @@ export default function CreditBookScreen() {
                       {hasDebt ? (
                         <>
                           <Text className="text-red-400 font-bold text-lg">{formatNaira(customer.currentCredit)}</Text>
-                          <Text className="text-stone-500 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">/ {formatNaira(customer.creditLimit)}</Text>
                         </>
                       ) : (
                         <View className="bg-emerald-500/20 px-2 py-1 rounded">
@@ -489,6 +504,32 @@ export default function CreditBookScreen() {
                     </View>
                     <ChevronRight size={20} color="#57534e" className="ml-2" />
                   </View>
+                  {hasDebt && (
+                    <View className="flex-row gap-2 mt-3">
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          openPaymentForCustomer(customer);
+                        }}
+                        className="flex-1 bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-2 items-center"
+                      >
+                        <Text className="text-emerald-400 text-xs font-semibold">Record Payment</Text>
+                      </Pressable>
+                      {customer.phone ? (
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            handleQuickRemind(customer);
+                          }}
+                          className="flex-1 bg-green-500/15 border border-green-500/30 rounded-lg py-2 items-center"
+                        >
+                          <Text className="text-green-400 text-xs font-semibold">Send Reminder</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  )}
                 </Pressable>
               );
 
@@ -507,9 +548,7 @@ export default function CreditBookScreen() {
                         <View style={{ flexDirection: 'row' }}>
                           <Pressable
                             onPress={() => {
-                              const fresh = useRetailStore.getState().customers.find((c) => c.id === customer.id);
-                              setSelectedCustomer(fresh || customer);
-                              setShowPaymentModal(true);
+                              openPaymentForCustomer(customer);
                             }}
                             style={{ backgroundColor: '#10b981', width: 80, alignItems: 'center', justifyContent: 'center' }}
                           >
@@ -519,12 +558,7 @@ export default function CreditBookScreen() {
                           {customer.phone ? (
                             <Pressable
                               onPress={() => {
-                                if (wasRemindedRecently(customer)) {
-                                  setReminderCooldownDays(daysSinceReminder(customer) ?? 0);
-                                  setShowReminderCooldown(true);
-                                  return;
-                                }
-                                sendWhatsAppReminder(customer);
+                                handleQuickRemind(customer);
                               }}
                               style={{ backgroundColor: '#25D366', width: 80, alignItems: 'center', justifyContent: 'center' }}
                             >
@@ -559,7 +593,7 @@ export default function CreditBookScreen() {
               </View>
               <View className="gap-4">
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Customer Name *</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Customer Name *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder={placeholders.customerName}
@@ -569,7 +603,7 @@ export default function CreditBookScreen() {
                   />
                 </View>
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. 08012345678"
@@ -580,7 +614,7 @@ export default function CreditBookScreen() {
                   />
                 </View>
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Credit Limit (₦)</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. 50000"
@@ -644,11 +678,11 @@ export default function CreditBookScreen() {
                       </View>
                       <View className="flex-row justify-between">
                         <View>
-                          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Outstanding</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs uppercase">Outstanding</Text>
                           <Text className="text-red-400 text-2xl font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
                         </View>
                         <View className="items-end">
-                          <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase">Credit Limit</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs uppercase">Credit Limit</Text>
                           <Text className="text-stone-900 dark:text-white text-xl font-semibold">{formatNaira(selectedCustomer.creditLimit)}</Text>
                         </View>
                       </View>
@@ -667,7 +701,7 @@ export default function CreditBookScreen() {
                             <Text className="text-stone-900 dark:text-white font-medium">
                               {selectedCustomer.creditFrozen ? 'Credit Frozen' : 'Credit Active'}
                             </Text>
-                            <Text className="text-stone-500 text-xs">
+                            <Text className="text-stone-600 dark:text-stone-400 text-xs">
                               {selectedCustomer.creditFrozen
                                 ? 'Cannot buy on credit'
                                 : freezeCheck.frozen
@@ -713,7 +747,7 @@ export default function CreditBookScreen() {
                         >
                           <MessageCircle size={18} color={recentlyReminded ? '#78716c' : '#22c55e'} />
                           {recentlyReminded && (
-                            <Text className="text-stone-500 text-xs">{reminderDays}d ago</Text>
+                            <Text className="text-stone-600 dark:text-stone-400 text-xs">{reminderDays}d ago</Text>
                           )}
                         </Pressable>
                       )}
@@ -721,7 +755,7 @@ export default function CreditBookScreen() {
 
                     {/* Last Reminded */}
                     {selectedCustomer.lastReminderSent && (
-                      <Text className="text-stone-400 text-xs mb-4">
+                      <Text className="text-stone-600 dark:text-stone-400 text-xs mb-4">
                         Last reminded: {new Date(selectedCustomer.lastReminderSent).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
                         {reminderDays !== null && ` (${reminderDays}d ago)`}
                       </Text>
@@ -731,7 +765,7 @@ export default function CreditBookScreen() {
                     <Text className="text-stone-900 dark:text-white font-semibold mb-3">Transaction History</Text>
                     {selectedCustomer.transactions.length === 0 ? (
                       <View className="bg-stone-100/30 dark:bg-stone-800/30 rounded-xl p-4 items-center">
-                        <Text className="text-stone-500">No transactions yet</Text>
+                        <Text className="text-stone-600 dark:text-stone-400">No transactions yet</Text>
                       </View>
                     ) : (
                       <View className="gap-2">
@@ -752,7 +786,7 @@ export default function CreditBookScreen() {
                                 <Text className="text-stone-900 dark:text-white font-medium">
                                   {tx.type === 'payment' ? 'Payment' : 'Credit'}
                                 </Text>
-                                <Text className="text-stone-500 dark:text-stone-500 text-xs">
+                                <Text className="text-stone-600 dark:text-stone-400 text-xs">
                                   {new Date(tx.createdAt).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </Text>
                               </View>
@@ -807,26 +841,26 @@ export default function CreditBookScreen() {
                       <CheckCircle size={36} color="#10b981" />
                     </View>
                     <Text className="text-stone-900 dark:text-white text-xl font-bold mb-1">Payment Recorded!</Text>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">
                       {selectedCustomer?.name}
                     </Text>
                   </View>
 
                   <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
                     <View className="flex-row justify-between mb-2">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm">Amount Paid</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">Amount Paid</Text>
                       <Text className="text-emerald-400 font-bold text-lg">{formatNaira(paymentSuccess.amountPaid)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm">Method</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">Method</Text>
                       <Text className="text-stone-900 dark:text-white font-medium text-sm">
                         {paymentSuccess.paymentMethod.charAt(0).toUpperCase() + paymentSuccess.paymentMethod.slice(1)}
                       </Text>
                     </View>
                     <View className="border-t border-stone-200 dark:border-stone-700 mt-2 pt-2">
                       <View className="flex-row justify-between mb-1">
-                        <Text className="text-stone-400 text-xs">Previous Balance</Text>
-                        <Text className="text-stone-400 text-xs">{formatNaira(paymentSuccess.previousBalance)}</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs">Previous Balance</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs">{formatNaira(paymentSuccess.previousBalance)}</Text>
                       </View>
                       <View className="flex-row justify-between">
                         <Text className="text-stone-900 dark:text-white font-bold text-sm">Remaining Balance</Text>
@@ -873,14 +907,14 @@ export default function CreditBookScreen() {
                   {selectedCustomer && (
                     <>
                       <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
-                        <Text className="text-stone-400 text-sm mb-1">{selectedCustomer.name}</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-sm mb-1">{selectedCustomer.name}</Text>
                         <Text className="text-stone-900 dark:text-white text-lg">
                           Outstanding: <Text className="text-red-400 font-bold">{formatNaira(selectedCustomer.currentCredit)}</Text>
                         </Text>
                       </View>
                       <View className="gap-4">
                         <View>
-                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Payment Amount (₦)</Text>
                           <TextInput
                             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                             placeholder="0"
@@ -892,7 +926,7 @@ export default function CreditBookScreen() {
                           />
                         </View>
                         <View>
-                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
                           <TextInput
                             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                             placeholder="e.g. Partial payment"
@@ -917,7 +951,7 @@ export default function CreditBookScreen() {
                         </View>
                         {/* Payment Method */}
                         <View>
-                          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Method</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Payment Method</Text>
                           <View className="flex-row gap-2">
                             {([
                               { key: 'cash' as const, label: 'Cash', icon: Banknote, color: '#10b981' },
@@ -940,7 +974,7 @@ export default function CreditBookScreen() {
                                   }`}
                                 >
                                   <IconComp size={16} color={isActive ? method.color : '#78716c'} />
-                                  <Text className={`text-sm font-medium ${isActive ? 'text-emerald-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                                  <Text className={`text-sm font-medium ${isActive ? 'text-emerald-400' : 'text-stone-600 dark:text-stone-400'}`}>
                                     {method.label}
                                   </Text>
                                 </Pressable>

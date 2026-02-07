@@ -58,6 +58,7 @@ export interface Customer {
   lastReminderSent?: string;
   transactions: CreditTransaction[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CreditTransaction {
@@ -238,6 +239,12 @@ const defaultCategories: Category[] = [];
 
 // ── Demo Data (auto-populates on first load) ────────────────────────────
 
+const toLocalDateKey = (value: string | Date): string => {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const today = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -276,6 +283,7 @@ const DEMO_CUSTOMERS: Customer[] = [
       { id: 'dt1', type: 'credit', amount: 8200, saleId: 'ds7', createdAt: todayAt(15, 30) },
     ],
     createdAt: todayAt(7, 0),
+    updatedAt: todayAt(7, 0),
   },
   {
     id: 'dc2', name: 'Alhaji Musa', phone: '08061234568', creditLimit: 100000, currentCredit: 0,
@@ -284,6 +292,7 @@ const DEMO_CUSTOMERS: Customer[] = [
       { id: 'dt3', type: 'payment', amount: 12000, note: 'Paid in full', createdAt: new Date(Date.now() - 1 * 86400000).toISOString() },
     ],
     createdAt: todayAt(7, 0),
+    updatedAt: todayAt(7, 0),
   },
   {
     id: 'dc3', name: 'Mrs. Adebayo', phone: '08091234569', creditLimit: 30000, currentCredit: 4750,
@@ -291,11 +300,13 @@ const DEMO_CUSTOMERS: Customer[] = [
       { id: 'dt4', type: 'credit', amount: 4750, saleId: 'ds8', createdAt: todayAt(17, 0) },
     ],
     createdAt: todayAt(7, 0),
+    updatedAt: todayAt(7, 0),
   },
   {
     id: 'dc4', name: 'Brother Emeka', phone: '07031234570', creditLimit: 20000, currentCredit: 0,
     transactions: [],
     createdAt: todayAt(7, 0),
+    updatedAt: todayAt(7, 0),
   },
 ];
 
@@ -413,9 +424,10 @@ export const useRetailStore = create<RetailState>()(
       },
 
       updateProduct: (id, updates) => {
+        const nextUpdatedAt = updates.updatedAt ?? new Date().toISOString();
         set((state) => ({
           products: state.products.map((p) =>
-            p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
+            p.id === id ? { ...p, ...updates, updatedAt: nextUpdatedAt } : p
           ),
         }));
       },
@@ -484,9 +496,11 @@ export const useRetailStore = create<RetailState>()(
         set((state) => {
           const currentProduct = state.products.find((p) => p.id === product.id);
           const maxStock = currentProduct?.quantity ?? product.quantity;
+          if (maxStock <= 0) return state;
+          const safeQty = Math.max(1, quantity);
           const existingItem = state.cart.find((item) => item.product.id === product.id);
           if (existingItem) {
-            const newQty = Math.min(existingItem.quantity + quantity, maxStock);
+            const newQty = Math.min(existingItem.quantity + safeQty, maxStock);
             if (newQty === existingItem.quantity) return state; // Already at max
             return {
               cart: state.cart.map((item) =>
@@ -496,7 +510,7 @@ export const useRetailStore = create<RetailState>()(
               ),
             };
           }
-          return { cart: [...state.cart, { product, quantity: Math.min(quantity, maxStock) }] };
+          return { cart: [...state.cart, { product, quantity: Math.min(safeQty, maxStock) }] };
         });
       },
 
@@ -508,6 +522,10 @@ export const useRetailStore = create<RetailState>()(
         const currentProduct = get().products.find((p) => p.id === productId);
         const maxStock = currentProduct?.quantity ?? quantity;
         const cappedQuantity = Math.min(quantity, maxStock);
+        if (cappedQuantity <= 0) {
+          get().removeFromCart(productId);
+          return;
+        }
         set((state) => ({
           cart: state.cart.map((item) =>
             item.product.id === productId ? { ...item, quantity: cappedQuantity } : item
@@ -526,7 +544,9 @@ export const useRetailStore = create<RetailState>()(
       },
 
       setCartDiscount: (discount) => {
-        set({ cartDiscount: discount });
+        const subtotal = get().cart.reduce((sum, item) => sum + item.product.sellingPrice * item.quantity, 0);
+        const nextDiscount = Math.max(0, Math.min(discount, subtotal));
+        set({ cartDiscount: nextDiscount });
       },
 
       // Sales actions
@@ -542,7 +562,8 @@ export const useRetailStore = create<RetailState>()(
             return { ...item, quantity: currentProduct.quantity };
           }
           return item;
-        }).filter((item): item is CartItem => item !== null);
+        }).filter((item): item is CartItem => item !== null)
+          .filter((item) => item.quantity > 0);
 
         if (adjustedCart.length === 0) return null;
 
@@ -550,14 +571,29 @@ export const useRetailStore = create<RetailState>()(
           (sum, item) => sum + item.product.sellingPrice * item.quantity,
           0
         );
-        const total = subtotal - state.cartDiscount;
+        const rawDiscount = state.cartDiscount;
+        const discount = Math.max(0, Math.min(rawDiscount, subtotal));
+        const total = Math.max(0, subtotal - discount);
         const customer = customerId ? state.customers.find(c => c.id === customerId) : undefined;
+
+        if (paymentMethod === 'credit') {
+          if (!customer) return null;
+          if (customer.creditFrozen) return null;
+          if (customer.creditLimit > 0 && customer.currentCredit + total > customer.creditLimit) {
+            return null;
+          }
+        }
+        const hasCashReceived = typeof cashReceived === 'number' && Number.isFinite(cashReceived);
+        const changeGiven =
+          paymentMethod === 'cash' && hasCashReceived && cashReceived >= total
+            ? cashReceived - total
+            : undefined;
 
         const sale: Sale = {
           id: generateId(),
           items: [...adjustedCart],
           subtotal,
-          discount: state.cartDiscount,
+          discount,
           total,
           paymentMethod,
           customerId,
@@ -565,8 +601,8 @@ export const useRetailStore = create<RetailState>()(
           customerPreviousBalance: paymentMethod === 'credit' && customer ? customer.currentCredit : undefined,
           staffId,
           staffName,
-          cashReceived: paymentMethod === 'cash' ? cashReceived : undefined,
-          changeGiven: paymentMethod === 'cash' && cashReceived ? cashReceived - total : undefined,
+          cashReceived: paymentMethod === 'cash' && hasCashReceived ? cashReceived : undefined,
+          changeGiven,
           createdAt: new Date().toISOString(),
           synced: false,
         };
@@ -593,6 +629,7 @@ export const useRetailStore = create<RetailState>()(
                     ...c,
                     currentCredit: c.currentCredit + total,
                     transactions: [creditTransaction, ...c.transactions],
+                    updatedAt: new Date().toISOString(),
                   }
                 : c
             ),
@@ -610,14 +647,13 @@ export const useRetailStore = create<RetailState>()(
       },
 
       getSalesToday: () => {
-        const d = new Date();
-        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return get().sales.filter((s) => s.createdAt.startsWith(todayStr));
+        const todayStr = toLocalDateKey(new Date());
+        return get().sales.filter((s) => toLocalDateKey(s.createdAt) === todayStr);
       },
 
       getSalesByDateRange: (startDate, endDate) => {
         return get().sales.filter((s) => {
-          const saleDate = s.createdAt.split('T')[0];
+          const saleDate = toLocalDateKey(s.createdAt);
           return saleDate >= startDate && saleDate <= endDate;
         });
       },
@@ -630,14 +666,16 @@ export const useRetailStore = create<RetailState>()(
           currentCredit: 0,
           transactions: [],
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         set((state) => ({ customers: [...state.customers, newCustomer] }));
       },
 
       updateCustomer: (id, updates) => {
+        const nextUpdatedAt = updates.updatedAt ?? new Date().toISOString();
         set((state) => ({
           customers: state.customers.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
+            c.id === id ? { ...c, ...updates, updatedAt: nextUpdatedAt } : c
           ),
         }));
       },
@@ -663,6 +701,7 @@ export const useRetailStore = create<RetailState>()(
                   ...c,
                   currentCredit: Math.max(0, c.currentCredit - amount),
                   transactions: [transaction, ...c.transactions],
+                  updatedAt: new Date().toISOString(),
                 }
               : c
           ),
@@ -680,7 +719,7 @@ export const useRetailStore = create<RetailState>()(
       freezeCustomerCredit: (id, frozen) => {
         set((state) => ({
           customers: state.customers.map((c) =>
-            c.id === id ? { ...c, creditFrozen: frozen } : c
+            c.id === id ? { ...c, creditFrozen: frozen, updatedAt: new Date().toISOString() } : c
           ),
         }));
       },
@@ -688,7 +727,7 @@ export const useRetailStore = create<RetailState>()(
       setLastReminderSent: (id) => {
         set((state) => ({
           customers: state.customers.map((c) =>
-            c.id === id ? { ...c, lastReminderSent: new Date().toISOString() } : c
+            c.id === id ? { ...c, lastReminderSent: new Date().toISOString(), updatedAt: new Date().toISOString() } : c
           ),
         }));
       },
@@ -708,14 +747,13 @@ export const useRetailStore = create<RetailState>()(
       },
 
       getExpensesToday: () => {
-        const d = new Date();
-        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return get().expenses.filter((e) => e.createdAt.startsWith(todayStr));
+        const todayStr = toLocalDateKey(new Date());
+        return get().expenses.filter((e) => toLocalDateKey(e.createdAt) === todayStr);
       },
 
       getExpensesByDateRange: (startDate, endDate) => {
         return get().expenses.filter((e) => {
-          const expenseDate = e.createdAt.split('T')[0];
+          const expenseDate = toLocalDateKey(e.createdAt);
           return expenseDate >= startDate && expenseDate <= endDate;
         });
       },
@@ -804,8 +842,8 @@ export const useRetailStore = create<RetailState>()(
 
       // Analytics
       getDailySummary: (date) => {
-        const sales = get().sales.filter((s) => s.createdAt.startsWith(date));
-        const expenses = get().expenses.filter((e) => e.createdAt.startsWith(date));
+        const sales = get().sales.filter((s) => toLocalDateKey(s.createdAt) === date);
+        const expenses = get().expenses.filter((e) => toLocalDateKey(e.createdAt) === date);
         const products = get().products;
 
         const totalSales = sales.reduce((sum, s) => sum + s.total, 0);

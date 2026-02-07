@@ -114,7 +114,7 @@ export default function PayScreen() {
         <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-stone-900 dark:text-white text-xl mt-6 text-center">
           Verifying Payment...
         </Text>
-        <Text className="text-stone-500 dark:text-stone-400 text-center mt-2">
+        <Text className="text-stone-600 dark:text-stone-400 text-center mt-2">
           Please wait while we confirm your payment.
         </Text>
       </View>
@@ -131,7 +131,7 @@ export default function PayScreen() {
           <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl text-center">
             Payment Successful! 🎉
           </Text>
-          <Text className="text-stone-500 dark:text-stone-400 text-center mt-3">
+          <Text className="text-stone-600 dark:text-stone-400 text-center mt-3">
             Your {targetPlan === 'growth' ? 'Growth' : 'Business'} plan is now active for 30 days. Enjoy all premium features!
           </Text>
           <Pressable
@@ -155,7 +155,7 @@ export default function PayScreen() {
           <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl text-center">
             Payment Failed
           </Text>
-          <Text className="text-stone-500 dark:text-stone-400 text-center mt-3">
+          <Text className="text-stone-600 dark:text-stone-400 text-center mt-3">
             {errorMessage || 'Something went wrong with your payment.'}
           </Text>
           <View className="flex-row gap-3 mt-8">
@@ -186,7 +186,7 @@ export default function PayScreen() {
         <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-stone-900 dark:text-white text-xl mt-6 text-center">
           Complete Payment
         </Text>
-        <Text className="text-stone-500 dark:text-stone-400 text-center mt-2">
+        <Text className="text-stone-600 dark:text-stone-400 text-center mt-2">
           A payment window has been opened. Complete your payment there.
         </Text>
         <Pressable
@@ -199,7 +199,7 @@ export default function PayScreen() {
           onPress={() => router.back()}
           className="mt-4 py-3 active:opacity-70"
         >
-          <Text className="text-stone-500 font-medium">Cancel</Text>
+          <Text className="text-stone-600 dark:text-stone-400 font-medium">Cancel</Text>
         </Pressable>
       </View>
     );
@@ -219,7 +219,7 @@ export default function PayScreen() {
           </Pressable>
           <View className="flex-1">
             <Text className="text-white font-semibold text-base">Secure Payment</Text>
-            <Text className="text-stone-500 text-xs">Powered by Paystack</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-xs">Powered by Paystack</Text>
           </View>
           <View className="bg-emerald-500/20 px-3 py-1 rounded-full">
             <Text className="text-emerald-400 text-xs font-medium">🔒 Secure</Text>

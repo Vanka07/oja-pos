@@ -252,18 +252,18 @@ export default function ReportsScreen() {
             const barHeight = Math.max((item.sales / maxSales) * 120, 4);
             return (
               <View key={index} className="items-center flex-1">
-                {showLabels && <Text className="text-stone-500 text-[10px] mb-1">{item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}</Text>}
+                {showLabels && <Text className="text-stone-600 dark:text-stone-400 text-[10px] mb-1">{item.sales > 0 ? `₦${(item.sales / 1000).toFixed(0)}k` : ''}</Text>}
                 <View style={{ height: barHeight, backgroundColor: item.sales > 0 ? '#e05e1b' : (isDark ? '#44403c' : '#d6d3d1'), width: data.length > 12 ? '80%' : '60%', borderRadius: 4 }} />
-                {showLabels && <Text className="text-stone-500 text-xs mt-2">{item.day}</Text>}
+                {showLabels && <Text className="text-stone-600 dark:text-stone-400 text-xs mt-2">{item.day}</Text>}
               </View>
             );
           })}
         </View>
         {!showLabels && (
           <View className="flex-row justify-between mt-2">
-            <Text className="text-stone-500 text-xs">{data[0]?.day}</Text>
-            <Text className="text-stone-500 text-xs">{data[Math.floor(data.length / 2)]?.day}</Text>
-            <Text className="text-stone-500 text-xs">{data[data.length - 1]?.day}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-xs">{data[0]?.day}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-xs">{data[Math.floor(data.length / 2)]?.day}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-xs">{data[data.length - 1]?.day}</Text>
           </View>
         )}
       </View>
@@ -336,7 +336,7 @@ export default function ReportsScreen() {
       <View className="flex-1 bg-stone-50 dark:bg-stone-950">
         <LinearGradient colors={gradientColors} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium tracking-wide uppercase mb-1">Analytics</Text>
           <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-bold tracking-tight">Summary</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
@@ -344,7 +344,7 @@ export default function ReportsScreen() {
             <Lock size={32} color="#78716c" />
           </View>
           <Text className="text-stone-900 dark:text-white text-xl font-bold mb-2">Access Restricted</Text>
-          <Text className="text-stone-500 dark:text-stone-400 text-center">You don't have permission to view reports. Ask the shop owner for access.</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-center">You don't have permission to view reports. Ask the shop owner for access.</Text>
         </View>
       </View>
     );
@@ -356,7 +356,7 @@ export default function ReportsScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-            <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">Analytics</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">Analytics</Text>
             <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">Summary</Text>
           </Animated.View>
         </View>
@@ -446,21 +446,21 @@ export default function ReportsScreen() {
             <View className="w-7 h-7 rounded-lg bg-blue-500/20 items-center justify-center mb-1.5">
               <ShoppingCart size={14} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Sales</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide" numberOfLines={1}>Sales</Text>
             <Text className="text-stone-900 dark:text-white text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{getDateRangeData.totalTransactions}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl px-3 py-3 border border-stone-200 dark:border-stone-800">
             <View className="w-7 h-7 rounded-lg bg-emerald-500/20 items-center justify-center mb-1.5">
               <DollarSign size={14} color="#10b981" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Profit</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide" numberOfLines={1}>Profit</Text>
             <Text className="text-emerald-400 text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatNaira(getDateRangeData.profit)}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-xl px-3 py-3 border border-stone-200 dark:border-stone-800">
             <View className="w-7 h-7 rounded-lg bg-orange-500/20 items-center justify-center mb-1.5">
               <Receipt size={14} color="#e05e1b" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs uppercase tracking-wide" numberOfLines={1}>Avg. Sale</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide" numberOfLines={1}>Avg. Sale</Text>
             <Text className="text-stone-900 dark:text-white text-xl font-bold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatNaira(getDateRangeData.totalTransactions > 0 ? Math.round(getDateRangeData.totalSales / getDateRangeData.totalTransactions) : 0)}</Text>
           </View>
         </Animated.View>
@@ -485,16 +485,16 @@ export default function ReportsScreen() {
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-3 flex-1">
                         <View className={`w-8 h-8 rounded-lg items-center justify-center ${index === 0 ? 'bg-amber-500/20' : index === 1 ? 'bg-stone-500/20' : index === 2 ? 'bg-orange-800/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
-                          <Text className={`font-bold ${index === 0 ? 'text-amber-400' : index === 1 ? 'text-stone-400 dark:text-stone-300' : index === 2 ? 'text-orange-700' : 'text-stone-500'}`}>#{index + 1}</Text>
+                          <Text className={`font-bold ${index === 0 ? 'text-amber-400' : index === 1 ? 'text-stone-400 dark:text-stone-300' : index === 2 ? 'text-orange-700' : 'text-stone-600 dark:text-stone-400'}`}>#{index + 1}</Text>
                         </View>
                         <View className="flex-1">
                           <Text className="text-stone-900 dark:text-white font-medium" numberOfLines={1}>{item.product.name}</Text>
-                          <Text className="text-stone-500 text-xs">{item.product.category}</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">{item.product.category}</Text>
                         </View>
                       </View>
                       <View className="items-end">
                         <Text className="text-stone-900 dark:text-white font-bold">{item.totalSold}</Text>
-                        <Text className="text-stone-500 text-xs">units sold</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs">units sold</Text>
                       </View>
                     </View>
                   </View>
@@ -520,8 +520,8 @@ export default function ReportsScreen() {
                         <View className={`w-2 h-2 rounded-full ${sale.paymentMethod === 'cash' ? 'bg-emerald-500' : sale.paymentMethod === 'transfer' ? 'bg-blue-500' : sale.paymentMethod === 'pos' ? 'bg-purple-500' : 'bg-amber-500'}`} />
                         <View className="flex-1">
                           <Text className="text-stone-900 dark:text-white font-medium">{sale.items.length} item{sale.items.length > 1 ? 's' : ''}</Text>
-                          <Text className="text-stone-500 text-xs">{new Date(sale.createdAt).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} • {sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}</Text>
-                          <Text className="text-stone-400 dark:text-stone-500 text-xs mt-0.5" numberOfLines={1}>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">{new Date(sale.createdAt).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} • {sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs mt-0.5" numberOfLines={1}>
                             {sale.items.slice(0, 3).map((item) => `${item.quantity}x ${item.product.name}`).join(', ')}{sale.items.length > 3 ? ` + ${sale.items.length - 3} more` : ''}
                           </Text>
                         </View>

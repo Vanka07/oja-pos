@@ -157,7 +157,7 @@ export default function StaffSwitchScreen() {
       {!selectedStaff ? (
         // Staff selection grid
         <View className="flex-1 px-5">
-          <Text className="text-stone-500 text-sm mb-6 text-center">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-6 text-center">
             Who's working now?
           </Text>
           <View className="flex-row flex-wrap justify-center gap-6">
@@ -182,7 +182,7 @@ export default function StaffSwitchScreen() {
                     </Text>
                   </View>
                   <Text className="text-stone-900 dark:text-white font-medium text-sm">{member.name.split(' ')[0]}</Text>
-                  <Text className="text-stone-500 text-xs capitalize">{member.role}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-xs capitalize">{member.role}</Text>
                 </Pressable>
               </Animated.View>
             ))}
@@ -191,7 +191,7 @@ export default function StaffSwitchScreen() {
           {activeStaff.length === 0 && (
             <View className="items-center py-16">
               <Lock size={48} color="#57534e" />
-              <Text className="text-stone-500 text-lg mt-4">No active staff</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-lg mt-4">No active staff</Text>
               <Text className="text-stone-600 dark:text-stone-400 text-center mt-2">
                 Add staff members from Settings → Staff Management
               </Text>
@@ -210,12 +210,12 @@ export default function StaffSwitchScreen() {
               </Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-xl font-bold">{selectedStaff.name}</Text>
-            <Text className="text-stone-500 text-sm capitalize">{selectedStaff.role}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm capitalize">{selectedStaff.role}</Text>
 
             {error ? (
               <Text className="text-red-400 text-sm mt-4 font-medium">Wrong PIN — try again</Text>
             ) : (
-              <Text className="text-stone-500 text-sm mt-4">Enter 4-digit PIN</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mt-4">Enter 4-digit PIN</Text>
             )}
 
             <PinDots />
@@ -227,7 +227,7 @@ export default function StaffSwitchScreen() {
             onPress={() => { setSelectedStaff(null); setPin(''); setError(false); }}
             className="mt-8 py-3 items-center"
           >
-            <Text className="text-stone-500 font-medium">← Back to staff list</Text>
+            <Text className="text-stone-600 dark:text-stone-400 font-medium">← Back to staff list</Text>
           </Pressable>
         </View>
       )}

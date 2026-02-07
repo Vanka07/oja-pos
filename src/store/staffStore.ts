@@ -62,6 +62,12 @@ export function hasPermission(role: StaffRole, action: string): boolean {
 
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
+const toLocalDateKey = (value: string | Date): string => {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 interface StaffState {
   staff: StaffMember[];
   currentStaff: StaffMember | null;
@@ -100,15 +106,27 @@ export const useStaffStore = create<StaffState>()(
       },
 
       updateStaff: (id, updates) => {
-        set((state) => ({
-          staff: state.staff.map((s) =>
+        set((state) => {
+          const nextStaff = state.staff.map((s) =>
             s.id === id ? { ...s, ...updates } : s
-          ),
-          // Also update currentStaff if it's the same person
-          currentStaff: state.currentStaff?.id === id
-            ? { ...state.currentStaff, ...updates }
-            : state.currentStaff,
-        }));
+          );
+
+          let nextCurrent = state.currentStaff;
+          if (state.currentStaff?.id === id) {
+            const updatedCurrent = { ...state.currentStaff, ...updates };
+            // If staff is disabled or no longer an app role, log them out
+            if (!updatedCurrent.active || !isAppRole(updatedCurrent.role)) {
+              nextCurrent = null;
+            } else {
+              nextCurrent = updatedCurrent;
+            }
+          }
+
+          return {
+            staff: nextStaff,
+            currentStaff: nextCurrent,
+          };
+        });
       },
 
       removeStaff: (id) => {
@@ -158,9 +176,8 @@ export const useStaffStore = create<StaffState>()(
       },
 
       getActivitiesToday: () => {
-        const d = new Date();
-        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return get().activities.filter((a) => a.createdAt.startsWith(today));
+        const today = toLocalDateKey(new Date());
+        return get().activities.filter((a) => toLocalDateKey(a.createdAt) === today);
       },
 
       getActivitiesByStaff: (staffId) => {

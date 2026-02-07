@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useAuthStore } from '@/store/authStore';
-import { useStaffStore } from '@/store/staffStore';
+import { useStaffStore, isAppRole } from '@/store/staffStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
 import { useThemeStore } from '@/store/themeStore';
 import { syncAll, startAutoSync, stopAutoSync } from '@/lib/syncService';
@@ -37,9 +37,13 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding);
   const pin = useAuthStore((s) => s.pin);
   const isLocked = useAuthStore((s) => s.isLocked);
-  const lock = useAuthStore((s) => s.lock);
-  const staffCount = useStaffStore((s) => s.staff.length);
-  const hasAnyPin = pin !== null || staffCount > 0;
+  const staff = useStaffStore((s) => s.staff);
+  const currentStaff = useStaffStore((s) => s.currentStaff);
+  const hasAppStaff = staff.some((s) => s.active && isAppRole(s.role) && s.pin?.length);
+  const hasAnyPin = pin !== null || hasAppStaff;
+  const isCloudAuthenticated = useCloudAuthStore((s) => s.isAuthenticated);
+  const shopId = useCloudAuthStore((s) => s.shopId);
+  const cloudSession = useCloudAuthStore((s) => s.session);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -48,7 +52,9 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       // Check directly from store state (not hooks) to ensure we have hydrated values
       const authState = useAuthStore.getState();
       const staffState = useStaffStore.getState();
-      const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+      const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
+        (s) => s.active && isAppRole(s.role) && s.pin?.length
+      );
       
       // On web, check if user already authenticated in this browser session
       // This prevents re-locking on every page refresh
@@ -61,6 +67,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       } else if (hasPinOrStaff && sessionAuthenticated) {
         // User already authenticated this session, keep unlocked
         useAuthStore.setState({ isLocked: false });
+      } else {
+        useAuthStore.setState({ isLocked: false });
       }
       setIsReady(true);
       SplashScreen.hideAsync();
@@ -71,33 +79,53 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     };
   }, []);
 
+  useEffect(() => {
+    if (hasAppStaff && !currentStaff) {
+      useAuthStore.getState().lock();
+    }
+  }, [hasAppStaff, currentStaff]);
+
   // Initialize cloud auth and auto-sync
   useEffect(() => {
     // Track app open
     track('app_open');
     
     const cloudAuth = useCloudAuthStore.getState();
-    cloudAuth.initialize().then(() => {
-      const { shopId, isAuthenticated } = useCloudAuthStore.getState();
-      if (isAuthenticated && shopId) {
-        // Track daily active user
-        trackDailyActive(shopId);
-        syncAll(shopId).catch(() => {});
-        startAutoSync(shopId);
-      }
-    });
+    cloudAuth.initialize();
 
     return () => {
       stopAutoSync();
     };
   }, []);
 
+  useEffect(() => {
+    if (isCloudAuthenticated && shopId && cloudSession) {
+      // Track daily active user
+      trackDailyActive(shopId);
+      syncAll(shopId).catch(() => {});
+      startAutoSync(shopId);
+    } else {
+      stopAutoSync();
+    }
+
+    return () => {
+      stopAutoSync();
+    };
+  }, [isCloudAuthenticated, shopId, cloudSession]);
+
   // Lock app when going to background (only if PIN is set)
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // 'background' or 'inactive' on native
-      if ((nextAppState === 'background' || nextAppState === 'inactive') && hasAnyPin) {
-        lock();
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        const authState = useAuthStore.getState();
+        const staffState = useStaffStore.getState();
+        const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
+          (s) => s.active && isAppRole(s.role) && s.pin?.length
+        );
+        if (hasPinOrStaff) {
+          authState.lock();
+        }
       }
     };
 
@@ -108,7 +136,9 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       if (document.visibilityState === 'hidden') {
         const authState = useAuthStore.getState();
         const staffState = useStaffStore.getState();
-        const hasPinOrStaff = authState.pin !== null || staffState.staff.length > 0;
+        const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
+          (s) => s.active && isAppRole(s.role) && s.pin?.length
+        );
         if (hasPinOrStaff) {
           authState.lock();
         }

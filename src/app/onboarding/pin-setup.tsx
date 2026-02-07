@@ -153,7 +153,7 @@ export default function PinSetupScreen() {
             <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl font-bold mb-2 text-center">
               Save Your Recovery Code
             </Text>
-            <Text className="text-stone-500 dark:text-stone-400 text-sm mb-8 text-center leading-5">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm mb-8 text-center leading-5">
               If you forget your PIN, you'll need this code to reset it
             </Text>
 
@@ -204,7 +204,7 @@ export default function PinSetupScreen() {
             <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-900 dark:text-white text-2xl font-bold mb-2">
               {step === 'enter' ? 'Secure Your App' : 'Confirm Your PIN'}
             </Text>
-            <Text className="text-stone-500 dark:text-stone-400 text-sm mb-8">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm mb-8">
               {step === 'enter' ? 'Choose a 4-digit PIN' : 'Enter the same PIN again'}
             </Text>
 

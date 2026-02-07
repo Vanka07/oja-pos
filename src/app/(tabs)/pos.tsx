@@ -36,22 +36,36 @@ import * as Haptics from 'expo-haptics';
 
 type PaymentMethod = Sale['paymentMethod'];
 
+const parseAmount = (value: string): number => {
+  const cleaned = value.replace(/[^\d.]/g, '');
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCashModal, setShowCashModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [cashReceivedInput, setCashReceivedInput] = useState('');
+  const [cashError, setCashError] = useState('');
   const [lowStockAlert, setLowStockAlert] = useState<{ name: string; quantity: number }[] | null>(null);
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
   const [showCreditCustomerPicker, setShowCreditCustomerPicker] = useState(false);
   const [showNoCustomersDialog, setShowNoCustomersDialog] = useState(false);
+  const [showCreditBlockedDialog, setShowCreditBlockedDialog] = useState(false);
+  const [creditBlockedTitle, setCreditBlockedTitle] = useState('Credit Unavailable');
+  const [creditBlockedMessage, setCreditBlockedMessage] = useState('');
+  const [creditCustomerSearch, setCreditCustomerSearch] = useState('');
   const scanLockRef = useRef(false);
   const paperSize = usePrinterStore((s) => s.paperSize);
   const whatsAppAlertsEnabled = useRetailStore((s) => s.whatsAppAlertsEnabled);
@@ -122,17 +136,30 @@ export default function POSScreen() {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.barcode.includes(searchQuery);
       const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      return matchesSearch && matchesCategory && p.quantity > 0;
+      const matchesStock = showOutOfStock ? true : p.quantity > 0;
+      return matchesSearch && matchesCategory && matchesStock;
     });
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory, showOutOfStock]);
 
   const cartSubtotal = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.product.sellingPrice * item.quantity, 0);
   }, [cart]);
 
-  const cartTotal = cartSubtotal - cartDiscount;
+  const clampedDiscount = Math.max(0, Math.min(cartDiscount, cartSubtotal));
+  const discountExceedsSubtotal = cartDiscount > cartSubtotal;
+  const cartTotal = Math.max(0, cartSubtotal - clampedDiscount);
+  const outOfStockCount = useMemo(
+    () => products.filter((p) => p.quantity <= 0).length,
+    [products]
+  );
+  const cashReceivedValue = useMemo(() => parseAmount(cashReceivedInput), [cashReceivedInput]);
+  const cashChange = cashReceivedValue >= cartTotal ? cashReceivedValue - cartTotal : 0;
 
   const handleAddToCart = useCallback((product: Product) => {
+    if (product.quantity <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     addToCart(product);
   }, [addToCart]);
@@ -150,7 +177,7 @@ export default function POSScreen() {
     }
   }, [cart, updateCartQuantity, removeFromCart]);
 
-  const handleCompleteSale = useCallback((method: PaymentMethod, customerId?: string) => {
+  const handleCompleteSale = useCallback((method: PaymentMethod, customerId?: string, cashReceived?: number) => {
     if (method === 'credit' && !customerId) {
       // Show customer picker for credit sales
       if (customers.length === 0) {
@@ -162,12 +189,55 @@ export default function POSScreen() {
       return;
     }
 
+    if (method === 'credit' && customerId) {
+      const customer = customers.find((c) => c.id === customerId);
+      if (!customer) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setCreditBlockedTitle('Customer Not Found');
+        setCreditBlockedMessage('Please select a valid customer for this credit sale.');
+        setShowCreditBlockedDialog(true);
+        return;
+      }
+
+      const isFrozen = !!customer.creditFrozen;
+      const wouldExceedLimit =
+        customer.creditLimit > 0 && customer.currentCredit + cartTotal > customer.creditLimit;
+
+      if (isFrozen || wouldExceedLimit) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        if (isFrozen) {
+          setCreditBlockedTitle('Credit Frozen');
+          setCreditBlockedMessage(`${customer.name}'s credit is frozen. Unfreeze the account to proceed.`);
+        } else {
+          const remaining = Math.max(0, customer.creditLimit - customer.currentCredit);
+          setCreditBlockedTitle('Credit Limit Exceeded');
+          setCreditBlockedMessage(`This sale of ${formatNaira(cartTotal)} exceeds the remaining credit of ${formatNaira(remaining)} for ${customer.name}.`);
+        }
+        setShowCreditBlockedDialog(true);
+        return;
+      }
+    }
+
+    if (method === 'cash') {
+      if (typeof cashReceived !== 'number' || !Number.isFinite(cashReceived)) {
+        setCashError('Enter the amount received');
+        return;
+      }
+      if (cashReceived < cartTotal) {
+        setCashError('Cash received is less than the total');
+        return;
+      }
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const soldProductIds = cart.map((item) => item.product.id);
-    const sale = completeSale(method, customerId, undefined, currentStaff?.id, currentStaff?.name);
+    const sale = completeSale(method, customerId, method === 'cash' ? cashReceived : undefined, currentStaff?.id, currentStaff?.name);
     if (sale) {
       setLastSale(sale);
       setShowPaymentModal(false);
+      setShowCashModal(false);
+      setCashReceivedInput('');
+      setCashError('');
       setShowCreditCustomerPicker(false);
       setShowSuccessModal(true);
       const itemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -189,7 +259,7 @@ export default function POSScreen() {
         }
       }
     }
-  }, [completeSale, currentStaff, logActivity, cart, whatsAppAlertsEnabled, customers]);
+  }, [completeSale, currentStaff, logActivity, cart, whatsAppAlertsEnabled, customers, cartTotal]);
 
   const handlePrintReceipt = useCallback(async () => {
     if (!lastSale || !shopInfo) return;
@@ -243,7 +313,7 @@ export default function POSScreen() {
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8 }} className="px-5 pb-4">
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-          <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide mb-1">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">
             Sell
           </Text>
           <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
@@ -328,6 +398,22 @@ export default function POSScreen() {
               ))}
             </ScrollView>
           </Animated.View>
+          <Animated.View entering={FadeInDown.delay(320).duration(600)} className="px-5 mb-3">
+            <Pressable
+              onPress={() => setShowOutOfStock((prev) => !prev)}
+              className={`self-start px-3 py-1.5 rounded-full border ${
+                showOutOfStock
+                  ? 'bg-amber-500/20 border-amber-500/40'
+                  : 'bg-white/60 dark:bg-stone-900/60 border-stone-200 dark:border-stone-800'
+              }`}
+            >
+              <Text className={showOutOfStock ? 'text-amber-500 text-sm font-medium' : 'text-stone-600 dark:text-stone-400 text-sm'}>
+                {showOutOfStock
+                  ? 'Hide out of stock'
+                  : `Show out of stock${outOfStockCount > 0 ? ` (${outOfStockCount})` : ''}`}
+              </Text>
+            </Pressable>
+          </Animated.View>
 
           {/* Products Grid */}
           <FlatList
@@ -340,6 +426,7 @@ export default function POSScreen() {
             ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
             renderItem={({ item: product }) => {
               const inCart = cart.find((i) => i.product.id === product.id);
+              const isOutOfStock = product.quantity <= 0;
               const firstLetter = product.name.charAt(0).toUpperCase();
               const letterColors = ['#e05e1b', '#3b82f6', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
               const colorIndex = firstLetter.charCodeAt(0) % letterColors.length;
@@ -347,10 +434,11 @@ export default function POSScreen() {
               return (
                 <Pressable
                   onPress={() => handleAddToCart(product)}
+                  accessibilityState={{ disabled: isOutOfStock }}
                   style={{ flex: 1 }}
                   className={`bg-white/80 dark:bg-stone-900/80 rounded-xl p-3 border ${
                     inCart ? 'border-orange-500' : 'border-stone-200 dark:border-stone-800'
-                  } active:scale-95`}
+                  } ${isOutOfStock ? 'opacity-60' : 'active:scale-95'}`}
                 >
                   {product.imageUrl ? (
                     <View className="w-full h-16 rounded-lg bg-stone-200 dark:bg-stone-800 mb-2 overflow-hidden items-center justify-center">
@@ -369,15 +457,22 @@ export default function POSScreen() {
                   <Text className="text-stone-900 dark:text-white font-semibold text-sm mb-1" numberOfLines={2}>
                     {product.name}
                   </Text>
-                  <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-xs mb-2">{product.category}</Text>
                   <View className="flex-row items-center justify-between">
                     <Text className="text-orange-400 font-bold text-base">
                       {formatNaira(product.sellingPrice)}
                     </Text>
-                    <View className="bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded">
-                      <Text className="text-stone-600 dark:text-stone-400 text-xs">{product.quantity}</Text>
+                    <View className={`${isOutOfStock ? 'bg-red-500/20' : 'bg-stone-200 dark:bg-stone-800'} px-2 py-0.5 rounded`}>
+                      <Text className={`${isOutOfStock ? 'text-red-400' : 'text-stone-600 dark:text-stone-400'} text-xs`}>
+                        {isOutOfStock ? 'Out' : product.quantity}
+                      </Text>
                     </View>
                   </View>
+                  {isOutOfStock && (
+                    <View className="mt-2 self-start bg-red-500/20 px-2 py-0.5 rounded-full">
+                      <Text className="text-red-400 text-[10px] font-bold">Out of stock</Text>
+                    </View>
+                  )}
                   {inCart && (
                     <View className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-orange-500 items-center justify-center">
                       <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
@@ -414,7 +509,7 @@ export default function POSScreen() {
                       <ShoppingBag size={20} color="white" />
                     </View>
                     <View>
-                      <Text className="text-white/80 text-xs">
+                      <Text className="text-white/85 text-sm">
                         {cart.reduce((sum, item) => sum + item.quantity, 0)} items
                       </Text>
                       <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white text-xl font-bold">
@@ -437,12 +532,22 @@ export default function POSScreen() {
         visible={showPaymentModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowPaymentModal(false)}
+        onRequestClose={() => {
+          setShowPaymentModal(false);
+          setShowCashModal(false);
+          setCashError('');
+          setCashReceivedInput('');
+        }}
       >
         <KeyboardAvoidingView style={{ flex: 1 }}>
           <Pressable
             className="flex-1 bg-black/60"
-            onPress={() => setShowPaymentModal(false)}
+            onPress={() => {
+              setShowPaymentModal(false);
+              setShowCashModal(false);
+              setCashError('');
+              setCashReceivedInput('');
+            }}
           />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <View className="p-6">
@@ -465,7 +570,7 @@ export default function POSScreen() {
                       <Text className="text-stone-900 dark:text-white font-medium" numberOfLines={1}>
                         {item.product.name}
                       </Text>
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">
                         {formatNaira(item.product.sellingPrice)} x {item.quantity}
                       </Text>
                     </View>
@@ -496,13 +601,16 @@ export default function POSScreen() {
               {/* Totals */}
               <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-6">
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-500 dark:text-stone-400">Subtotal</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">Subtotal</Text>
                   <Text className="text-stone-900 dark:text-white font-medium">{formatNaira(cartSubtotal)}</Text>
                 </View>
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-500 dark:text-stone-400">Discount</Text>
-                  <Text className="text-orange-400 font-medium">-{formatNaira(cartDiscount)}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">Discount</Text>
+                  <Text className="text-orange-400 font-medium">-{formatNaira(clampedDiscount)}</Text>
                 </View>
+                {discountExceedsSubtotal && (
+                  <Text className="text-amber-500 text-xs mb-2">Discount capped at subtotal</Text>
+                )}
                 <View className="h-px bg-stone-300 dark:bg-stone-700 my-2" />
                 <View className="flex-row justify-between">
                   <Text className="text-stone-900 dark:text-white font-semibold text-lg">Total</Text>
@@ -511,10 +619,14 @@ export default function POSScreen() {
               </View>
 
               {/* Payment Methods */}
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-3">Select Payment Method</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-3">Select Payment Method</Text>
               <View className="gap-3">
                 <Pressable
-                  onPress={() => handleCompleteSale('cash')}
+                  onPress={() => {
+                    setCashError('');
+                    setCashReceivedInput(cartTotal > 0 ? String(cartTotal) : '');
+                    setShowCashModal(true);
+                  }}
                   className="flex-row items-center bg-emerald-500/20 border border-emerald-500/40 rounded-xl p-4 active:scale-98"
                 >
                   <View className="w-10 h-10 rounded-full bg-emerald-500/30 items-center justify-center mr-3">
@@ -522,7 +634,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Cash</Text>
-                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Receive payment in cash</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Receive payment in cash</Text>
                   </View>
                 </Pressable>
 
@@ -535,7 +647,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Bank Transfer</Text>
-                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Mobile banking / USSD</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Mobile banking / USSD</Text>
                   </View>
                 </Pressable>
 
@@ -548,7 +660,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">POS Terminal</Text>
-                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Card payment via POS</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Card payment via POS</Text>
                   </View>
                 </Pressable>
 
@@ -561,7 +673,7 @@ export default function POSScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-stone-900 dark:text-white font-medium">Credit Sale</Text>
-                    <Text className="text-stone-500 dark:text-stone-400 text-xs">Customer pays later</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Customer pays later</Text>
                   </View>
                 </Pressable>
               </View>
@@ -575,6 +687,114 @@ export default function POSScreen() {
                 className="mt-4 py-3 items-center"
               >
                 <Text className="text-red-400 font-medium">Clear Cart</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Cash Received Modal */}
+      <Modal
+        visible={showCashModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowCashModal(false);
+          setCashError('');
+        }}
+      >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
+          <Pressable
+            className="flex-1 bg-black/60"
+            onPress={() => {
+              setShowCashModal(false);
+              setCashError('');
+            }}
+          />
+          <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
+            <View className="p-6">
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-stone-900 dark:text-white text-xl font-bold">Cash Received</Text>
+                <Pressable onPress={() => {
+                  setShowCashModal(false);
+                  setCashError('');
+                }}>
+                  <X size={24} color="#78716c" />
+                </Pressable>
+              </View>
+
+              <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-4">
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-stone-600 dark:text-stone-400">Total</Text>
+                  <Text className="text-stone-900 dark:text-white font-semibold">{formatNaira(cartTotal)}</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-stone-600 dark:text-stone-400">Change</Text>
+                  <Text className={`${cashReceivedValue >= cartTotal ? 'text-emerald-400' : 'text-stone-400'} font-medium`}>
+                    {formatNaira(cashChange)}
+                  </Text>
+                </View>
+              </View>
+
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Amount Received</Text>
+              <TextInput
+                className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white text-lg font-semibold"
+                placeholder="0"
+                placeholderTextColor="#57534e"
+                keyboardType="numeric"
+                value={cashReceivedInput}
+                onChangeText={(text) => {
+                  setCashReceivedInput(text);
+                  if (cashError) setCashError('');
+                }}
+              />
+              {cashError ? (
+                <Text className="text-red-400 text-xs mt-2">{cashError}</Text>
+              ) : null}
+
+              <View className="flex-row flex-wrap gap-2 mt-4">
+                <Pressable
+                  onPress={() => {
+                    setCashReceivedInput(String(cartTotal));
+                    setCashError('');
+                  }}
+                  className="px-3 py-2 rounded-full bg-stone-200 dark:bg-stone-800"
+                >
+                  <Text className="text-stone-700 dark:text-stone-300 text-sm font-medium">Exact</Text>
+                </Pressable>
+                {[1000, 2000, 5000, 10000].map((amount) => (
+                  <Pressable
+                    key={amount}
+                    onPress={() => {
+                      setCashReceivedInput(String(amount));
+                      setCashError('');
+                    }}
+                    className="px-3 py-2 rounded-full bg-stone-200 dark:bg-stone-800"
+                  >
+                    <Text className="text-stone-700 dark:text-stone-300 text-sm font-medium">
+                      {formatNaira(amount)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                onPress={() => {
+                  const amount = parseAmount(cashReceivedInput);
+                  if (!Number.isFinite(amount) || amount <= 0) {
+                    setCashError('Enter the amount received');
+                    return;
+                  }
+                  if (amount < cartTotal) {
+                    setCashError('Cash received is less than the total');
+                    return;
+                  }
+                  setCashError('');
+                  handleCompleteSale('cash', undefined, amount);
+                }}
+                className="bg-emerald-500 py-4 rounded-xl active:opacity-90 mt-6"
+              >
+                <Text className="text-white font-semibold text-center text-lg">Complete Cash Sale</Text>
               </Pressable>
             </View>
           </View>
@@ -597,7 +817,7 @@ export default function POSScreen() {
                   <X size={24} color={isDark ? '#a8a29e' : '#57534e'} />
                 </Pressable>
               </View>
-              <Text className="text-stone-500 text-sm mt-1">Choose which customer to assign this credit sale to</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mt-1">Choose which customer to assign this credit sale to</Text>
               {customers.length > 3 && (
                 <View className="bg-stone-100 dark:bg-stone-800 rounded-xl flex-row items-center px-3 mt-3">
                   <Search size={16} color="#78716c" />
@@ -619,14 +839,26 @@ export default function POSScreen() {
             <ScrollView className="p-5">
               {customers.filter((c) => !creditCustomerSearch || c.name.toLowerCase().includes(creditCustomerSearch.toLowerCase()) || c.phone.includes(creditCustomerSearch)).map((customer) => {
                 const isFrozen = customer.creditFrozen;
-                const overLimit = customer.creditLimit > 0 && customer.currentCredit >= customer.creditLimit;
-                const blocked = isFrozen || overLimit;
+                const wouldExceedLimit = customer.creditLimit > 0 && customer.currentCredit + cartTotal > customer.creditLimit;
+                const blocked = isFrozen || wouldExceedLimit;
 
                 return (
                   <Pressable
                     key={customer.id}
                     onPress={() => {
-                      if (blocked) return;
+                      if (blocked) {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        if (isFrozen) {
+                          setCreditBlockedTitle('Credit Frozen');
+                          setCreditBlockedMessage(`${customer.name}'s credit is frozen. Unfreeze the account to proceed.`);
+                        } else {
+                          const remaining = Math.max(0, customer.creditLimit - customer.currentCredit);
+                          setCreditBlockedTitle('Credit Limit Exceeded');
+                          setCreditBlockedMessage(`This sale of ${formatNaira(cartTotal)} exceeds the remaining credit of ${formatNaira(remaining)} for ${customer.name}.`);
+                        }
+                        setShowCreditBlockedDialog(true);
+                        return;
+                      }
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                       handleCompleteSale('credit', customer.id);
                     }}
@@ -644,9 +876,9 @@ export default function POSScreen() {
                           </View>
                         )}
                       </View>
-                      <Text className="text-stone-500 text-xs">
+                      <Text className="text-stone-600 dark:text-stone-400 text-xs">
                         {blocked
-                          ? isFrozen ? 'Credit frozen' : 'Credit limit reached'
+                          ? isFrozen ? 'Credit frozen' : 'Limit would be exceeded'
                           : `Owes: ${formatNaira(customer.currentCredit)}${customer.creditLimit > 0 ? ` / Limit: ${formatNaira(customer.creditLimit)}` : ''}`}
                       </Text>
                     </View>
@@ -655,7 +887,7 @@ export default function POSScreen() {
               })}
               {customers.length === 0 && (
                 <View className="items-center py-8">
-                  <Text className="text-stone-500 text-sm text-center">No customers yet. Add customers in the Credit Book first.</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm text-center">No customers yet. Add customers in the Credit Book first.</Text>
                 </View>
               )}
             </ScrollView>
@@ -716,6 +948,16 @@ export default function POSScreen() {
         showCancel={false}
       />
 
+      {/* Credit Blocked Dialog */}
+      <ConfirmDialog
+        visible={showCreditBlockedDialog}
+        onClose={() => setShowCreditBlockedDialog(false)}
+        title={creditBlockedTitle}
+        message={creditBlockedMessage}
+        variant="warning"
+        showCancel={false}
+      />
+
       {/* Success Modal */}
       <Modal
         visible={showSuccessModal}
@@ -744,21 +986,21 @@ export default function POSScreen() {
               <Check size={40} color="#10b981" />
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Sale Complete!</Text>
-            <Text className="text-stone-500 dark:text-stone-400 text-center mb-6">
+            <Text className="text-stone-600 dark:text-stone-400 text-center mb-6">
               Transaction recorded successfully
             </Text>
             {lastSale && (
               <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 w-full mb-6">
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-500 dark:text-stone-400">Total</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">Total</Text>
                   <Text className="text-stone-900 dark:text-white font-bold text-lg">{formatNaira(lastSale.total)}</Text>
                 </View>
                 <View className="flex-row justify-between mb-2">
-                  <Text className="text-stone-500 dark:text-stone-400">Payment</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">Payment</Text>
                   <Text className="text-orange-400 font-medium capitalize">{lastSale.paymentMethod}</Text>
                 </View>
                 <View className="flex-row justify-between">
-                  <Text className="text-stone-500 dark:text-stone-400">Items</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">Items</Text>
                   <Text className="text-stone-600 dark:text-stone-300">{lastSale.items.length} product{lastSale.items.length > 1 ? 's' : ''}</Text>
                 </View>
               </View>

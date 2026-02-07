@@ -79,7 +79,7 @@ export default function ShopProfileScreen() {
             <View className="flex-row items-center justify-between mb-6">
               <Animated.View entering={FadeInDown.delay(100).duration(600)}>
                 <Text className="text-stone-900 dark:text-white text-2xl font-bold">Shop Profile</Text>
-                <Text className="text-stone-500 text-sm mt-1">Edit your shop information</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mt-1">Edit your shop information</Text>
               </Animated.View>
               <Pressable
                 onPress={() => router.back()}
@@ -100,7 +100,7 @@ export default function ShopProfileScreen() {
           {/* Form Fields */}
           <Animated.View entering={FadeInDown.delay(200).duration(600)} className="px-5 gap-4">
             <View>
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Name *</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Shop Name *</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder={placeholders.shopName}
@@ -111,7 +111,7 @@ export default function ShopProfileScreen() {
             </View>
 
             <View>
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Owner Name</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Owner Name</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder={placeholders.ownerName}
@@ -122,7 +122,7 @@ export default function ShopProfileScreen() {
             </View>
 
             <View>
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Phone Number</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder="e.g. 08012345678"
@@ -134,7 +134,7 @@ export default function ShopProfileScreen() {
             </View>
 
             <View>
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Address</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Address</Text>
               <TextInput
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-base"
                 placeholder={placeholders.address}
@@ -146,9 +146,9 @@ export default function ShopProfileScreen() {
             </View>
 
             <View>
-              <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Currency</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Currency</Text>
               <View className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4">
-                <Text className="text-stone-500 text-base">🇳🇬 Nigerian Naira (₦ NGN)</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-base">🇳🇬 Nigerian Naira (₦ NGN)</Text>
               </View>
             </View>
 
@@ -162,7 +162,7 @@ export default function ShopProfileScreen() {
 
             {/* Reset App */}
             <View className="mt-8 pt-6 border-t border-stone-200 dark:border-stone-800">
-              <Text className="text-stone-600 dark:text-stone-400 text-xs uppercase tracking-wide mb-3">Danger Zone</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide mb-3">Danger Zone</Text>
               <Pressable
                 onPress={handleReset}
                 className="bg-red-500/10 border border-red-500/30 py-4 rounded-xl active:opacity-90 flex-row items-center justify-center gap-2"

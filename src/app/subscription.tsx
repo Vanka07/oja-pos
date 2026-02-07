@@ -119,7 +119,7 @@ export default function SubscriptionScreen() {
         />
         <Crown size={48} color="#78716c" />
         <Text className="text-stone-900 dark:text-white font-semibold text-lg mt-4 mb-2 text-center">Access Restricted</Text>
-        <Text className="text-stone-500 dark:text-stone-400 text-center">Only the shop owner can manage the subscription and billing.</Text>
+        <Text className="text-stone-600 dark:text-stone-400 text-center">Only the shop owner can manage the subscription and billing.</Text>
         <Pressable onPress={() => router.back()} className="mt-6 bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
           <Text className="text-white font-semibold">Go Back</Text>
         </Pressable>
@@ -145,7 +145,7 @@ export default function SubscriptionScreen() {
               <ChevronLeft size={20} color="#a8a29e" />
             </Pressable>
             <View>
-              <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">Plan</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium tracking-wide uppercase">Plan</Text>
               <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-2xl font-bold tracking-tight">
                 Subscription
               </Text>

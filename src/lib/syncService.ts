@@ -25,9 +25,10 @@ function notifyListeners(status: SyncStatus, message?: string) {
 
 // ── Product Sync ──────────────────────────────────────────────────────
 
-async function syncProducts(shopId: string): Promise<void> {
+async function syncProducts(shopId: string): Promise<boolean> {
   const store = useRetailStore.getState();
   const localProducts = store.products;
+  let ok = true;
 
   // Push all local products (upsert)
   if (localProducts.length > 0) {
@@ -52,7 +53,10 @@ async function syncProducts(shopId: string): Promise<void> {
       .from('products')
       .upsert(rows, { onConflict: 'id' });
 
-    if (error) console.warn('Product push error:', error.message);
+    if (error) {
+      console.warn('Product push error:', error.message);
+      ok = false;
+    }
   }
 
   // Pull remote products
@@ -69,7 +73,7 @@ async function syncProducts(shopId: string): Promise<void> {
   const { data: remoteProducts, error } = await query;
   if (error) {
     console.warn('Product pull error:', error.message);
-    return;
+    return false;
   }
 
   if (remoteProducts && remoteProducts.length > 0) {
@@ -105,17 +109,32 @@ async function syncProducts(shopId: string): Promise<void> {
       }
     }
   }
+
+  return ok;
 }
 
 // ── Sales Sync (append-only) ──────────────────────────────────────────
 
-async function syncSales(shopId: string): Promise<void> {
+async function syncSales(shopId: string): Promise<boolean> {
   const store = useRetailStore.getState();
   const localSales = store.sales;
+  let ok = true;
 
   // Get already-synced sale IDs
   const syncedRaw = getStorageItem(SYNCED_SALES_KEY);
-  const syncedIds = new Set<string>(syncedRaw ? JSON.parse(syncedRaw) : []);
+  let syncedIdsList: string[] = [];
+  if (syncedRaw) {
+    try {
+      const parsed = JSON.parse(syncedRaw);
+      if (Array.isArray(parsed)) {
+        syncedIdsList = parsed.filter((id) => typeof id === 'string');
+      }
+    } catch {
+      syncedIdsList = [];
+      setStorageItem(SYNCED_SALES_KEY, JSON.stringify([]));
+    }
+  }
+  const syncedIds = new Set<string>(syncedIdsList);
 
   // Push unsynced sales
   const unsyncedSales = localSales.filter((s) => !syncedIds.has(s.id));
@@ -150,6 +169,7 @@ async function syncSales(shopId: string): Promise<void> {
 
     if (error) {
       console.warn('Sales push error:', error.message);
+      ok = false;
     } else {
       // Mark as synced
       unsyncedSales.forEach((s) => syncedIds.add(s.id));
@@ -179,7 +199,7 @@ async function syncSales(shopId: string): Promise<void> {
   const { data: remoteSales, error: pullError } = await query;
   if (pullError) {
     console.warn('Sales pull error:', pullError.message);
-    return;
+    return false;
   }
 
   if (remoteSales && remoteSales.length > 0) {
@@ -232,13 +252,16 @@ async function syncSales(shopId: string): Promise<void> {
       setStorageItem(SYNCED_SALES_KEY, JSON.stringify([...syncedIds]));
     }
   }
+
+  return ok;
 }
 
 // ── Customer Sync ─────────────────────────────────────────────────────
 
-async function syncCustomers(shopId: string): Promise<void> {
+async function syncCustomers(shopId: string): Promise<boolean> {
   const store = useRetailStore.getState();
   const localCustomers = store.customers;
+  let ok = true;
 
   if (localCustomers.length > 0) {
     const rows = localCustomers.map((c) => ({
@@ -250,14 +273,17 @@ async function syncCustomers(shopId: string): Promise<void> {
       current_credit: c.currentCredit,
       transactions: c.transactions,
       created_at: c.createdAt,
-      updated_at: c.createdAt,
+      updated_at: c.updatedAt || c.createdAt,
     }));
 
     const { error } = await supabase
       .from('customers')
       .upsert(rows, { onConflict: 'id' });
 
-    if (error) console.warn('Customer push error:', error.message);
+    if (error) {
+      console.warn('Customer push error:', error.message);
+      ok = false;
+    }
   }
 
   // Pull remote
@@ -274,14 +300,18 @@ async function syncCustomers(shopId: string): Promise<void> {
   const { data: remoteCustomers, error } = await query;
   if (error) {
     console.warn('Customer pull error:', error.message);
-    return;
+    return false;
   }
 
   if (remoteCustomers && remoteCustomers.length > 0) {
-    const localIds = new Set(localCustomers.map((c) => c.id));
+    const nextCustomers = [...localCustomers];
+    let changed = false;
 
     for (const rc of remoteCustomers) {
-      if (!localIds.has(rc.id)) {
+      const remoteUpdatedAt = rc.updated_at || rc.created_at;
+      const localIndex = nextCustomers.findIndex((c) => c.id === rc.id);
+
+      if (localIndex === -1) {
         const newCustomer: Customer = {
           id: rc.id,
           name: rc.name,
@@ -290,20 +320,47 @@ async function syncCustomers(shopId: string): Promise<void> {
           currentCredit: Number(rc.current_credit) || 0,
           transactions: rc.transactions || [],
           createdAt: rc.created_at,
+          updatedAt: remoteUpdatedAt || rc.created_at,
         };
-        useRetailStore.setState((state) => ({
-          customers: [...state.customers, newCustomer],
-        }));
+        nextCustomers.push(newCustomer);
+        changed = true;
+        continue;
+      }
+
+      const localCustomer = nextCustomers[localIndex];
+      const localUpdatedAt = localCustomer.updatedAt || localCustomer.createdAt;
+      const remoteTime = new Date(remoteUpdatedAt).getTime();
+      const localTime = new Date(localUpdatedAt).getTime();
+
+      if (remoteTime > localTime) {
+        nextCustomers[localIndex] = {
+          ...localCustomer,
+          name: rc.name,
+          phone: rc.phone || '',
+          creditLimit: Number(rc.credit_limit) || 0,
+          currentCredit: Number(rc.current_credit) || 0,
+          transactions: rc.transactions || [],
+          createdAt: localCustomer.createdAt || rc.created_at,
+          updatedAt: remoteUpdatedAt || rc.created_at,
+        };
+        changed = true;
       }
     }
+
+    if (changed) {
+      useRetailStore.setState({ customers: nextCustomers });
+    }
   }
+
+  return ok;
 }
 
 // ── Expense Sync ──────────────────────────────────────────────────────
 
-async function syncExpenses(shopId: string): Promise<void> {
+async function syncExpenses(shopId: string): Promise<boolean> {
   const store = useRetailStore.getState();
   const localExpenses = store.expenses;
+  let ok = true;
 
   if (localExpenses.length > 0) {
     const rows = localExpenses.map((e) => ({
@@ -320,7 +377,10 @@ async function syncExpenses(shopId: string): Promise<void> {
       .from('expenses')
       .upsert(rows, { onConflict: 'id' });
 
-    if (error) console.warn('Expense push error:', error.message);
+    if (error) {
+      console.warn('Expense push error:', error.message);
+      ok = false;
+    }
   }
 
   // Pull remote
@@ -337,7 +397,7 @@ async function syncExpenses(shopId: string): Promise<void> {
   const { data: remoteExpenses, error } = await query;
   if (error) {
     console.warn('Expense pull error:', error.message);
-    return;
+    return false;
   }
 
   if (remoteExpenses && remoteExpenses.length > 0) {
@@ -359,13 +419,16 @@ async function syncExpenses(shopId: string): Promise<void> {
       }
     }
   }
+
+  return ok;
 }
 
 // ── Stock Movement Sync ───────────────────────────────────────────────
 
-async function syncStockMovements(shopId: string): Promise<void> {
+async function syncStockMovements(shopId: string): Promise<boolean> {
   const store = useRetailStore.getState();
   const localMovements = store.stockMovements;
+  let ok = true;
 
   if (localMovements.length > 0) {
     const rows = localMovements.map((m) => ({
@@ -386,8 +449,13 @@ async function syncStockMovements(shopId: string): Promise<void> {
       .from('stock_movements')
       .upsert(rows, { onConflict: 'id' });
 
-    if (error) console.warn('Stock movement push error:', error.message);
+    if (error) {
+      console.warn('Stock movement push error:', error.message);
+      ok = false;
+    }
   }
+
+  return ok;
 }
 
 // ── Sync All ──────────────────────────────────────────────────────────
@@ -398,21 +466,29 @@ export async function syncAll(shopId: string): Promise<boolean> {
   notifyListeners('syncing');
 
   try {
-    await syncProducts(shopId);
-    await syncSales(shopId);
-    await syncCustomers(shopId);
-    await syncExpenses(shopId);
-    await syncStockMovements(shopId);
+    const productsOk = await syncProducts(shopId);
+    const salesOk = await syncSales(shopId);
+    const customersOk = await syncCustomers(shopId);
+    const expensesOk = await syncExpenses(shopId);
+    const stockOk = await syncStockMovements(shopId);
 
-    // Update last sync time
-    const now = new Date().toISOString();
-    setStorageItem(LAST_SYNC_KEY, now);
+    const allOk = productsOk && salesOk && customersOk && expensesOk && stockOk;
 
-    useRetailStore.setState({ lastSyncTime: now });
+    if (allOk) {
+      // Update last sync time
+      const now = new Date().toISOString();
+      setStorageItem(LAST_SYNC_KEY, now);
 
-    notifyListeners('success');
+      useRetailStore.setState({ lastSyncTime: now });
+
+      notifyListeners('success');
+      isSyncing = false;
+      return true;
+    }
+
+    notifyListeners('error', 'Partial sync failure');
     isSyncing = false;
-    return true;
+    return false;
   } catch (err: any) {
     console.warn('Sync error:', err.message);
     notifyListeners('error', err.message);

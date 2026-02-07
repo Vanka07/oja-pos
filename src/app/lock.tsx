@@ -190,7 +190,7 @@ export default function LockScreen() {
           <Lock size={28} color="#e05e1b" />
         </View>
         <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">Enter PIN</Text>
-        <Text className="text-stone-500 text-sm mb-8">
+        <Text className="text-stone-600 dark:text-stone-400 text-sm mb-8">
           {hasStaff
             ? 'Enter your staff PIN to unlock'
             : 'Enter your 4-digit PIN to unlock'}
@@ -241,7 +241,7 @@ export default function LockScreen() {
             <Text className="text-stone-900 dark:text-white text-2xl font-bold mb-2">
               {recoveryStep === 'code' ? 'Recovery Code' : recoveryStep === 'newPin' ? 'New PIN' : 'Confirm PIN'}
             </Text>
-            <Text className="text-stone-500 text-sm mb-8">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm mb-8">
               {recoveryStep === 'code'
                 ? 'Enter your 6-digit recovery code'
                 : recoveryStep === 'newPin'
@@ -280,7 +280,7 @@ export default function LockScreen() {
               }}
               className="mt-6 active:opacity-70"
             >
-              <Text className="text-stone-500 text-sm font-medium">Cancel</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium">Cancel</Text>
             </Pressable>
           </Animated.View>
         </View>

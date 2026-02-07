@@ -155,13 +155,13 @@ export default function ProductEditScreen() {
         >
           {/* Product Details Section */}
           <View className="px-5 mt-2">
-            <Text className="text-stone-500 text-xs uppercase tracking-wide mb-4 font-medium">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide mb-4 font-medium">
               Product Details
             </Text>
 
             <View className="gap-4">
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder={placeholders.productName}
@@ -172,7 +172,7 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Barcode</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Barcode</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="Scan or enter barcode"
@@ -183,7 +183,7 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Category</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -215,7 +215,7 @@ export default function ProductEditScreen() {
 
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="e.g. 500"
@@ -226,7 +226,7 @@ export default function ProductEditScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                     placeholder="e.g. 750"
@@ -254,7 +254,7 @@ export default function ProductEditScreen() {
               )}
 
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Unit</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Unit</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -283,8 +283,8 @@ export default function ProductEditScreen() {
               </View>
 
               <View>
-                <Text className="text-stone-500 dark:text-stone-400 text-sm mb-1">Low Stock Alert</Text>
-                <Text className="text-stone-500 text-xs mb-2">Alert when stock falls below</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-1">Low Stock Alert</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Alert when stock falls below</Text>
                 <TextInput
                   className="bg-stone-100 dark:bg-stone-900 rounded-xl px-4 py-3.5 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-800"
                   placeholder="10"
@@ -301,16 +301,16 @@ export default function ProductEditScreen() {
 
           {/* Stock Adjustment Section */}
           <View className="px-5 mt-8">
-            <Text className="text-stone-500 text-xs uppercase tracking-wide mb-4 font-medium">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wide mb-4 font-medium">
               Stock Adjustment
             </Text>
 
             <View className="bg-white/80 dark:bg-stone-900/80 rounded-2xl border border-stone-200 dark:border-stone-800 p-4">
               <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Current Stock</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Current Stock</Text>
                 <View className="flex-row items-center gap-2">
                   <Text className="text-stone-900 dark:text-white font-bold text-2xl">{product.quantity}</Text>
-                  <Text className="text-stone-500">{product.unit}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400">{product.unit}</Text>
                 </View>
               </View>
 

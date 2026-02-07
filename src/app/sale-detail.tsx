@@ -163,14 +163,14 @@ export default function SaleDetailScreen() {
                 <Text className="text-stone-900 dark:text-white text-lg font-bold">
                   #{receiptNumber}
                 </Text>
-                <Text className="text-stone-500 dark:text-stone-500 text-sm">Receipt Number</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Receipt Number</Text>
               </View>
             </View>
 
             <View className="flex-row gap-4">
               <View className="flex-1 flex-row items-center gap-2">
                 <Clock size={14} color="#78716c" />
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">
                   {new Date(sale.createdAt).toLocaleDateString('en-NG', {
                     day: 'numeric',
                     month: 'short',
@@ -195,7 +195,7 @@ export default function SaleDetailScreen() {
               {sale.staffName && (
                 <View className="flex-row items-center gap-2">
                   <User size={14} color="#78716c" />
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {sale.staffName}
                   </Text>
                 </View>
@@ -230,7 +230,7 @@ export default function SaleDetailScreen() {
             )}
             {sale.customerName && sale.paymentMethod !== 'credit' && (
               <View className="mt-3 bg-stone-100/50 dark:bg-stone-800/50 px-3 py-2 rounded-lg">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm font-medium">
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium">
                   Customer: {sale.customerName}
                 </Text>
               </View>
@@ -240,7 +240,7 @@ export default function SaleDetailScreen() {
 
         {/* Items List */}
         <Animated.View entering={FadeInDown.delay(300).duration(600)} className="mt-4">
-          <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-2">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-2">
             ITEMS ({sale.items.length})
           </Text>
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden">
@@ -261,7 +261,7 @@ export default function SaleDetailScreen() {
                     >
                       {item.product.name}
                     </Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-xs mt-1">
+                    <Text className="text-stone-600 dark:text-stone-400 text-xs mt-1">
                       {item.quantity} × {formatNaira(item.product.sellingPrice)}
                     </Text>
                   </View>
@@ -278,14 +278,14 @@ export default function SaleDetailScreen() {
         <Animated.View entering={FadeInDown.delay(400).duration(600)} className="mt-4">
           <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800 p-5">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-stone-500 dark:text-stone-400 text-sm">Subtotal</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm">Subtotal</Text>
               <Text className="text-stone-900 dark:text-white font-medium">
                 {formatNaira(sale.subtotal)}
               </Text>
             </View>
             {sale.discount > 0 && (
               <View className="flex-row justify-between mb-2">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Discount</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Discount</Text>
                 <Text className="text-orange-400 font-medium">
                   -{formatNaira(sale.discount)}
                 </Text>
@@ -301,14 +301,14 @@ export default function SaleDetailScreen() {
             {sale.cashReceived !== undefined && sale.cashReceived > 0 && (
               <View className="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
                 <View className="flex-row justify-between mb-1">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm">Cash Received</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Cash Received</Text>
                   <Text className="text-stone-700 dark:text-stone-300 font-medium">
                     {formatNaira(sale.cashReceived)}
                   </Text>
                 </View>
                 {sale.changeGiven !== undefined && sale.changeGiven > 0 && (
                   <View className="flex-row justify-between">
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm">Change</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">Change</Text>
                     <Text className="text-stone-700 dark:text-stone-300 font-medium">
                       {formatNaira(sale.changeGiven)}
                     </Text>

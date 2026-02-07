@@ -43,8 +43,14 @@ export default function OnboardingSetup() {
     }
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^[0-9]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Enter a valid phone number (10-15 digits)';
+    } else {
+      const digits = formData.phone.replace(/\D/g, '');
+      const isValid =
+        digits.length === 11 ||
+        (digits.length === 13 && digits.startsWith('234'));
+      if (!isValid) {
+        newErrors.phone = 'Enter a valid phone number (e.g., 08012345678 or +2348012345678)';
+      }
     }
 
     setErrors(newErrors);
@@ -106,7 +112,7 @@ export default function OnboardingSetup() {
               <Text className="text-stone-900 dark:text-white text-3xl font-bold mb-2">
                 Set up your shop
               </Text>
-              <Text className="text-stone-500 dark:text-stone-400 text-base leading-6 mb-8">
+              <Text className="text-stone-600 dark:text-stone-400 text-base leading-6 mb-8">
                 Tell us about your business so we can personalize Oja for you. Takes less than a minute!
               </Text>
             </Animated.View>
@@ -211,7 +217,7 @@ export default function OnboardingSetup() {
               </LinearGradient>
             </Pressable>
 
-            <Text className="text-stone-500 dark:text-stone-400 text-xs text-center mt-4">
+            <Text className="text-stone-600 dark:text-stone-400 text-xs text-center mt-4">
               You can change these details later in Settings
             </Text>
           </Animated.View>

@@ -26,6 +26,9 @@ import { useOnboardingStore } from '@/store/onboardingStore';
 import { getPlaceholders } from '@/lib/placeholderConfig';
 import { track } from '@/lib/analytics';
 
+const generateInternalBarcode = () =>
+  `INT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -36,9 +39,12 @@ export default function InventoryScreen() {
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
-const [showUpsell, setShowUpsell] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState('');
+  const [noBarcode, setNoBarcode] = useState(false);
+  const [barcodeError, setBarcodeError] = useState('');
+  const [generatedBarcode, setGeneratedBarcode] = useState('');
 
   const businessType = useOnboardingStore((s) => s.businessType);
   const placeholders = getPlaceholders(businessType);
@@ -84,6 +90,12 @@ const [showUpsell, setShowUpsell] = useState(false);
 
   const handleAddProduct = useCallback(() => {
     if (!formData.name || !formData.costPrice || !formData.sellingPrice) return;
+    const trimmedBarcode = formData.barcode.trim();
+    if (!trimmedBarcode && !noBarcode) {
+      setBarcodeError('Select "No barcode" to continue without a barcode.');
+      return;
+    }
+    const finalBarcode = trimmedBarcode || generatedBarcode || generateInternalBarcode();
     // Check product limit for free users
     if (products.length >= FREE_PRODUCT_LIMIT && !canAccess('unlimited_products')) {
       setShowAddModal(false);
@@ -93,7 +105,7 @@ const [showUpsell, setShowUpsell] = useState(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addProduct({
       name: formData.name,
-      barcode: formData.barcode || Math.random().toString(36).substring(2, 15),
+      barcode: finalBarcode,
       category: formData.category,
       costPrice: parseFloat(formData.costPrice) || 0,
       sellingPrice: parseFloat(formData.sellingPrice) || 0,
@@ -103,8 +115,18 @@ const [showUpsell, setShowUpsell] = useState(false);
     });
     track('product_added', undefined, { category: formData.category });
     setFormData({ name: '', barcode: '', category: 'Provisions', costPrice: '', sellingPrice: '', quantity: '', unit: 'pcs', lowStockThreshold: '10' });
+    setNoBarcode(false);
+    setBarcodeError('');
+    setGeneratedBarcode('');
     setShowAddModal(false);
-  }, [formData, addProduct, products.length]);
+  }, [formData, addProduct, products.length, noBarcode, generatedBarcode]);
+
+  const closeAddModal = useCallback(() => {
+    setShowAddModal(false);
+    setBarcodeError('');
+    setNoBarcode(false);
+    setGeneratedBarcode('');
+  }, []);
 
   const handleStockAdjust = useCallback((type: 'add' | 'remove') => {
     if (!selectedProduct || !stockAdjustment) return;
@@ -143,7 +165,7 @@ const [showUpsell, setShowUpsell] = useState(false);
         <View style={{ paddingTop: insets.top + 8 }} className="px-5">
           <Animated.View entering={FadeInDown.delay(100).duration(600)}>
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-stone-500 dark:text-stone-500 text-sm font-semibold tracking-wide">Stock</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Stock</Text>
               {canAddProduct && (
                 <Pressable
                   onPress={() => {
@@ -168,14 +190,14 @@ const [showUpsell, setShowUpsell] = useState(false);
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <Package size={16} color="#3b82f6" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Total Products</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Total Products</Text>
             </View>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </View>
           <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
             <View className="flex-row items-center gap-2 mb-2">
               <TrendingUp size={16} color="#10b981" />
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide">Stock Value</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">Stock Value</Text>
             </View>
             <Text className="text-orange-400 text-xl font-bold">{formatNaira(totalInventoryValue)}</Text>
           </View>
@@ -196,7 +218,7 @@ const [showUpsell, setShowUpsell] = useState(false);
                 </View>
                 <View>
                   <Text className="text-amber-400 font-medium">{lowStockProducts.length} Low Stock Items</Text>
-                  <Text className="text-stone-500 text-xs">Tap to {showLowStockOnly ? 'show all' : 'filter'}</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">Tap to {showLowStockOnly ? 'show all' : 'filter'}</Text>
                 </View>
               </View>
               <View className={`w-5 h-5 rounded-full border-2 ${showLowStockOnly ? 'bg-amber-500 border-amber-500' : 'border-amber-500/50'} items-center justify-center`}>
@@ -228,7 +250,7 @@ const [showUpsell, setShowUpsell] = useState(false);
             ))}
             {canEditProduct && (
               <Pressable onPress={() => router.push('/categories')} className="mr-2 px-4 py-2 rounded-full border border-dashed border-stone-400 dark:border-stone-600">
-                <Text className="text-stone-500 dark:text-stone-400">+ Edit</Text>
+                <Text className="text-stone-600 dark:text-stone-400">+ Edit</Text>
               </Pressable>
             )}
           </ScrollView>
@@ -236,7 +258,7 @@ const [showUpsell, setShowUpsell] = useState(false);
 
         {/* Products List */}
         <Animated.View entering={FadeInDown.delay(600).duration(600)} className="px-5 mt-4">
-          <Text className="text-stone-500 dark:text-stone-500 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-3">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</Text>
           {filteredProducts.length === 0 && products.length === 0 && (
             <View className="bg-white/60 dark:bg-stone-900/60 rounded-2xl border border-stone-200 dark:border-stone-800">
               <EmptyState icon={Package} title="Your shelf is empty" description="Add your first product to get started" buttonLabel="Add Product" onButtonPress={() => setShowAddModal(true)} />
@@ -260,18 +282,18 @@ const [showUpsell, setShowUpsell] = useState(false);
                         <Text className="text-stone-900 dark:text-white font-medium text-base" numberOfLines={1}>{product.name}</Text>
                         {isLowStock && <View className="bg-amber-500/20 px-2 py-0.5 rounded"><Text className="text-amber-400 text-xs">Low</Text></View>}
                       </View>
-                      <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-xs mb-2">{product.category}</Text>
                       <View className="flex-row items-center gap-4">
                         <View>
-                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Cost</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">Cost</Text>
                           <Text className="text-stone-600 dark:text-stone-400 text-sm">{formatNaira(product.costPrice)}</Text>
                         </View>
                         <View>
-                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Sell</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">Sell</Text>
                           <Text className="text-orange-400 text-sm font-medium">{formatNaira(product.sellingPrice)}</Text>
                         </View>
                         <View>
-                          <Text className="text-stone-400 dark:text-stone-600 text-xs">Margin</Text>
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">Margin</Text>
                           <Text className="text-emerald-400 text-sm">{margin}%</Text>
                         </View>
                       </View>
@@ -280,7 +302,7 @@ const [showUpsell, setShowUpsell] = useState(false);
                       <View className={`px-3 py-1 rounded-lg ${isLowStock ? 'bg-amber-500/20' : 'bg-stone-200 dark:bg-stone-800'}`}>
                         <Text className={`font-bold text-lg ${isLowStock ? 'text-amber-400' : 'text-stone-900 dark:text-white'}`}>{product.quantity}</Text>
                       </View>
-                      <Text className="text-stone-400 dark:text-stone-600 text-xs mt-1">{product.unit}</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-xs mt-1">{product.unit}</Text>
                     </View>
                   </View>
                 </Pressable>
@@ -334,27 +356,65 @@ const [showUpsell, setShowUpsell] = useState(false);
       />
 
       {/* Add Product Modal */}
-      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
+      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={closeAddModal}>
         <KeyboardAvoidingView style={{ flex: 1 }}>
-          <Pressable className="flex-1 bg-black/60" onPress={() => setShowAddModal(false)} />
+          <Pressable className="flex-1 bg-black/60" onPress={closeAddModal} />
           <View className="bg-white dark:bg-stone-900 rounded-t-3xl" style={{ paddingBottom: insets.bottom + 20 }}>
             <ScrollView className="max-h-[500px]" showsVerticalScrollIndicator={false}>
               <View className="p-6">
                 <View className="flex-row items-center justify-between mb-6">
                   <Text className="text-stone-900 dark:text-white text-xl font-bold">Add New Product</Text>
-                  <Pressable onPress={() => setShowAddModal(false)}><X size={24} color="#78716c" /></Pressable>
+                  <Pressable onPress={closeAddModal}><X size={24} color="#78716c" /></Pressable>
                 </View>
                 <View className="gap-4">
                   <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Product Name *</Text>
                     <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder={placeholders.productName} placeholderTextColor="#57534e" value={formData.name} onChangeText={(text) => setFormData({ ...formData, name: text })} />
                   </View>
                   <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Barcode (Optional)</Text>
-                    <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="Scan or enter barcode" placeholderTextColor="#57534e" value={formData.barcode} onChangeText={(text) => setFormData({ ...formData, barcode: text })} />
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Barcode (Optional)</Text>
+                    <TextInput
+                      className={`bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white ${noBarcode ? 'opacity-50' : ''}`}
+                      placeholder="Scan or enter barcode"
+                      placeholderTextColor="#57534e"
+                      editable={!noBarcode}
+                      value={formData.barcode}
+                      onChangeText={(text) => {
+                        setFormData({ ...formData, barcode: text });
+                        if (barcodeError) setBarcodeError('');
+                      }}
+                    />
+                    <Pressable
+                      onPress={() => {
+                        const next = !noBarcode;
+                        setNoBarcode(next);
+                        setBarcodeError('');
+                        if (next) {
+                          setFormData({ ...formData, barcode: '' });
+                          if (!generatedBarcode) setGeneratedBarcode(generateInternalBarcode());
+                        } else {
+                          setGeneratedBarcode('');
+                        }
+                      }}
+                      className="flex-row items-center gap-2 mt-2"
+                    >
+                      <View
+                        className={`w-5 h-5 rounded border ${noBarcode ? 'bg-orange-500 border-orange-500' : 'border-stone-300 dark:border-stone-700'}`}
+                      />
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">No barcode (use internal code)</Text>
+                    </Pressable>
+                    {noBarcode && (
+                      <View className="mt-2">
+                        <Text className="text-amber-500 text-xs">Internal code: {generatedBarcode}</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs">This code is for search only.</Text>
+                      </View>
+                    )}
+                    {barcodeError ? (
+                      <Text className="text-red-400 text-xs mt-1">{barcodeError}</Text>
+                    ) : null}
                   </View>
                   <View>
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Category</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Category</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
                       {categories.map((cat) => (
                         <Pressable key={cat.id} onPress={() => setFormData({ ...formData, category: cat.name })} className={`mr-2 px-4 py-2 rounded-full border ${formData.category === cat.name ? 'bg-orange-500 border-orange-500' : 'bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700'}`}>
@@ -365,21 +425,21 @@ const [showUpsell, setShowUpsell] = useState(false);
                   </View>
                   <View className="flex-row gap-3">
                     <View className="flex-1">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Cost Price (₦) *</Text>
                       <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.costPrice} onChangeText={(text) => setFormData({ ...formData, costPrice: text })} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Selling Price (₦) *</Text>
                       <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.sellingPrice} onChangeText={(text) => setFormData({ ...formData, sellingPrice: text })} />
                     </View>
                   </View>
                   <View className="flex-row gap-3">
                     <View className="flex-1">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Initial Stock</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Initial Stock</Text>
                       <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.quantity} onChangeText={(text) => setFormData({ ...formData, quantity: text })} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Low Stock Alert</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Low Stock Alert</Text>
                       <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white" placeholder="10" placeholderTextColor="#57534e" keyboardType="numeric" value={formData.lowStockThreshold} onChangeText={(text) => setFormData({ ...formData, lowStockThreshold: text })} />
                     </View>
                   </View>
@@ -407,14 +467,14 @@ const [showUpsell, setShowUpsell] = useState(false);
                 <>
                   <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4 mb-6">
                     <Text className="text-stone-900 dark:text-white font-medium text-lg mb-1">{selectedProduct.name}</Text>
-                    <Text className="text-stone-500 text-sm">{selectedProduct.category}</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">{selectedProduct.category}</Text>
                     <View className="flex-row items-center mt-3">
-                      <Text className="text-stone-500 dark:text-stone-400 text-sm">Current Stock:</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">Current Stock:</Text>
                       <Text className="text-stone-900 dark:text-white font-bold text-lg ml-2">{selectedProduct.quantity} {selectedProduct.unit}</Text>
                     </View>
                   </View>
                   <View className="mb-6">
-                    <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Quantity to Add/Remove</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Quantity to Add/Remove</Text>
                     <TextInput className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold" placeholder="0" placeholderTextColor="#57534e" keyboardType="numeric" value={stockAdjustment} onChangeText={setStockAdjustment} />
                   </View>
                   <View className="flex-row gap-3">

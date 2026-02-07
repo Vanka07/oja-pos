@@ -207,7 +207,7 @@ export default function StaffScreen() {
     return (
       <View className="gap-4">
         <View>
-          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Name *</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Name *</Text>
           <TextInput
             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
             placeholder="e.g. Chidi Okafor"
@@ -220,7 +220,7 @@ export default function StaffScreen() {
         </View>
 
         <View>
-          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Phone</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Phone</Text>
           <TextInput
             className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
             placeholder="e.g. 08012345678"
@@ -232,13 +232,13 @@ export default function StaffScreen() {
         </View>
 
         <View>
-          <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Role</Text>
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Role</Text>
           {renderRoleSelector(formRole, setFormRole)}
         </View>
 
         {needsPin ? (
           <View>
-            <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">
+            <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">
               {isEdit ? 'New PIN (leave blank to keep current)' : '4-Digit PIN *'}
             </Text>
             <TextInput
@@ -311,7 +311,7 @@ export default function StaffScreen() {
                 <ChevronLeft size={20} color="#a8a29e" />
               </Pressable>
               <View>
-                <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium tracking-wide uppercase">
                   Management
                 </Text>
                 <Text className="text-stone-900 dark:text-white text-2xl font-bold tracking-tight">
@@ -368,7 +368,7 @@ export default function StaffScreen() {
             {staff.length === 0 ? (
               <Animated.View entering={FadeIn.duration(400)} className="items-center py-16">
                 <Users size={48} color="#57534e" />
-                <Text className="text-stone-500 text-lg mt-4 mb-2">No staff members yet</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-lg mt-4 mb-2">No staff members yet</Text>
                 <Text className="text-stone-600 dark:text-stone-400 text-center mb-6">
                   Add your first staff member to enable role-based access
                 </Text>
@@ -405,7 +405,7 @@ export default function StaffScreen() {
                                 </View>
                               )}
                             </View>
-                            <Text className="text-stone-500 text-sm">{member.phone || 'No phone'}</Text>
+                            <Text className="text-stone-600 dark:text-stone-400 text-sm">{member.phone || 'No phone'}</Text>
                           </View>
                         </View>
                         <View className="items-end gap-2">
@@ -452,7 +452,7 @@ export default function StaffScreen() {
             {recentActivities.length === 0 ? (
               <View className="items-center py-16">
                 <Clock size={48} color="#57534e" />
-                <Text className="text-stone-500 text-lg mt-4">No activity yet</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-lg mt-4">No activity yet</Text>
                 <Text className="text-stone-600 dark:text-stone-400 text-center mt-2">
                   Staff actions will be logged here
                 </Text>
@@ -474,7 +474,7 @@ export default function StaffScreen() {
                           </View>
                           <Text className="text-stone-900 dark:text-white font-medium text-sm">{activity.staffName}</Text>
                         </View>
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs">{formatActivityTime(activity.createdAt)}</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs">{formatActivityTime(activity.createdAt)}</Text>
                       </View>
                       <View className="flex-row items-center justify-between ml-9">
                         <Text className="text-stone-400 text-sm flex-1" numberOfLines={2}>

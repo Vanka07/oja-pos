@@ -2,6 +2,15 @@
 
 The most complete offline-first point-of-sale and business management system built specifically for Nigerian retail supermarkets.
 
+## Recent Changes (Feb 7, 2026)
+- Standardized typography sizes and helper text contrast across the app for better readability.
+- POS improvements: cash-received flow, out-of-stock visibility, and safer discount/credit handling.
+- Inventory updates: explicit “No barcode” option with internal codes.
+- Onboarding phone validation now accepts +234 and common 11‑digit Nigerian formats.
+- Credit Book: visible “Record Payment” and “Send Reminder” actions.
+- Dashboard rolls over at midnight and can refresh/sync while the app stays open.
+- Sync/auth reliability: safer lock eligibility, staff deactivation handling, and improved cross-device customer/product updates.
+
 ## Key Features
 
 ### Onboarding
@@ -207,5 +216,4 @@ Built with love for Nigerian entrepreneurs.
 
 
 # test
-
 

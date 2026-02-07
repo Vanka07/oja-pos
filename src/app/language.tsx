@@ -50,7 +50,7 @@ export default function LanguageScreen() {
           >
             Language
           </Text>
-          <Text className="text-stone-500 dark:text-stone-500 text-sm mt-1">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm mt-1">
             Choose your preferred language
           </Text>
         </Animated.View>
@@ -87,7 +87,7 @@ export default function LanguageScreen() {
                     {lang.nativeName}
                   </Text>
                   {lang.nativeName !== lang.name && (
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">
                       {lang.name}
                     </Text>
                   )}

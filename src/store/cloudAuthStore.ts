@@ -164,23 +164,31 @@ export const useCloudAuthStore = create<CloudAuthState>()(
       initialize: async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            // Fetch shop membership
-            const { data: members } = await supabase
-              .from('shop_members')
-              .select('shop_id')
-              .eq('user_id', session.user.id)
-              .limit(1);
-
-            const shopId = members?.[0]?.shop_id || null;
-
+          if (!session) {
             set({
-              session,
-              shopId,
-              isAuthenticated: true,
-              syncEnabled: !!shopId,
+              session: null,
+              shopId: null,
+              isAuthenticated: false,
+              syncEnabled: false,
             });
+            return;
           }
+
+          // Fetch shop membership
+          const { data: members } = await supabase
+            .from('shop_members')
+            .select('shop_id')
+            .eq('user_id', session.user.id)
+            .limit(1);
+
+          const shopId = members?.[0]?.shop_id || null;
+
+          set({
+            session,
+            shopId,
+            isAuthenticated: true,
+            syncEnabled: !!shopId,
+          });
         } catch (_) {
           // Silent fail on init
         }

@@ -54,10 +54,33 @@ export default function DashboardScreen() {
   const isCloudAuthenticated = useCloudAuthStore((s) => s.isAuthenticated);
   const shopId = useCloudAuthStore((s) => s.shopId);
 
-  const todayDate = getLocalDateStr(new Date());
-  const summary = useMemo(() => getDailySummary(todayDate), [getDailySummary, todayDate, sales, expenses]);
-  const salesToday = useMemo(() => getSalesToday(), [getSalesToday, sales]);
+  const [dayKey, setDayKey] = useState(() => getLocalDateStr(new Date()));
+  const summary = useMemo(() => getDailySummary(dayKey), [getDailySummary, dayKey, sales, expenses]);
+  const salesToday = useMemo(() => getSalesToday(), [getSalesToday, sales, dayKey]);
   const lowStock = useMemo(() => getLowStockProducts(), [getLowStockProducts, products]);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleMidnightRefresh = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+      const delay = Math.max(1, nextMidnight.getTime() - now.getTime());
+
+      timer = setTimeout(() => {
+        setDayKey(getLocalDateStr(new Date()));
+        if (isCloudAuthenticated && shopId) {
+          syncAll(shopId).catch(() => {});
+        }
+        scheduleMidnightRefresh();
+      }, delay);
+    };
+
+    scheduleMidnightRefresh();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCloudAuthenticated, shopId]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -118,7 +141,7 @@ export default function DashboardScreen() {
             <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-3xl font-extrabold tracking-tight">
               {shopInfo?.name || t('tabs.dashboard')}
             </Text>
-            <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-500 dark:text-stone-500 text-sm font-medium mt-1">
+            <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-stone-600 dark:text-stone-400 text-sm font-medium mt-1">
               {greeting}, {displayName} 👋
             </Text>
             {staffMembers.length > 0 && currentStaff && (
@@ -127,10 +150,10 @@ export default function DashboardScreen() {
                 className="flex-row items-center gap-2 mt-2 bg-white/80 dark:bg-stone-900/80 self-start px-3 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 active:opacity-80"
               >
                 <UserCircle size={14} color="#e05e1b" />
-                <Text className="text-orange-400 text-xs font-medium">
+                <Text className="text-orange-400 text-sm font-medium">
                   {currentStaff.name}
                 </Text>
-                <Text className="text-stone-400 dark:text-stone-600 text-xs">• {t('dashboard.switch')}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">• {t('dashboard.switch')}</Text>
               </Pressable>
             )}
           </Animated.View>
@@ -166,17 +189,17 @@ export default function DashboardScreen() {
             </Text>
             <View className="flex-row gap-6">
               <View>
-                <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.transactions')}</Text>
+                <Text className="text-white/80 text-sm tracking-wide mb-1">{t('dashboard.transactions')}</Text>
                 <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-xl font-semibold">{summary.totalTransactions}</Text>
               </View>
               {canViewReports && (
                 <View>
-                  <Text className="text-white/60 text-xs tracking-wide mb-1">{t('dashboard.profit')}</Text>
+                  <Text className="text-white/80 text-sm tracking-wide mb-1">{t('dashboard.profit')}</Text>
                   <View className="flex-row items-center gap-2">
                     <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-emerald-100 text-xl font-semibold">{formatNaira(summary.profit)}</Text>
                     {summary.totalSales > 0 && (
                       <View className="bg-white/20 px-2 py-0.5 rounded-full">
-                        <Text className="text-white/90 text-xs font-medium">
+                        <Text className="text-white/90 text-sm font-medium">
                           {summary.profit > 0 ? '↑' : ''} {summary.totalSales > 0 ? ((summary.profit / summary.totalSales) * 100).toFixed(0) : 0}%
                         </Text>
                       </View>
@@ -187,7 +210,7 @@ export default function DashboardScreen() {
             </View>
           </LinearGradient>
           </Pressable>
-          <Text className="text-stone-500 dark:text-stone-500 text-sm text-center mt-3 font-medium">
+          <Text className="text-stone-600 dark:text-stone-400 text-sm text-center mt-3 font-medium">
             {summary.totalTransactions === 0
               ? 'New day, new opportunities! 🌅'
               : summary.totalSales >= 50000
@@ -205,15 +228,15 @@ export default function DashboardScreen() {
           <Pressable onPress={() => router.push('/(tabs)/summary')} className="active:opacity-80">
             <View className="flex-row gap-3">
               <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.cash')}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">{t('dashboard.cash')}</Text>
                 <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.cashSales)}</Text>
               </View>
               <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.transfer')}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">{t('dashboard.transfer')}</Text>
                 <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.transferSales)}</Text>
               </View>
               <View className="flex-1 bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
-                <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.pos')}</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">{t('dashboard.pos')}</Text>
                 <Text className="text-stone-900 dark:text-white text-lg font-semibold">{formatNaira(summary.posSales)}</Text>
               </View>
             </View>
@@ -233,7 +256,7 @@ export default function DashboardScreen() {
             <View className="w-10 h-10 rounded-xl bg-blue-500/20 items-center justify-center mb-3">
               <Package size={20} color="#3b82f6" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.totalProducts')}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">{t('dashboard.totalProducts')}</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{products.length}</Text>
           </Pressable>
 
@@ -244,7 +267,7 @@ export default function DashboardScreen() {
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <ShoppingCart size={20} color="#10b981" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mb-1">{t('dashboard.salesToday')}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-1">{t('dashboard.salesToday')}</Text>
             <Text className="text-stone-900 dark:text-white text-2xl font-bold">{salesToday.length}</Text>
           </Pressable>
         </Animated.View>
@@ -266,7 +289,7 @@ export default function DashboardScreen() {
                   </View>
                   <View>
                     <Text className="text-amber-400 font-semibold text-base">{t('dashboard.lowStockAlert')}</Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-sm">{t('dashboard.productsNeedRestocking').replace('{{count}}', String(lowStock.length))}</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm">{t('dashboard.productsNeedRestocking').replace('{{count}}', String(lowStock.length))}</Text>
                   </View>
                 </View>
                 <ArrowRight size={20} color="#78716c" />
@@ -323,7 +346,7 @@ export default function DashboardScreen() {
                         <Text className="text-stone-900 dark:text-white font-medium">
                           {sale.items.length} {sale.items.length > 1 ? t('dashboard.items') : t('dashboard.item')}
                         </Text>
-                        <Text className="text-stone-500 dark:text-stone-500 text-xs">
+                        <Text className="text-stone-600 dark:text-stone-400 text-sm">
                           {new Date(sale.createdAt).toLocaleTimeString('en-NG', {
                             hour: '2-digit',
                             minute: '2-digit'
@@ -365,10 +388,10 @@ export default function DashboardScreen() {
                     <Text className="text-stone-900 dark:text-white font-medium text-sm mb-1" numberOfLines={2}>
                       {product.name}
                     </Text>
-                    <Text className="text-stone-500 dark:text-stone-500 text-xs mb-2">{product.category}</Text>
+                    <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">{product.category}</Text>
                     <View className="flex-row items-center gap-1">
                       <View className="bg-red-500/20 px-2 py-0.5 rounded">
-                        <Text className="text-red-400 text-xs font-medium">{product.quantity} {t('dashboard.left')}</Text>
+                        <Text className="text-red-400 text-sm font-medium">{product.quantity} {t('dashboard.left')}</Text>
                       </View>
                     </View>
                   </Pressable>

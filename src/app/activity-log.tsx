@@ -295,7 +295,7 @@ export default function ActivityLogScreen() {
             <View className="w-16 h-16 rounded-full bg-stone-800/50 items-center justify-center mb-4">
               <Filter size={28} color="#78716c" />
             </View>
-            <Text className="text-stone-500 text-base font-medium">No activities found</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-base font-medium">No activities found</Text>
             <Text className="text-stone-600 text-sm mt-1">
               {activeFilter !== 'all' || selectedStaffId
                 ? 'Try changing your filters'
@@ -308,7 +308,7 @@ export default function ActivityLogScreen() {
               key={group.date}
               entering={FadeInDown.delay(300 + groupIndex * 100).duration(500)}
             >
-              <Text className="text-stone-500 dark:text-stone-500 text-xs font-semibold tracking-wide mt-4 mb-2">
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mt-4 mb-2">
                 {group.label}
               </Text>
               <View className="bg-white/60 dark:bg-stone-900/60 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
@@ -342,7 +342,7 @@ export default function ActivityLogScreen() {
                         </Text>
                       </View>
                       {activity.amount !== undefined && (
-                        <Text className="text-stone-500 dark:text-stone-400 text-sm font-semibold">
+                        <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold">
                           {formatNaira(activity.amount)}
                         </Text>
                       )}

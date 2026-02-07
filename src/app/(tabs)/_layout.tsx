@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Platform, View, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, BarChart3 } from 'lucide-react-native';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as Haptics from 'expo-haptics';
 import { useRetailStore } from '@/store/retailStore';
@@ -90,11 +90,12 @@ export default function TabLayout() {
         listeners={{ tabPress: handleTabPress }}
       />
       <Tabs.Screen
-        name="summary"
+      <Tabs.Screen
+        name="inventory"
         options={{
-          title: 'Summary',
+          title: 'Stock',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={BarChart3} color={color} focused={focused} />
+            <TabBarIcon icon={Package} color={color} focused={focused} />
           ),
         }}
         listeners={{ tabPress: handleTabPress }}
@@ -105,16 +106,6 @@ export default function TabLayout() {
           title: 'Sell',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon icon={ShoppingCart} color={color} focused={focused} />
-          ),
-        }}
-        listeners={{ tabPress: handleTabPress }}
-      />
-      <Tabs.Screen
-        name="inventory"
-        options={{
-          title: 'Stock',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={Package} color={color} focused={focused} />
           ),
         }}
         listeners={{ tabPress: handleTabPress }}

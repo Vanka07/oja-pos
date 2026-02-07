@@ -147,7 +147,7 @@ export default function PayrollScreen() {
                   <ChevronLeft size={20} color="#a8a29e" />
                 </Pressable>
                 <View>
-                  <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium tracking-wide uppercase">
                     Staff & Tools
                   </Text>
                   <Text className="text-stone-900 dark:text-white text-2xl font-bold tracking-tight">
@@ -173,7 +173,7 @@ export default function PayrollScreen() {
             <View className="w-10 h-10 rounded-xl bg-orange-500/20 items-center justify-center mb-3">
               <Wallet size={20} color="#f97316" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs">Total Monthly Salary</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm">Total Monthly Salary</Text>
             <Text className="text-stone-900 dark:text-white text-xl font-bold mt-1">
               {formatNaira(totalMonthlySalary)}
             </Text>
@@ -182,7 +182,7 @@ export default function PayrollScreen() {
             <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center mb-3">
               <Banknote size={20} color="#10b981" />
             </View>
-            <Text className="text-stone-500 dark:text-stone-500 text-xs">Paid This Month</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm">Paid This Month</Text>
             <Text className="text-emerald-400 text-xl font-bold mt-1">
               {formatNaira(totalPaidThisMonth)}
             </Text>
@@ -192,7 +192,7 @@ export default function PayrollScreen() {
         <Animated.View entering={FadeInDown.delay(250).duration(600)} className="mx-5 mt-3">
           <View className="flex-row items-center gap-2">
             <Calendar size={14} color="#78716c" />
-            <Text className="text-stone-500 text-sm">{currentMonth}</Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-sm">{currentMonth}</Text>
           </View>
         </Animated.View>
 
@@ -201,7 +201,7 @@ export default function PayrollScreen() {
           {salaryRecords.length === 0 ? (
             <Animated.View entering={FadeIn.duration(400)} className="items-center py-16">
               <Users size={48} color="#57534e" />
-              <Text className="text-stone-500 text-lg mt-4 mb-2">No salaries set up yet</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-lg mt-4 mb-2">No salaries set up yet</Text>
               <Text className="text-stone-600 dark:text-stone-400 text-center mb-6">
                 Add staff salary records to track payments
               </Text>
@@ -213,7 +213,7 @@ export default function PayrollScreen() {
                   <Text className="text-white font-semibold">Add Staff Salary</Text>
                 </Pressable>
               ) : (
-                <Text className="text-stone-500 text-sm text-center">
+                <Text className="text-stone-600 dark:text-stone-400 text-sm text-center">
                   Add staff members first in Staff Management
                 </Text>
               )}
@@ -254,13 +254,13 @@ export default function PayrollScreen() {
                                   <Text className={`text-xs font-medium ${styles.text}`}>{styles.label}</Text>
                                 </View>
                               </View>
-                              <Text className="text-stone-500 text-sm">
+                              <Text className="text-stone-600 dark:text-stone-400 text-sm">
                                 Salary: {formatNaira(record.monthlySalary)}
                               </Text>
                             </View>
                           </View>
                           <View className="items-end">
-                            <Text className="text-stone-500 text-xs">Remaining</Text>
+                            <Text className="text-stone-600 dark:text-stone-400 text-xs">Remaining</Text>
                             <Text className={`font-bold text-lg ${remaining > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                               {formatNaira(remaining)}
                             </Text>
@@ -282,10 +282,10 @@ export default function PayrollScreen() {
                           />
                         </View>
                         <View className="flex-row justify-between mt-1">
-                          <Text className="text-stone-500 text-xs">
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">
                             Paid: {formatNaira(paidThisMonth)}
                           </Text>
-                          <Text className="text-stone-500 text-xs">
+                          <Text className="text-stone-600 dark:text-stone-400 text-xs">
                             {Math.round((paidThisMonth / record.monthlySalary) * 100)}%
                           </Text>
                         </View>
@@ -295,7 +295,7 @@ export default function PayrollScreen() {
                       {isExpanded && (
                         <View className="px-4 pb-4 border-t border-stone-200 dark:border-stone-800">
                           {/* Payment History */}
-                          <Text className="text-stone-500 text-xs font-semibold tracking-wide mt-3 mb-2">
+                          <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mt-3 mb-2">
                             Payment History
                           </Text>
                           {record.paymentHistory.length === 0 ? (
@@ -311,7 +311,7 @@ export default function PayrollScreen() {
                                     <Text className="text-stone-900 dark:text-white font-medium">
                                       {formatNaira(payment.amount)}
                                     </Text>
-                                    <Text className="text-stone-500 text-xs">
+                                    <Text className="text-stone-600 dark:text-stone-400 text-xs">
                                       {payment.method === 'cash' ? '💵 Cash' : '📱 Transfer'}
                                       {payment.note ? ` • ${payment.note}` : ''}
                                     </Text>
@@ -380,7 +380,7 @@ export default function PayrollScreen() {
               {selectedRecord && (
                 <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-3 mb-4">
                   <Text className="text-stone-900 dark:text-white font-medium">{selectedRecord.staffName}</Text>
-                  <Text className="text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     Monthly salary: {formatNaira(selectedRecord.monthlySalary)}
                   </Text>
                 </View>
@@ -388,7 +388,7 @@ export default function PayrollScreen() {
 
               <View className="gap-4">
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Amount (₦) *</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Amount (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                     placeholder="0"
@@ -406,7 +406,7 @@ export default function PayrollScreen() {
                 </View>
 
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Payment Method</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Payment Method</Text>
                   <View className="flex-row gap-2">
                     {(['cash', 'transfer'] as const).map((method) => (
                       <Pressable
@@ -429,7 +429,7 @@ export default function PayrollScreen() {
                 </View>
 
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Note (Optional)</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white"
                     placeholder="e.g. Half month payment"
@@ -474,10 +474,10 @@ export default function PayrollScreen() {
 
               <View className="gap-4">
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Select Staff</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Select Staff</Text>
                   {availableStaff.length === 0 ? (
                     <View className="bg-stone-100/50 dark:bg-stone-800/50 rounded-xl p-4">
-                      <Text className="text-stone-500 text-center">All staff already have salary records</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-center">All staff already have salary records</Text>
                     </View>
                   ) : (
                     <View className="gap-2">
@@ -508,7 +508,7 @@ export default function PayrollScreen() {
                 </View>
 
                 <View>
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Monthly Salary (₦) *</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Monthly Salary (₦) *</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-4 text-stone-900 dark:text-white text-center text-2xl font-bold"
                     placeholder="e.g. 50000"
@@ -533,7 +533,7 @@ export default function PayrollScreen() {
                   }`}
                 >
                   <Text className={`font-semibold text-center text-lg ${
-                    selectedStaffId && newSalary ? 'text-white' : 'text-stone-500'
+                    selectedStaffId && newSalary ? 'text-white' : 'text-stone-600 dark:text-stone-400'
                   }`}>Add Salary Record</Text>
                 </Pressable>
               </View>

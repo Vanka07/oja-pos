@@ -147,7 +147,7 @@ export default function ActivateScreen() {
 
           <Animated.Text
             entering={FadeInUp.delay(400).duration(500)}
-            className="text-stone-500 dark:text-stone-400 text-center text-base mb-8"
+            className="text-stone-600 dark:text-stone-400 text-center text-base mb-8"
           >
             {success.message}
           </Animated.Text>
@@ -155,15 +155,15 @@ export default function ActivateScreen() {
           <Animated.View entering={FadeInUp.delay(500).duration(500)} className="w-full">
             <View className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 mb-6">
               <View className="flex-row justify-between mb-3">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Plan</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Plan</Text>
                 <Text className="text-emerald-400 font-semibold">Business</Text>
               </View>
               <View className="flex-row justify-between mb-3">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Duration</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Duration</Text>
                 <Text className="text-emerald-400 font-semibold">{success.days} days</Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-stone-500 dark:text-stone-400 text-sm">Expires</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Expires</Text>
                 <Text className="text-emerald-400 font-semibold">
                   {new Date(success.expiresAt).toLocaleDateString('en-NG', {
                     day: 'numeric',
@@ -206,7 +206,7 @@ export default function ActivateScreen() {
               <ChevronLeft size={20} color="#a8a29e" />
             </Pressable>
             <View>
-              <Text className="text-stone-500 text-sm font-medium tracking-wide uppercase">Redeem</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-medium tracking-wide uppercase">Redeem</Text>
               <Text
                 style={{ fontFamily: 'Poppins-ExtraBold' }}
                 className="text-stone-900 dark:text-white text-2xl font-bold tracking-tight"
@@ -224,7 +224,7 @@ export default function ActivateScreen() {
           <View className="w-20 h-20 rounded-full bg-orange-500/15 items-center justify-center mb-4">
             <KeyRound size={40} color="#e05e1b" />
           </View>
-          <Text className="text-stone-500 dark:text-stone-400 text-center text-sm leading-5">
+          <Text className="text-stone-600 dark:text-stone-400 text-center text-sm leading-5">
             Enter the activation code you received{'\n'}to unlock your Business plan.
           </Text>
         </Animated.View>
@@ -236,7 +236,7 @@ export default function ActivateScreen() {
             <View className="bg-stone-200 dark:bg-stone-800 rounded-xl px-4 py-3.5 min-w-[60px] items-center">
               <Text
                 style={{ fontFamily: 'Poppins-Bold' }}
-                className="text-stone-500 dark:text-stone-500 text-lg font-bold tracking-widest"
+                className="text-stone-600 dark:text-stone-400 text-lg font-bold tracking-widest"
               >
                 OJA
               </Text>

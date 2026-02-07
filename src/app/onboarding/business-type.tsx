@@ -64,7 +64,7 @@ export default function BusinessTypeScreen() {
             <Text className="text-stone-900 dark:text-white text-3xl font-bold mb-2">
               What kind of business{'\n'}do you run?
             </Text>
-            <Text className="text-stone-500 dark:text-stone-400 text-base leading-6 mb-8">
+            <Text className="text-stone-600 dark:text-stone-400 text-base leading-6 mb-8">
               We'll set up categories for your business
             </Text>
           </Animated.View>
@@ -105,7 +105,7 @@ export default function BusinessTypeScreen() {
                       {type.title}
                     </Text>
                     <Text
-                      className="text-stone-500 dark:text-stone-400 text-center mt-1"
+                      className="text-stone-600 dark:text-stone-400 text-center mt-1"
                       style={{ fontSize: 11, lineHeight: 15 }}
                     >
                       {type.subtitle}

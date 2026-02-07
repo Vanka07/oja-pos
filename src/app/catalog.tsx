@@ -146,7 +146,7 @@ export default function CatalogScreen() {
         />
         <ShoppingBag size={48} color="#78716c" />
         <Text className="text-stone-900 dark:text-white font-semibold text-lg mt-4 mb-2 text-center">Access Restricted</Text>
-        <Text className="text-stone-500 dark:text-stone-400 text-center">Only the shop owner or manager can manage the WhatsApp Storefront.</Text>
+        <Text className="text-stone-600 dark:text-stone-400 text-center">Only the shop owner or manager can manage the WhatsApp Storefront.</Text>
         <Pressable onPress={() => router.back()} className="mt-6 bg-orange-500 px-6 py-3 rounded-xl active:opacity-90">
           <Text className="text-white font-semibold">Go Back</Text>
         </Pressable>
@@ -180,7 +180,7 @@ export default function CatalogScreen() {
                 <Text style={{ fontFamily: 'Poppins-ExtraBold' }} className="text-stone-900 dark:text-white text-2xl font-extrabold tracking-tight">
                   WhatsApp Catalog
                 </Text>
-                <Text className="text-stone-500 text-sm">Share your products online</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm">Share your products online</Text>
               </View>
             </View>
           </Animated.View>
@@ -196,7 +196,7 @@ export default function CatalogScreen() {
                 </View>
                 <View>
                   <Text className="text-stone-900 dark:text-white font-medium">Enable Online Catalog</Text>
-                  <Text className="text-stone-500 text-sm">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm">
                     {catalogEnabled ? 'Your catalog is live' : 'Turn on to share products'}
                   </Text>
                 </View>
@@ -218,11 +218,11 @@ export default function CatalogScreen() {
           <>
             {/* Shop Details */}
             <Animated.View entering={FadeInDown.delay(300).duration(600)} className="mx-5 mt-4">
-              <Text className="text-stone-500 text-xs font-semibold tracking-wide mb-3">Shop Details</Text>
+              <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Shop Details</Text>
               <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
                 {/* Shop Slug */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Link Name</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Shop Link Name</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
                     placeholder={placeholders.catalogSlug}
@@ -236,7 +236,7 @@ export default function CatalogScreen() {
 
                 {/* Description */}
                 <View className="p-4 border-b border-stone-200 dark:border-stone-800">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">Shop Description</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">Shop Description</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
                     placeholder={placeholders.catalogDescription}
@@ -252,7 +252,7 @@ export default function CatalogScreen() {
 
                 {/* WhatsApp Number */}
                 <View className="p-4">
-                  <Text className="text-stone-500 dark:text-stone-400 text-sm mb-2">WhatsApp Number</Text>
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm mb-2">WhatsApp Number</Text>
                   <TextInput
                     className="bg-stone-100 dark:bg-stone-800 rounded-lg px-3 py-2.5 text-stone-900 dark:text-white"
                     placeholder="e.g. 2348012345678"
@@ -269,7 +269,7 @@ export default function CatalogScreen() {
             {/* Catalog Link Ready */}
             {catalogUrl.url ? (
               <Animated.View entering={FadeInDown.delay(350).duration(600)} className="mx-5 mt-4">
-                <Text className="text-stone-500 text-xs font-semibold tracking-wide mb-3">Your Catalog</Text>
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide mb-3">Your Catalog</Text>
                 <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
                   <View className="flex-row items-center gap-3 mb-4">
                     <View className="w-10 h-10 rounded-xl bg-emerald-500/20 items-center justify-center">
@@ -277,7 +277,7 @@ export default function CatalogScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-stone-900 dark:text-white font-semibold">Your link is ready ✅</Text>
-                      <Text className="text-stone-500 text-sm">{selectedCount} product{selectedCount !== 1 ? 's' : ''} in catalog</Text>
+                      <Text className="text-stone-600 dark:text-stone-400 text-sm">{selectedCount} product{selectedCount !== 1 ? 's' : ''} in catalog</Text>
                     </View>
                   </View>
                   {catalogUrl.truncated && (
@@ -326,7 +326,7 @@ export default function CatalogScreen() {
             {/* Product Selection */}
             <Animated.View entering={FadeInDown.delay(400).duration(600)} className="mx-5 mt-4">
               <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-stone-500 text-xs font-semibold tracking-wide">
+                <Text className="text-stone-600 dark:text-stone-400 text-sm font-semibold tracking-wide">
                   Catalog Products ({selectedCount}/{products.length})
                 </Text>
                 <Pressable onPress={selectAll} className="active:opacity-70">
@@ -336,7 +336,7 @@ export default function CatalogScreen() {
 
               {products.length === 0 ? (
                 <View className="bg-white/80 dark:bg-stone-900/80 rounded-xl border border-stone-200 dark:border-stone-800 p-6 items-center">
-                  <Text className="text-stone-500 text-sm text-center">
+                  <Text className="text-stone-600 dark:text-stone-400 text-sm text-center">
                     No products yet. Add products in the Inventory tab first.
                   </Text>
                 </View>
@@ -345,7 +345,7 @@ export default function CatalogScreen() {
                   {Object.entries(productsByCategory).map(([category, catProducts], catIndex) => (
                     <View key={category}>
                       <View className="px-4 py-2 bg-stone-100 dark:bg-stone-800/60">
-                        <Text className="text-stone-500 dark:text-stone-400 text-xs font-semibold">{category}</Text>
+                        <Text className="text-stone-600 dark:text-stone-400 text-xs font-semibold">{category}</Text>
                       </View>
                       {catProducts.map((product, index) => {
                         const selected = isProductSelected(product.id);
