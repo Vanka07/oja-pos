@@ -1,6 +1,6 @@
-const CACHE_NAME = 'oja-pos-v1';
-const STATIC_CACHE = 'oja-static-v1';
-const DYNAMIC_CACHE = 'oja-dynamic-v1';
+const CACHE_NAME = 'oja-pos-v2';
+const STATIC_CACHE = 'oja-static-v2';
+const DYNAMIC_CACHE = 'oja-dynamic-v2';
 
 // App shell files to cache on install
 const APP_SHELL = [
@@ -52,6 +52,23 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           const clone = response.clone();
           caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, clone);
+          });
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+
+  // Expo web bundles: network-first to avoid stale JS/CSS after deploys
+  if (url.pathname.includes('/_expo/static/js') || url.pathname.includes('/_expo/static/css')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => {
             cache.put(request, clone);
           });
           return response;

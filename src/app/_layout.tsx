@@ -109,22 +109,37 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
     // Web-specific: lock when tab becomes hidden (user switches away)
     let isPageUnloading = false;
+    let visibilityLockTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearVisibilityTimer = () => {
+      if (visibilityLockTimer) {
+        clearTimeout(visibilityLockTimer);
+        visibilityLockTimer = null;
+      }
+    };
     const markPageUnloading = () => {
       isPageUnloading = true;
+      clearVisibilityTimer();
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         if (isPageUnloading) return;
         const sessionAuthenticated = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oja_authenticated') === 'true';
         if (sessionAuthenticated) return;
-        const authState = useAuthStore.getState();
-        const staffState = useStaffStore.getState();
-        const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
-          (s) => s.active && isAppRole(s.role) && s.pin?.length
-        );
-        if (hasPinOrStaff) {
-          authState.lock();
-        }
+        clearVisibilityTimer();
+        visibilityLockTimer = setTimeout(() => {
+          if (isPageUnloading) return;
+          if (document.visibilityState !== 'hidden') return;
+          const authState = useAuthStore.getState();
+          const staffState = useStaffStore.getState();
+          const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
+            (s) => s.active && isAppRole(s.role) && s.pin?.length
+          );
+          if (hasPinOrStaff) {
+            authState.lock();
+          }
+        }, 500);
+      } else {
+        clearVisibilityTimer();
       }
     };
 
