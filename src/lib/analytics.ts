@@ -22,6 +22,7 @@ interface AnalyticsEvent {
 }
 
 let sessionId: string | null = null;
+let analyticsEnabled = true;
 
 function getSessionId(): string {
   if (!sessionId) {
@@ -31,6 +32,7 @@ function getSessionId(): string {
 }
 
 export async function track(event: EventName, shopId?: string, properties?: Record<string, any>) {
+  if (!analyticsEnabled) return;
   try {
     const { error } = await supabase.from('analytics_events').insert({
       event,
@@ -45,6 +47,9 @@ export async function track(event: EventName, shopId?: string, properties?: Reco
     if (error) {
       // Silent fail - analytics should never break the app
       console.log('[Analytics] Failed to track:', error.message);
+      if (error.message?.includes('Could not find the table') || error.message?.includes('404')) {
+        analyticsEnabled = false;
+      }
     }
   } catch {
     // Silent fail
@@ -53,6 +58,7 @@ export async function track(event: EventName, shopId?: string, properties?: Reco
 
 // Track daily active shops (call on app open)
 export async function trackDailyActive(shopId: string) {
+  if (!analyticsEnabled) return;
   const today = new Date().toISOString().split('T')[0];
   
   try {

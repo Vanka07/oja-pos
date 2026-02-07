@@ -135,7 +135,6 @@ export default function TabLayout() {
         name="summary"
         options={{
           href: null,
-          tabBarButton: () => null,
         }}
       />
     </Tabs>

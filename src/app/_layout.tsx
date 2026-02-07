@@ -108,8 +108,15 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     // Web-specific: lock when tab becomes hidden (user switches away)
+    let isPageUnloading = false;
+    const handleBeforeUnload = () => {
+      isPageUnloading = true;
+    };
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
+        if (isPageUnloading) return;
+        const sessionAuthenticated = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oja_authenticated') === 'true';
+        if (sessionAuthenticated) return;
         const authState = useAuthStore.getState();
         const staffState = useStaffStore.getState();
         const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
@@ -123,12 +130,14 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
     if (Platform.OS === 'web') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('beforeunload', handleBeforeUnload);
     }
 
     return () => {
       subscription.remove();
       if (Platform.OS === 'web') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
       }
     };
   }, []);
