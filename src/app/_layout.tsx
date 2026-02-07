@@ -123,7 +123,20 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         if (isPageUnloading) return;
-        const sessionAuthenticated = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oja_authenticated') === 'true';
+        let sessionAuthenticated = false;
+        if (typeof localStorage !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('oja_authenticated_session');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
+              const ttlMs = 12 * 60 * 60 * 1000;
+              sessionAuthenticated = ts > 0 && Date.now() - ts < ttlMs;
+            }
+          } catch {
+            sessionAuthenticated = false;
+          }
+        }
         if (sessionAuthenticated) return;
         clearVisibilityTimer();
         visibilityLockTimer = setTimeout(() => {

@@ -6,11 +6,12 @@ import { useStaffStore, isAppRole } from './staffStore';
 
 const AUTH_SESSION_KEY = 'oja_authenticated_session';
 const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const WEB_SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 const setSessionAuthenticated = () => {
   if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('oja_authenticated', 'true');
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
     }
     return;
   }
@@ -19,8 +20,8 @@ const setSessionAuthenticated = () => {
 
 const clearSessionAuthenticated = () => {
   if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-      sessionStorage.removeItem('oja_authenticated');
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(AUTH_SESSION_KEY);
     }
     return;
   }
@@ -29,9 +30,20 @@ const clearSessionAuthenticated = () => {
 
 const hasValidSession = () => {
   if (Platform.OS === 'web') {
-    return typeof window !== 'undefined' &&
-      typeof sessionStorage !== 'undefined' &&
-      sessionStorage.getItem('oja_authenticated') === 'true';
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false;
+    const raw = localStorage.getItem(AUTH_SESSION_KEY);
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
+      if (ts > 0 && Date.now() - ts < WEB_SESSION_TTL_MS) {
+        return true;
+      }
+    } catch {
+      // ignore malformed session
+    }
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    return false;
   }
 
   const raw = getStorageItem(AUTH_SESSION_KEY);
