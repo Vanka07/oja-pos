@@ -90,7 +90,6 @@ export default function TabLayout() {
         listeners={{ tabPress: handleTabPress }}
       />
       <Tabs.Screen
-      <Tabs.Screen
         name="inventory"
         options={{
           title: 'Stock',
