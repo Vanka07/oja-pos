@@ -17,7 +17,7 @@ import { useRetailStore, formatNaira } from '@/store/retailStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useStaffStore, hasPermission } from '@/store/staffStore';
 import { useCloudAuthStore } from '@/store/cloudAuthStore';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useColorScheme } from 'nativewind';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter, Href } from 'expo-router';
