@@ -134,7 +134,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="summary"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
     </Tabs>

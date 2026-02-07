@@ -109,7 +109,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
     // Web-specific: lock when tab becomes hidden (user switches away)
     let isPageUnloading = false;
-    const handleBeforeUnload = () => {
+    const markPageUnloading = () => {
       isPageUnloading = true;
     };
     const handleVisibilityChange = () => {
@@ -130,14 +130,16 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
     if (Platform.OS === 'web') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('beforeunload', markPageUnloading);
+      window.addEventListener('pagehide', markPageUnloading);
     }
 
     return () => {
       subscription.remove();
       if (Platform.OS === 'web') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('beforeunload', markPageUnloading);
+        window.removeEventListener('pagehide', markPageUnloading);
       }
     };
   }, []);

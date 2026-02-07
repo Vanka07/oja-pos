@@ -86,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
 
       setPin: (pin: string) => {
         set({ pin, isLocked: false });
+        setSessionAuthenticated();
       },
 
       unlock: (pin: string) => {
@@ -144,6 +145,7 @@ export const useAuthStore = create<AuthState>()(
         const stored = get().recoveryCode;
         if (stored && stored === code) {
           set({ pin: newPin, isLocked: false, recoveryCode: null });
+          setSessionAuthenticated();
           return true;
         }
         return false;
