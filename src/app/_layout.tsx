@@ -59,11 +59,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     };
   }, []);
 
-  useEffect(() => {
-    if (hasAppStaff && !currentStaff) {
-      useAuthStore.getState().lock();
-    }
-  }, [hasAppStaff, currentStaff]);
+
 
   // Initialize cloud auth and auto-sync
   useEffect(() => {
