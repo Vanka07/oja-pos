@@ -1,7 +1,53 @@
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { zustandStorage } from '@/lib/storage';
+import { zustandStorage, getStorageItem, setStorageItem } from '@/lib/storage';
 import { useStaffStore, isAppRole } from './staffStore';
+
+const AUTH_SESSION_KEY = 'oja_authenticated_session';
+const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+const setSessionAuthenticated = () => {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('oja_authenticated', 'true');
+    }
+    return;
+  }
+  setStorageItem(AUTH_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+};
+
+const clearSessionAuthenticated = () => {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('oja_authenticated');
+    }
+    return;
+  }
+  setStorageItem(AUTH_SESSION_KEY, '');
+};
+
+const hasValidSession = () => {
+  if (Platform.OS === 'web') {
+    return typeof window !== 'undefined' &&
+      typeof sessionStorage !== 'undefined' &&
+      sessionStorage.getItem('oja_authenticated') === 'true';
+  }
+
+  const raw = getStorageItem(AUTH_SESSION_KEY);
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
+    if (ts > 0 && Date.now() - ts < SESSION_TTL_MS) {
+      return true;
+    }
+  } catch {
+    // ignore malformed session
+  }
+  setStorageItem(AUTH_SESSION_KEY, '');
+  return false;
+};
 
 const generateRecoveryCodeValue = (length: number): string => {
   const cryptoObj: { getRandomValues?: (array: Uint8Array) => void } | undefined =
@@ -44,17 +90,17 @@ export const useAuthStore = create<AuthState>()(
 
       unlock: (pin: string) => {
         const staffStore = useStaffStore.getState();
-        const hasStaff = staffStore.staff.length > 0;
+        const hasAppStaff = staffStore.staff.some(
+          (s) => s.active && isAppRole(s.role) && typeof s.pin === 'string' && s.pin.length > 0
+        );
 
-        if (hasStaff) {
+        if (hasAppStaff) {
           // Staff system active — match PIN against all active app-role staff
           const success = staffStore.switchStaff(pin);
           if (success) {
             set({ isLocked: false });
             // Mark session as authenticated on web to prevent re-lock on refresh
-            if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-              sessionStorage.setItem('oja_authenticated', 'true');
-            }
+            setSessionAuthenticated();
             return true;
           }
           return false;
@@ -65,9 +111,7 @@ export const useAuthStore = create<AuthState>()(
         if (stored === pin) {
           set({ isLocked: false });
           // Mark session as authenticated on web to prevent re-lock on refresh
-          if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('oja_authenticated', 'true');
-          }
+          setSessionAuthenticated();
           return true;
         }
         return false;
@@ -77,9 +121,7 @@ export const useAuthStore = create<AuthState>()(
         // Also clear current staff on lock
         useStaffStore.getState().logout();
         // Clear session authentication on web so next refresh will require PIN
-        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem('oja_authenticated');
-        }
+        clearSessionAuthenticated();
         set({ isLocked: true });
       },
 
@@ -135,10 +177,7 @@ export const useAuthStore = create<AuthState>()(
           );
           const hasPinOrStaff = authState.pin !== null || hasAppPin;
 
-          // Check if user already authenticated in this browser session
-          const sessionAuthenticated = typeof window !== 'undefined' &&
-            typeof sessionStorage !== 'undefined' &&
-            sessionStorage.getItem('oja_authenticated') === 'true';
+          const sessionAuthenticated = hasValidSession();
 
           if (hasPinOrStaff && !sessionAuthenticated) {
             useAuthStore.setState({ isLocked: true });

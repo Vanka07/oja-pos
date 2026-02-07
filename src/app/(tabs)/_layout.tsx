@@ -131,6 +131,13 @@ export default function TabLayout() {
         }}
         listeners={{ tabPress: handleTabPress }}
       />
+      <Tabs.Screen
+        name="summary"
+        options={{
+          href: null,
+          tabBarButton: () => null,
+        }}
+      />
     </Tabs>
   );
 }

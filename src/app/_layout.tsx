@@ -49,27 +49,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   useEffect(() => {
     // Longer delay to ensure stores are fully hydrated from storage
     const timer = setTimeout(() => {
-      // Check directly from store state (not hooks) to ensure we have hydrated values
-      const authState = useAuthStore.getState();
-      const staffState = useStaffStore.getState();
-      const hasPinOrStaff = authState.pin !== null || staffState.staff.some(
-        (s) => s.active && isAppRole(s.role) && s.pin?.length
-      );
-      
-      // On web, check if user already authenticated in this browser session
-      // This prevents re-locking on every page refresh
-      const isWeb = Platform.OS === 'web';
-      const sessionAuthenticated = isWeb && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oja_authenticated') === 'true';
-      
-      // Lock on app startup if PIN/staff exists, unless already authenticated this session
-      if (hasPinOrStaff && !sessionAuthenticated) {
-        authState.lock();
-      } else if (hasPinOrStaff && sessionAuthenticated) {
-        // User already authenticated this session, keep unlocked
-        useAuthStore.setState({ isLocked: false });
-      } else {
-        useAuthStore.setState({ isLocked: false });
-      }
+      // Allow store hydration to settle before showing UI
       setIsReady(true);
       SplashScreen.hideAsync();
     }, 300);
