@@ -45,6 +45,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   const shopId = useCloudAuthStore((s) => s.shopId);
   const cloudSession = useCloudAuthStore((s) => s.session);
   const [isReady, setIsReady] = useState(false);
+  const inOnboarding = segments[0] === 'onboarding';
 
   useEffect(() => {
     // Longer delay to ensure stores are fully hydrated from storage
@@ -175,21 +176,19 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
   useEffect(() => {
     if (!isReady) return;
 
-    const inOnboarding = segments[0] === 'onboarding';
-
     if (!hasCompletedOnboarding && !inOnboarding) {
       router.replace('/onboarding');
     } else if (hasCompletedOnboarding && inOnboarding) {
       router.replace('/(tabs)');
     }
-  }, [hasCompletedOnboarding, segments, isReady, router]);
+  }, [hasCompletedOnboarding, inOnboarding, isReady, router]);
 
   if (!isReady) {
     return <SkeletonLoader />;
   }
 
   // Show lock screen if any PIN exists (legacy or staff) and app is locked
-  if (hasAnyPin && isLocked) {
+  if (hasAnyPin && isLocked && !(Platform.OS === 'web' && inOnboarding && !hasCompletedOnboarding)) {
     return <LockScreen />;
   }
 
